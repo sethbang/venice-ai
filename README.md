@@ -1,8 +1,8 @@
 # Venice AI Python Client
 
 [![PyPI version](https://img.shields.io/pypi/v/venice-ai.svg)](https://pypi.org/project/venice-ai/)
-[![CI Status](https://github.com/venice-ai/venice-ai-python/actions/workflows/python-package.yml/badge.svg)](https://github.com/venice-ai/venice-ai-python/actions/workflows/python-package.yml)
-[![Coverage Status](https://img.shields.io/codecov/c/github/venice-ai/venice-ai-python.svg)](https://codecov.io/gh/venice-ai/venice-ai-python)
+[![CI Status](https://github.com/sethbang/venice-ai/actions/workflows/python-publish.yaml/badge.svg)](https://github.com/sethbang/venice-ai/actions/workflows/python-publish.yaml)
+[![Coverage Status](https://img.shields.io/codecov/c/github/sethbang/venice-ai.svg)](https://codecov.io/gh/sethbang/venice-ai)
 [![Downloads](https://static.pepy.tech/badge/venice-ai)](https://pepy.tech/project/venice-ai)
 [![Downloads](https://static.pepy.tech/badge/venice-ai/month)](https://pepy.tech/project/venice-ai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
