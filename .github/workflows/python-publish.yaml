@@ -1,10 +1,4 @@
-# This workflow will upload a Python Package to PyPI when a release is created
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#publishing-to-package-registries
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
+# Publish to pypi, run tests for coverage
 
 name: Upload Python Package
 
@@ -25,6 +19,29 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+
+      - name: Install Poetry
+        run: |
+          pipx install poetry
+
+      - name: Install dependencies
+        run: |
+          poetry install --with dev
+
+      - name: Run tests and generate coverage report
+        env:
+          VENICE_API_KEY: ${{ secrets.VENICE_API_KEY }}
+        run: |
+          poetry run python test_runner.py --group all --coverage
+          # Ensure this command generates a coverage.xml file in the root,
+          # or adjust the Codecov action's `file` parameter accordingly.
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos, required for private
+          # file: ./coverage.xml # Default is ./coverage.xml
+          # fail_ci_if_error: true # Optional: uncomment to fail the CI job if Codecov upload fails
 
       - name: Build release distributions
         run: |
