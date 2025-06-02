@@ -1,0 +1,98 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "venice-ai"
+version = "1.0.0"
+description = "A community-driven Python client library for interacting with the Venice.ai API, offering comprehensive access to its features."
+readme = "README.md"
+license = "MIT"
+authors = [
+    "Community Contributors", # Update with actual team info
+]
+keywords = ["ai", "api-client", "venice", "ml", "machine-learning"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+packages = [{ include = "venice_ai", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+httpx = "^0.28.0"            # Using httpx for sync/async requests
+typing_extensions = "^4.7.0" # For Literal, TypedDict etc. on older pythons
+pydantic = "^2.7.0"          # For data validation and serialization
+numpy = "^2.2.0"             # For numerical operations, required by some tests
+tiktoken = ">=0.9.0"         # For token estimation
+Pillow = "^11.2.1"           # For image processing (e.g., dimension checks)
+pypandoc = "^1.15"
+beautifulsoup4 = "^4.13.4"
+
+[tool.poetry.urls]
+Homepage = "https://github.com/venice-ai/venice-ai-python"
+Repository = "https://github.com/venice-ai/venice-ai-python"
+Documentation = "https://docs.venice.ai/api-reference"
+
+[tool.poetry.group.dev.dependencies]
+pytest-httpx = "^0.35.0"
+pytest = "^8.3.5"
+pytest-cov = "^6.1.1"
+pytest-asyncio = "^1.0.0"
+pytest-mock = "^3.14.0"
+ruff = "^0.11.10"
+black = "^25.1.0"
+mypy = "^1.6.1"
+sphinx = "^8.2.3"
+sphinx-rtd-theme = "^3.0.2"
+coverage = "^7.8.1"
+questionary = "^2.0.1"
+rich = "^14.0.0"
+pytest-xdist = "^3.5.0"
+typing_extensions = "^4.7.0"
+furo = "^2024.8.6"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["src"]
+addopts = ""
+
+[tool.coverage.run]
+source = ["venice_ai"]
+branch = true
+parallel = false
+# omit = [ "*/__main__.py" ] # Optional: if you have main scripts you want to omit
+
+[tool.coverage.paths]
+source = ["venice_ai", "src/venice_ai"]
+
+[tool.coverage.report]
+fail_under = 90 # Optional: Set a minimum coverage threshold
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "    pass",                   # Allow 'pass' on its own line if it's the only thing in a TYPE_CHECKING block
+]
+
+[tool.poetry.extras]
+tokenizers = []
+
+[tool.poetry.scripts]
+test-runner = "test_runner:main"
