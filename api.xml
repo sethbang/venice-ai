@@ -1,0 +1,1442 @@
+<log_entries>
+    <entry>
+        <datetime>MAY 7, 8:19 AM</datetime>
+        <message>Captured stdout call
+            ----- DEBUG: Request headers for POST https://api.venice.ai/api/v1/audio/speech:
+            {'accept-encoding': 'gzip, deflate', 'connection': 'keep-alive', 'user-agent':
+            'python-httpx/0.28.1', 'accept': 'application/json', ...</message>
+        <tokens_up>7.8m</tokens_up>
+        <tokens_down>21.5k</tokens_down>
+        <api_cost>19.3158</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 25, 2:51 PM</datetime>
+        <message>We have great coverage but there are still plenty of missed lines that I would love
+            us to do our best to improve coverage on. Please explore and investigate each of the
+            files with miss coverage below and present a detailed plan to improve coverage for each
+            of these files:...</message>
+        <tokens_up>13.6m</tokens_up>
+        <tokens_down>279.7k</tokens_down>
+        <api_cost>18.0220</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 22, 9:00 PM</datetime>
+        <message>Please take some time exploring the project. I would like you to conduct a holistic
+            and thorough review of the documentation as well as the codebase</message>
+        <tokens_up>12.3m</tokens_up>
+        <tokens_down>102.8k</tokens_down>
+        <api_cost>16.4457</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 12, 9:41 PM</datetime>
+        <message>I am delegating the Finalization phase of a larger project to enhance the
+            documentation for the venice-ai Python package to production-ready standards for the
+            1.0.0 release. Below is the context and specific instructions for this subtask....</message>
+        <tokens_up>13.2m</tokens_up>
+        <tokens_down>61.0k</tokens_down>
+        <api_cost>15.8867</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 7, 8:06 AM</datetime>
+        <message>Please conduct a holistic investigation of the project!</message>
+        <tokens_up>11.6m</tokens_up>
+        <tokens_down>158.1k</tokens_down>
+        <api_cost>14.2149</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 25, 8:08 PM</datetime>
+        <message>## Project Report: Venice AI SDK Test Coverage Improvement
+            Date: May 25, 2025...</message>
+        <tokens_up>5.0m</tokens_up>
+        <tokens_down>44.0k</tokens_down>
+        <api_cost>12.9710</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 17, 9:48 PM</datetime>
+        <message>## Project Report: Venice AI Image Upscaling Debug and Refactor
+            Date: May 17, 2025...</message>
+        <tokens_up>5.0m</tokens_up>
+        <tokens_down>23.8k</tokens_down>
+        <api_cost>12.4150</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 21, 8:55 PM</datetime>
+        <message>Project Report: Venice AI Python Client Library - Coverage Debugging
+            Date: May 21, 2025
+            Prepared by: Roo (AI Assistant)...</message>
+        <tokens_up>8.4m</tokens_up>
+        <tokens_down>241.8k</tokens_down>
+        <api_cost>12.0032</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 21, 1:00 AM</datetime>
+        <message>Please take some time exploring the project. I would like you to conduct a holistic
+            and thorough review of the documentation as well as the codebase and then wrap it up by
+            reviewing our release checklist, which you can find in the root directory in the form of
+            a markdown document.</message>
+        <tokens_up>9.2m</tokens_up>
+        <tokens_down>199.9k</tokens_down>
+        <api_cost>11.3151</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 22, 9:52 PM</datetime>
+        <message>For the failing POST api_keys/generate_web3_key requests in
+            src/venice_ai/_client.py:
+            DEBUG venice_ai._client: DEBUG_CLIENT:'request_headers' (id: 4458861888) before main...</message>
+        <tokens_up>4.6m</tokens_up>
+        <tokens_down>61.3k</tokens_down>
+        <api_cost>10.4125</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 26, 6:47 AM</datetime>
+        <message>We are nearing the release of our project. I have completely deleted the content of
+            the README.md file, so you have a blank canvas to work with! But, I wan't this to have
+            sleek, modern style and formatting. It should have extensive information on the project,
+            it's use cases, test run procedure, etc. This is a fairly ...</message>
+        <tokens_up>7.2m</tokens_up>
+        <tokens_down>130.4k</tokens_down>
+        <api_cost>10.3944</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 4:12 PM</datetime>
+        <message>Please debug our failing tests! Use poetry run pytest ... to check your work!</message>
+        <tokens_up>3.7m</tokens_up>
+        <tokens_down>39.9k</tokens_down>
+        <api_cost>9.7651</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 24, 9:13 PM</datetime>
+        <message>Overall Summary:
+
+            Total Tests: 1091...</message>
+        <tokens_up>8.4m</tokens_up>
+        <tokens_down>114.0k</tokens_down>
+        <api_cost>9.6891</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 8:05 PM</datetime>
+        <message>I think we are closing in on the v1.0.0 release candidate! We have 94% test
+            coverage currently with, 255 passed, 4 xfailed, 3 xpassed in 3.08s! One thing I have
+            been meaning to do is to update the README.md so that it is current with the codebase;
+            Please attempt to bring any out of date documentation current.</message>
+        <tokens_up>10.9m</tokens_up>
+        <tokens_down>52.7k</tokens_down>
+        <api_cost>8.8422</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 6:59 AM</datetime>
+        <message>- Implement the streaming logic for chat.completions.create.
+            Refine type hints (e.g., create TypedDicts for ToolParam, Logprobs etc.)....</message>
+        <tokens_up>4.6m</tokens_up>
+        <tokens_down>67.1k</tokens_down>
+        <api_cost>8.5356</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 24, 10:23 PM</datetime>
+        <message>We need to systematically debug each of the remaining (unexpected) failures from
+            the test suite. We use the test runner script through poetry with flags, so please that
+            to check your work as you go but try to keep tests targeted (or atleast grouped) to
+            avoid excessive api costs testing passing tests. ...</message>
+        <tokens_up>10.2m</tokens_up>
+        <tokens_down>109.2k</tokens_down>
+        <api_cost>8.3800</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 24, 7:55 PM</datetime>
+        <message>Please use the test-runner script to check e2e tests one by one. Here is the
+            test-runner code for reference and so you know how to use it in the command line:
+            ...</message>
+        <tokens_up>9.2m</tokens_up>
+        <tokens_down>58.1k</tokens_down>
+        <api_cost>8.3565</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 20, 7:39 PM</datetime>
+        <message>Please conduct a thorough and holistic investigation in to this project and then
+            report back. Explore documentation and code!</message>
+        <tokens_up>7.8m</tokens_up>
+        <tokens_down>142.4k</tokens_down>
+        <api_cost>8.3280</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 7, 10:53 AM</datetime>
+        <message>Let's debug these failures! Many of the errors we have run in to have been related
+            to parameter mismatches between the api and the code, so be sure to to a targeted search
+            of the venice ai swagger file (docs/swagger.yaml)), Here are the failures of test_02:...</message>
+        <tokens_up>9.3m</tokens_up>
+        <tokens_down>109.6k</tokens_down>
+        <api_cost>7.8402</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 22, 1:20 AM</datetime>
+        <message>Please take some time exploring the project. I would like you to conduct a holistic
+            and thorough review of the documentation as well as the codebase and then wrap it up by
+            reviewing our release checklist, which you can find in the root directory in the form of
+            a markdown document.</message>
+        <tokens_up>5.0m</tokens_up>
+        <tokens_down>119.5k</tokens_down>
+        <api_cost>7.4233</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 12:34 AM</datetime>
+        <message>You are tasked with resolving asynchronous client mocking issues in the Venice AI
+            package, which are causing multiple test failures and runtime warnings in async client
+            tests. The parent task is to prepare the package for production launch by addressing
+            test suite issues, as detailed in a comprehensive report fro...</message>
+        <tokens_up>12.6m</tokens_up>
+        <tokens_down>77.2k</tokens_down>
+        <api_cost>7.2653</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 18, 6:57 PM</datetime>
+        <message>We are so close to ready for production release of our python package! Please spend
+            sometime conducting a holistic investigation in to the package!</message>
+        <tokens_up>5.8m</tokens_up>
+        <tokens_down>116.6k</tokens_down>
+        <api_cost>7.2578</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 12:55 AM</datetime>
+        <message>You are tasked with completing the resolution of asynchronous client mocking issues
+            in the Venice AI package, which are causing multiple test failures and runtime warnings
+            in async client tests. This is a follow-up to a partially completed subtask, and the
+            parent task is to prepare the package for production ...</message>
+        <tokens_up>4.5m</tokens_up>
+        <tokens_down>82.2k</tokens_down>
+        <api_cost>7.2022</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 25, 10:15 PM</datetime>
+        <message>Please investigate why the following file is showing zero coverage:
+            src/venice_ai/resources/chat.py
+            ...</message>
+        <tokens_up>4.8m</tokens_up>
+        <tokens_down>100.3k</tokens_down>
+        <api_cost>7.0626</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 9, 5:52 AM</datetime>
+        <message>Please improve test coverage anywhere where it is under 80%
+            @/docs/Coverage1.md @/docs/Coverage2.md</message>
+        <tokens_up>9.2m</tokens_up>
+        <tokens_down>73.4k</tokens_down>
+        <api_cost>6.8132</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 20, 9:29 PM</datetime>
+        <message>Please conduct a thorough and holistic investigation in to this project and then
+            report back. Explore documentation and code!</message>
+        <tokens_up>5.3m</tokens_up>
+        <tokens_down>101.2k</tokens_down>
+        <api_cost>6.6874</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 13, 2:39 AM</datetime>
+        <message>Please take a moment to holistically investigate the project's codebase and
+            documentation.</message>
+        <tokens_up>4.3m</tokens_up>
+        <tokens_down>104.8k</tokens_down>
+        <api_cost>6.3455</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 7, 5:57 PM</datetime>
+        <message>I have a handoff report for you below that I would like you to reference,
+            especially in the early part of our session where you have limited context from the
+            actual codebase. Please gather clues, evidence, etc. The previous developer got a bit
+            hung up on the actual test_03 file being the culprit, but I actually have a ...</message>
+        <tokens_up>8.8m</tokens_up>
+        <tokens_down>80.5k</tokens_down>
+        <api_cost>6.2296</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 8, 11:22 PM</datetime>
+        <message>Your task is to ensure that the benchmark file benchmark_01_chat_latency.py
+            (selected by input "11" to run_tests.sh) runs successfully. The initial implementation
+            for this benchmark file was recently completed....</message>
+        <tokens_up>1.9m</tokens_up>
+        <tokens_down>22.0k</tokens_down>
+        <api_cost>5.9625</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 17, 9:29 PM</datetime>
+        <message>Please take a moment to review the image generation and upscale features. Please
+            conduct a holistic and detailed investigation, then report back on your findings!</message>
+        <tokens_up>3.1m</tokens_up>
+        <tokens_down>58.4k</tokens_down>
+        <api_cost>5.8745</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 13, 5:22 AM</datetime>
+        <message>Project: Venice AI Gradio Showcase Application
+            Objective: Diagnose and fix the issue causing the Gradio UI not to load data
+            specifically in the ...</message>
+        <tokens_up>6.0m</tokens_up>
+        <tokens_down>66.8k</tokens_down>
+        <api_cost>5.7917</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 8, 2:18 AM</datetime>
+        <message>Your task is to ensure that the E2E test file test_04_api_keys.py (selected by
+            input "4" to run_tests.sh) runs successfully and all its tests pass. The initial
+            implementation for this test file was recently completed....</message>
+        <tokens_up>1.8m</tokens_up>
+        <tokens_down>13.4k</tokens_down>
+        <api_cost>5.4783</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 22, 12:25 AM</datetime>
+        <message>Parent Task Context:
+            The overall project is to prepare the Venice AI Python client library for a 1.0
+            production release. We are in Phase 4 (Documentation and Code Polish). Task 4.1 (Update
+            Core API Documentation) has just been ...</message>
+        <tokens_up>6.5m</tokens_up>
+        <tokens_down>72.6k</tokens_down>
+        <api_cost>5.3623</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 9, 12:00 AM</datetime>
+        <message>Please resume our testing by run the run_tests.sh script passing the test selection
+            with 'echo', like this example:
+            ...</message>
+        <tokens_up>2.9m</tokens_up>
+        <tokens_down>27.9k</tokens_down>
+        <api_cost>5.3323</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 4:59 PM</datetime>
+        <message>Please look in to these test failure and warning and report back!
+            ====== warnings summary ...</message>
+        <tokens_up>5.0m</tokens_up>
+        <tokens_down>39.1k</tokens_down>
+        <api_cost>5.2851</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 18, 1:39 AM</datetime>
+        <message>AI Debugging Agent Task: Test Suite Failure Resolution (Version 2)
+            Objective: Investigate and resolve all 54 failing tests in the provided Pytest output.
+            Update test code...</message>
+        <tokens_up>3.1m</tokens_up>
+        <tokens_down>79.8k</tokens_down>
+        <api_cost>4.8141</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 23, 10:54 PM</datetime>
+        <message>Please take some time exploring the project. I would like you to conduct a holistic
+            and thorough review of the documentation as well as the codebase</message>
+        <tokens_up>2.2m</tokens_up>
+        <tokens_down>48.9k</tokens_down>
+        <api_cost>4.7477</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 12:05 PM</datetime>
+        <message>How can we expand our test coverage to get above 80% coverage?
+            ---------- coverage: platform darwin, python 3.11.3-final-0 ----------...</message>
+        <tokens_up>1.5m</tokens_up>
+        <tokens_down>27.8k</tokens_down>
+        <api_cost>4.7345</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 8, 11:59 PM</datetime>
+        <message>Your task is to ensure that the benchmark file benchmark_02_image_gen_time.py
+            (selected by input "12" to run_tests.sh) runs successfully. The initial implementation
+            for this benchmark file was recently completed....</message>
+        <tokens_up>1.4m</tokens_up>
+        <tokens_down>14.6k</tokens_down>
+        <api_cost>4.4628</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 18, 3:19 AM</datetime>
+        <message>Please spend some time investigating these tests, and then investigating the
+            related code, and then create a detailed report back!
+            ...</message>
+        <tokens_up>3.3m</tokens_up>
+        <tokens_down>75.6k</tokens_down>
+        <api_cost>4.3489</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 10:02 AM</datetime>
+        <message>I am delegating a subtask as part of the broader goal to increase test coverage for
+            the Venice AI client library from 67% to above 80%. This subtask focuses on integrating
+            the newly created tests into a CI/CD pipeline and running a coverage report to assess
+            the achieved coverage....</message>
+        <tokens_up>1.4m</tokens_up>
+        <tokens_down>12.1k</tokens_down>
+        <api_cost>4.3004</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 4:17 AM</datetime>
+        <message>You are tasked with resolving the remaining mock configuration and asynchronous
+            testing issues in the Venice AI test suite. The parent task is to prepare the package
+            for production launch by addressing all remaining test suite issues....</message>
+        <tokens_up>5.6m</tokens_up>
+        <tokens_down>19.9k</tokens_down>
+        <api_cost>4.2234</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 7:13 AM</datetime>
+        <message>Your task today, as the project orchestrator, is to delegate subtasks out
+            naive/fresh coding agents, whose only context on the project, will be the context you
+            provide in your subtask assignment message. So keep subtasks very targeted and context
+            rich! Also, you are the big brains on the project, the agents you are ...</message>
+        <tokens_up>1.8m</tokens_up>
+        <tokens_down>21.3k</tokens_down>
+        <api_cost>4.1298</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 10:24 AM</datetime>
+        <message>I am delegating a subtask as part of the broader goal to resolve failing tests in
+            the Venice AI client library, ensuring the reliability of the test suite after achieving
+            an overall coverage of 87%. This subtask focuses on re-running the tests for audio.py to
+            verify the fixes applied to address previous failures....</message>
+        <tokens_up>1.3m</tokens_up>
+        <tokens_down>11.0k</tokens_down>
+        <api_cost>4.0378</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 9, 2:50 PM</datetime>
+        <message>Improve the following code from file path tests/test_async_client.py:1-721
+            ...</message>
+        <tokens_up>4.5m</tokens_up>
+        <tokens_down>45.2k</tokens_down>
+        <api_cost>4.0148</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 5:47 PM</datetime>
+        <message>I'm delegating a task to improve test coverage for the Venice AI codebase,
+            specifically targeting the following files with lower coverage percentages as identified
+            in the recent test suite results:
+            ...</message>
+        <tokens_up>6.5m</tokens_up>
+        <tokens_down>58.1k</tokens_down>
+        <api_cost>3.8376</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 16, 12:37 AM</datetime>
+        <message>Please explore the swagger docs for our python package, and then write a report on
+            all of the different functionality.</message>
+        <tokens_up>1.2m</tokens_up>
+        <tokens_down>19.3k</tokens_down>
+        <api_cost>3.7409</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 22, 12:10 AM</datetime>
+        <message>Parent Task Context:
+            The overall project is to prepare the Venice AI Python client library for a 1.0
+            production release. We have just completed Phase 2 (Test Coverage Enhancement and
+            Reliability) and are now beginning Phase 4 ...</message>
+        <tokens_up>4.4m</tokens_up>
+        <tokens_down>62.3k</tokens_down>
+        <api_cost>3.5249</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 6:05 PM</datetime>
+        <message>PLEASE LOOK INTO THE FAILURES AND WARNINGS!
+            === warnings summary ...</message>
+        <tokens_up>1.1m</tokens_up>
+        <tokens_down>17.3k</tokens_down>
+        <api_cost>3.5241</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 5:45 AM</datetime>
+        <message>You are tasked with resolving specific test failures in the
+            TestAsyncVeniceClientEnhanced class, likely located in
+            tests/test_async_client_extended.py or a similar file, for the Venice AI package. The
+            parent task is to prepare the package for production launch....</message>
+        <tokens_up>5.1m</tokens_up>
+        <tokens_down>20.6k</tokens_down>
+        <api_cost>3.2523</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 20, 4:06 PM</datetime>
+        <message>Overall Goal:
+            Execute the project's complete automated test suite using the
+            (run_tests.sh)[run_tests.sh:1] script, ensuring code coverage is generated for
+            src/venice_ai, and report the results....</message>
+        <tokens_up>23.6m</tokens_up>
+        <tokens_down>66.0k</tokens_down>
+        <api_cost>3.1664</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 11:17 PM</datetime>
+        <message>## Project Report: Venice AI Python Package Documentation
+            This report summarizes the documentation efforts undertaken for the Venice AI Python
+            package, detailin...</message>
+        <tokens_up>3.4m</tokens_up>
+        <tokens_down>65.1k</tokens_down>
+        <api_cost>3.1013</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 5:18 AM</datetime>
+        <message>You are tasked with resolving specific multipart test failures in
+            tests/test_async_client_multipart.py for the Venice AI package. The parent task is to
+            prepare the package for production launch.
+            ...</message>
+        <tokens_up>1.6m</tokens_up>
+        <tokens_down>10.6k</tokens_down>
+        <api_cost>2.5106</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 8, 1:39 AM</datetime>
+        <message>Your task is to ensure that the E2E test file test_03_image.py (selected by input
+            "3" to run_tests.sh) runs successfully and all its tests pass. We have prior information
+            (from a truncated log) indicating failures in image upscaling tests within this file,
+            specifically a UnicodeDecodeError when trying to parse the A...</message>
+        <tokens_up>730.2k</tokens_up>
+        <tokens_down>20.2k</tokens_down>
+        <api_cost>2.4930</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 10, 11:22 PM</datetime>
+        <message>Let's update the run_tests.sh utility script so that it dynamically populates
+            arrays when possible for things like the filenames. Here it is in full:
+            ...</message>
+        <tokens_up>2.5m</tokens_up>
+        <tokens_down>36.5k</tokens_down>
+        <api_cost>2.4501</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 2:57 AM</datetime>
+        <message>You are tasked with resolving the sync client mocking and behavior issues
+            specifically in the test files tests/test_client_coverage_additional.py,
+            tests/test_client_coverage_improved.py, tests/test_client_extended.py,
+            tests/test_client_multipart.py, and tests/test_client.py for the Venic...</message>
+        <tokens_up>4.1m</tokens_up>
+        <tokens_down>21.7k</tokens_down>
+        <api_cost>2.3831</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 26, 12:49 AM</datetime>
+        <message>Project Context:
+            The main project is venice-ai, a Python client library for the Venice.ai API, located at
+            /Users/sethbangert/Code/cloud/venice-ai. The project uses Sphinx for API documentation
+            generation, ...</message>
+        <tokens_up>2.8m</tokens_up>
+        <tokens_down>29.4k</tokens_down>
+        <api_cost>2.1807</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 10, 10:36 PM</datetime>
+        <message>Below is a detailed report on the output of running out test suite (using the
+            run_tests.sh helper script that injects authentication and allows toggling of flags and
+            test or test group selection) so please review it and then address it's findings and
+            action plan!...</message>
+        <tokens_up>1.5m</tokens_up>
+        <tokens_down>35.6k</tokens_down>
+        <api_cost>2.1803</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 7, 4:01 AM</datetime>
+        <message>Let's craft a development plan for:
+            Plan to Achieve Full API Coverage...</message>
+        <tokens_up>1.0m</tokens_up>
+        <tokens_down>15.3k</tokens_down>
+        <api_cost>2.1614</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 12, 10:26 PM</datetime>
+        <message>Please take a moment to investigate the project's codebase and documentation.</message>
+        <tokens_up>1.8m</tokens_up>
+        <tokens_down>28.4k</tokens_down>
+        <api_cost>2.1145</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 10, 7:07 PM</datetime>
+        <message>Please use the browser tool to view the most recent coverage report (in htmlcov/)
+            for:
+            src/venice_ai/resources/embeddings.py 26 12 54%...</message>
+        <tokens_up>1.5m</tokens_up>
+        <tokens_down>13.9k</tokens_down>
+        <api_cost>2.1106</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 10, 2:31 AM</datetime>
+        <message>Subtask: Implement Test Coverage for src/venice_ai/resources/image.py
+            Objective: ...</message>
+        <tokens_up>1.9m</tokens_up>
+        <tokens_down>20.6k</tokens_down>
+        <api_cost>1.9885</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 10, 10:04 PM</datetime>
+        <message>## Detailed Coverage Report (Files lt 85%)
+            ---...</message>
+        <tokens_up>572.1k</tokens_up>
+        <tokens_down>16.2k</tokens_down>
+        <api_cost>1.9852</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 6:59 AM</datetime>
+        <message>You are tasked with resolving the remaining test failures in client-enhanced test
+            modules related to async operations and stream request handling in the Venice AI
+            package. The parent task is to prepare the package for production launch....</message>
+        <tokens_up>3.6m</tokens_up>
+        <tokens_down>19.2k</tokens_down>
+        <api_cost>1.9433</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 16, 3:20 PM</datetime>
+        <message>I am delegating a subtask to conduct thorough testing and validation of the updated
+            Streamlit demo application in app.py as part of a larger workflow to align with the
+            Venice.ai API specifications in dev-docs/swagger.yaml. This subtask focuses on ensuring
+            that all ...</message>
+        <tokens_up>1.7m</tokens_up>
+        <tokens_down>23.5k</tokens_down>
+        <api_cost>1.9061</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 7, 4:43 AM</datetime>
+        <message>Objective: Implement the /characters endpoint.
+            Context: ...</message>
+        <tokens_up>9.7m</tokens_up>
+        <tokens_down>52.9k</tokens_down>
+        <api_cost>1.8626</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 7, 3:20 PM</datetime>
+        <message>===== short test summary info
+            FAILED tests/test_utils.py::TestGetFilteredModels::test_filter_by_model_type -
+            TypeError: object list can...</message>
+        <tokens_up>2.4m</tokens_up>
+        <tokens_down>49.3k</tokens_down>
+        <api_cost>1.8601</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 9, 2:49 AM</datetime>
+        <message>I'm delegating the task of improving test coverage for the Venice AI project to
+            exceed 80%, ideally above 85%, for the following files with current coverage as per the
+            provided report:
+            ...</message>
+        <tokens_up>2.1m</tokens_up>
+        <tokens_down>30.3k</tokens_down>
+        <api_cost>1.8188</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 10, 9:03 PM</datetime>
+        <message>Your task is to improve test coverage for src/venice_ai/exceptions.py in the Venice
+            AI project, which currently has only 62% coverage (39 out of 63 statements covered).
+            This task is part of a larger effort to increase test coverage for files with less than
+            85% coverage....</message>
+        <tokens_up>1.4m</tokens_up>
+        <tokens_down>10.3k</tokens_down>
+        <api_cost>1.7831</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 9, 3:58 PM</datetime>
+        <message>We have some final tests to debug before we can release the project but, they must
+            be fully debugged and not just skipped or written off. These 4 xfailures, 1 skip, 5
+            warnings and 1 fail. Let's get to work when you are ready. If you feel like it would
+            help to poke around the codebase, please feel free to do; Hell, I ...</message>
+        <tokens_up>539.4k</tokens_up>
+        <tokens_down>5.6k</tokens_down>
+        <api_cost>1.7016</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 8, 7:48 PM</datetime>
+        <message>Your task is to ensure that the E2E test file test_08_characters.py (selected by
+            input "9" to run_tests.sh) runs successfully and all its tests pass. The initial
+            implementation for this test file was recently completed....</message>
+        <tokens_up>509.9k</tokens_up>
+        <tokens_down>8.5k</tokens_down>
+        <api_cost>1.6571</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 1:54 AM</datetime>
+        <message>You are tasked with resolving the image resource test failures specifically in the
+            test files tests/resources/test_image_async.py, tests/resources/test_image_sync.py,
+            tests/resources/test_image_enhanced.py, and tests/test_image.py for the Venice AI
+            package. This i...</message>
+        <tokens_up>3.2m</tokens_up>
+        <tokens_down>20.6k</tokens_down>
+        <api_cost>1.6360</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 9, 2:50 AM</datetime>
+        <message>Your first task is to get well acquainted with the code base and the documentation.
+            So please poke around for a bit and then report back.</message>
+        <tokens_up>506.3k</tokens_up>
+        <tokens_down>7.2k</tokens_down>
+        <api_cost>1.6269</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 17, 2:27 PM</datetime>
+        <message>Okay, I have closely reviewed the pytest_run_tests_output_20250517_091438.txt log.
+            Here is a detailed report with recommendations:...</message>
+        <tokens_up>1.5m</tokens_up>
+        <tokens_down>22.0k</tokens_down>
+        <api_cost>1.6205</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 7:31 AM</datetime>
+        <message>Please fix the test failures and errors based on the debugging analysis provided.
+            Context: The previous steps involved running the test suite for src/venice_ai and then
+            debugging the ...</message>
+        <tokens_up>3.9m</tokens_up>
+        <tokens_down>17.4k</tokens_down>
+        <api_cost>1.6065</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 7, 2:51 AM</datetime>
+        <message>I am delegating a subtask to analyze and resolve the test failures for the Venice
+            AI v1.0.0 release as part of a larger workflow to systematically complete release tasks
+            outlined in RELEASE_CHECKLIST.md.
+            ...</message>
+        <tokens_up>2.8m</tokens_up>
+        <tokens_down>19.8k</tokens_down>
+        <api_cost>1.5797</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 17, 10:26 PM</datetime>
+        <message>Subtask: Resolve Test Failures - Category 1: Image Upscale Mocking - Assertion
+            Mismatch
+            Objective: Investigate and resolve test failures related to "Image Upscale Mocking -
+            Assertion ...</message>
+        <tokens_up>1.0m</tokens_up>
+        <tokens_down>26.9k</tokens_down>
+        <api_cost>1.5002</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 12, 11:57 PM</datetime>
+        <message>Project: Venice AI Gradio Showcase - Advanced Prerequisite Debugging
+            Objective: Further investigate and provide a definitive solution for the persistent ...</message>
+        <tokens_up>1.9m</tokens_up>
+        <tokens_down>33.7k</tokens_down>
+        <api_cost>1.4635</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 16, 9:03 PM</datetime>
+        <message>## Test Execution Report: Venice AI SDK
+            Date of Test Run: (Assuming current date, as not specified in output)...</message>
+        <tokens_up>1.2m</tokens_up>
+        <tokens_down>15.8k</tokens_down>
+        <api_cost>1.3946</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 11:51 AM</datetime>
+        <message>I am delegating a subtask as part of the broader goal to ensure the reliability of
+            the test suite for the Venice AI client library after achieving an overall coverage of
+            87%. This subtask focuses on increasing test coverage for specific modules currently
+            below 80% coverage: src/venice_ai/_async_client.py (78%), ...</message>
+        <tokens_up>377.9k</tokens_up>
+        <tokens_down>14.7k</tokens_down>
+        <api_cost>1.3538</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 10, 6:38 PM</datetime>
+        <message>Subtask: Implement Test Coverage for src/venice_ai/exceptions.py
+            Objective: ...</message>
+        <tokens_up>397.8k</tokens_up>
+        <tokens_down>8.8k</tokens_down>
+        <api_cost>1.3255</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 17, 10:51 PM</datetime>
+        <message>Subtask: Correct Client JSON Decode Error Assertions (Category 5)
+            Objective: ...</message>
+        <tokens_up>1.1m</tokens_up>
+        <tokens_down>9.8k</tokens_down>
+        <api_cost>1.3013</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 6:28 AM</datetime>
+        <message>You are tasked with resolving specific image test failures related to missing httpx
+            imports and binary response issues in the Venice AI package. The parent task is to
+            prepare the package for production launch....</message>
+        <tokens_up>1.9m</tokens_up>
+        <tokens_down>6.9k</tokens_down>
+        <api_cost>1.2909</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 22, 12:30 AM</datetime>
+        <message>Parent Task Context:
+            The overall project is to prepare the Venice AI Python client library for a 1.0
+            production release. We are in Phase 4 (Documentation and Code Polish). Tasks 4.1 and 4.2
+            (Docstring updates and quality review) have ...</message>
+        <tokens_up>795.0k</tokens_up>
+        <tokens_down>4.1k</tokens_down>
+        <api_cost>1.2204</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 12, 8:22 PM</datetime>
+        <message>I am delegating the Implementation phase of a larger project to enhance the
+            documentation for the venice-ai Python package to production-ready standards for the
+            1.0.0 release. Below is the context and specific instructions for this subtask....</message>
+        <tokens_up>1.6m</tokens_up>
+        <tokens_down>19.1k</tokens_down>
+        <api_cost>1.1934</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 21, 10:52 PM</datetime>
+        <message>Parent Task Context:
+            The overall project is to prepare the Venice AI Python client library for a 1.0
+            production release. This sub-task is part of Phase 2: Test Coverage Enhancement and
+            Reliability. Specifically, it addresses **Sub-Task ...</message>
+        <tokens_up>434.7k</tokens_up>
+        <tokens_down>15.3k</tokens_down>
+        <api_cost>1.1875</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 10, 9:26 PM</datetime>
+        <message>Your task is to improve test coverage for src/venice_ai/utils.py in the Venice AI
+            project, which currently has 77% coverage (189 out of 246 statements covered). This task
+            is part of a larger effort to increase test coverage for files with less than 85%
+            coverage....</message>
+        <tokens_up>1.2m</tokens_up>
+        <tokens_down>10.6k</tokens_down>
+        <api_cost>1.1626</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 6:14 AM</datetime>
+        <message>You are tasked with fixing a critical SyntaxError in src/venice_ai/_async_client.py
+            that is preventing the test suite from running. The parent task is to prepare the
+            package for production launch.
+            ...</message>
+        <tokens_up>1.3m</tokens_up>
+        <tokens_down>9.0k</tokens_down>
+        <api_cost>1.1157</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 7, 9:05 AM</datetime>
+        <message>Currently, one of our e2e tests is logging an extremely long string represetation
+            of a png. You can see it on the tail end of the output, but I would like you to find the
+            cause for its printing and remove it because it is overwhelming the output....</message>
+        <tokens_up>766.6k</tokens_up>
+        <tokens_down>22.5k</tokens_down>
+        <api_cost>1.1131</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 23, 10:44 PM</datetime>
+        <message>Project: Venice AI Python Client - Chat Completions Streaming Fix
+            Objective: ...</message>
+        <tokens_up>2.4m</tokens_up>
+        <tokens_down>9.0k</tokens_down>
+        <api_cost>1.1067</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 24, 1:51 PM</datetime>
+        <message>Objective: Investigate and resolve 401/400 errors for tests targeting embeddings
+            and API key (especially web3) endpoints.
+            ...</message>
+        <tokens_up>2.5m</tokens_up>
+        <tokens_down>11.4k</tokens_down>
+        <api_cost>1.0748</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 10:42 AM</datetime>
+        <message>I am delegating a subtask as part of the broader goal to resolve failing tests in
+            the Venice AI client library, ensuring the reliability of the test suite after achieving
+            an overall coverage of 87%. This subtask focuses on debugging the failing tests related
+            to image.py ....</message>
+        <tokens_up>422.4k</tokens_up>
+        <tokens_down>26.1k</tokens_down>
+        <api_cost>1.0730</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 17, 4:26 AM</datetime>
+        <message>## Test Suite Run Report and Recommendations
+            Date of Review: 2024-07-28...</message>
+        <tokens_up>327.8k</tokens_up>
+        <tokens_down>5.8k</tokens_down>
+        <api_cost>1.0702</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 2:29 AM</datetime>
+        <message>You are tasked with resolving the utility function test failures specifically in
+            the test files tests/test_utils_enhanced.py and tests/test_exceptions_coverage.py for
+            the Venice AI package. This is a targeted subtask within the broader goal of preparing
+            the package for production launch by ...</message>
+        <tokens_up>2.1m</tokens_up>
+        <tokens_down>16.7k</tokens_down>
+        <api_cost>1.0697</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 4:34 AM</datetime>
+        <message>You are tasked with resolving the remaining asynchronous test failures and errors
+            in the Venice AI test suite. The parent task is to prepare the package for production
+            launch.
+            ...</message>
+        <tokens_up>2.4m</tokens_up>
+        <tokens_down>11.1k</tokens_down>
+        <api_cost>1.0586</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 12:07 AM</datetime>
+        <message>You are tasked with resolving the Voice enum/class issue in the Venice AI package,
+            which is causing multiple test failures in audio resource tests. The parent task is to
+            prepare the package for production launch by addressing test suite issues, as detailed
+            in a comprehensive report from a recent full test run ...</message>
+        <tokens_up>450.5k</tokens_up>
+        <tokens_down>3.4k</tokens_down>
+        <api_cost>1.0534</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 23, 10:49 PM</datetime>
+        <message>Project: Venice AI Python Client - Fix Unawaited Async Mock Coroutines in Tests
+            Objective: ...</message>
+        <tokens_up>2.6m</tokens_up>
+        <tokens_down>7.5k</tokens_down>
+        <api_cost>1.0510</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 27, 7:31 PM</datetime>
+        <message>Please conduct a thorough and holistic investigation into this project. You should
+            have a very detailed understanding of the functionality, the code base, the
+            documentation, the project structure, etc. Please take your time and be meticulous about
+            your investigation and your concluding report!</message>
+        <tokens_up>1.2m</tokens_up>
+        <tokens_down>11.0k</tokens_down>
+        <api_cost>1.0337</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 4:55 AM</datetime>
+        <message>You are tasked with running the full test suite for the Venice AI package to verify
+            that the latest asynchronous code fixes have been successful and to assess the status of
+            any remaining multipart test failures. The parent task is to prepare the package for
+            production launch....</message>
+        <tokens_up>631.7k</tokens_up>
+        <tokens_down>6.6k</tokens_down>
+        <api_cost>1.0181</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 15, 1:44 PM</datetime>
+        <message>Our streamlit app is not working as intended. After entering an api key, you get
+            these messages below the api key field:
+            ...</message>
+        <tokens_up>817.8k</tokens_up>
+        <tokens_down>12.1k</tokens_down>
+        <api_cost>1.0137</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 24, 11:48 PM</datetime>
+        <message>We need to systematically debug each of the remaining (unexpected) failures from
+            the test suite. We use the test runner script through poetry with flags, so please that
+            to check your work as you go but try to keep tests targeted (or atleast grouped) to
+            avoid excessive api costs testing passing tests. ...</message>
+        <tokens_up>512.7k</tokens_up>
+        <tokens_down>48.1k</tokens_down>
+        <api_cost>0.9966</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 20, 4:26 PM</datetime>
+        <message>Overall Goal:
+            Fix unit tests that fail with AttributeError: Mock object has no attribute 'method' or
+            AttributeError: Mock object has no attribute 'url'. These errors occur when the code
+            attempts to access ...</message>
+        <tokens_up>2.0m</tokens_up>
+        <tokens_down>14.0k</tokens_down>
+        <api_cost>0.9834</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 18, 4:42 AM</datetime>
+        <message>Please do a deep dive investigation in to the image generation functionality of our
+            python package!</message>
+        <tokens_up>564.2k</tokens_up>
+        <tokens_down>26.3k</tokens_down>
+        <api_cost>0.9773</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 7, 3:19 PM</datetime>
+        <message>Improve the following code from file path e2e_tests/test_03_image.py:1-418
+            ...</message>
+        <tokens_up>487.8k</tokens_up>
+        <tokens_down>25.6k</tokens_down>
+        <api_cost>0.9530</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 21, 8:55 PM</datetime>
+        <message>Project: Venice AI Python Client Library - Test Coverage Debugging
+            Your Role: You are an AI Coding Agent. Your sole and exclusive task is to execute a
+            specific test ...</message>
+        <tokens_up>554.6k</tokens_up>
+        <tokens_down>2.3k</tokens_down>
+        <api_cost>0.9444</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 7, 8:33 AM</datetime>
+        <message>Project Debugging Report and Handoff
+            1. Context Overview: ...</message>
+        <tokens_up>3.1m</tokens_up>
+        <tokens_down>13.1k</tokens_down>
+        <api_cost>0.9348</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 11:57 AM</datetime>
+        <message>I am delegating a subtask as part of the broader goal to ensure the reliability of
+            the test suite for the Venice AI client library after achieving an overall coverage of
+            91%. This subtask focuses on debugging the failing tests related to test_async_client.py
+            and test_client.py....</message>
+        <tokens_up>402.4k</tokens_up>
+        <tokens_down>15.3k</tokens_down>
+        <api_cost>0.8974</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 3:49 PM</datetime>
+        <message>Your task is to pore through the project code in this Python library and then
+            compare it against the Swagger document to verify that we have implemented every
+            endpoint with every appropriate parameter.</message>
+        <tokens_up>282.5k</tokens_up>
+        <tokens_down>3.2k</tokens_down>
+        <api_cost>0.8953</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 26, 1:01 AM</datetime>
+        <message>Project Context:
+            The main project is venice-ai, a Python client library for the Venice.ai API, located at
+            /Users/sethbangert/Code/cloud/venice-ai. We are in the process of improving code
+            documentation ...</message>
+        <tokens_up>969.4k</tokens_up>
+        <tokens_down>27.4k</tokens_down>
+        <api_cost>0.8894</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 9, 5:29 PM</datetime>
+        <message>Please explore the most recent html coverage report to get a line by line
+            evaluation of the coverage of some of our most poorly covered code. There is 4 that need
+            substantialy more coverage, so let's focus on those for now! Please use the browser tool
+            to VIEW, NOT READ, you should VIEW the report in the brows...</message>
+        <tokens_up>1.0m</tokens_up>
+        <tokens_down>22.1k</tokens_down>
+        <api_cost>0.8893</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 1:10 AM</datetime>
+        <message>You are tasked with resolving the remaining asynchronous client mocking issues
+            specifically in the test file tests/test_async_client_coverage_additional.py for the
+            Venice AI package. This is a targeted subtask within the broader goal of preparing the
+            package for production launch by addressing test suite issues, ...</message>
+        <tokens_up>1.0m</tokens_up>
+        <tokens_down>12.6k</tokens_down>
+        <api_cost>0.8402</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 2:09 AM</datetime>
+        <message>You are tasked with resolving the remaining audio resource test failures
+            specifically in the test files tests/resources/test_audio_async.py,
+            tests/resources/test_audio_sync.py, and tests/test_audio.py for the Venice AI package.
+            This is a targeted subtask within the broader goal of preparing the package fo...</message>
+        <tokens_up>1.2m</tokens_up>
+        <tokens_down>8.1k</tokens_down>
+        <api_cost>0.8194</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 10:37 AM</datetime>
+        <message>I am delegating a subtask as part of the broader goal to resolve failing tests in
+            the Venice AI client library, ensuring the reliability of the test suite after achieving
+            an overall coverage of 87%. This subtask focuses on debugging the failing tests related
+            to models.py ....</message>
+        <tokens_up>404.4k</tokens_up>
+        <tokens_down>13.5k</tokens_down>
+        <api_cost>0.7990</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 22, 5:03 PM</datetime>
+        <message>Project Context:
+            We are in the final stage of integrating .env file support and enabling real
+            cryptographic signing for Web3 API key E2E tests....</message>
+        <tokens_up>750.5k</tokens_up>
+        <tokens_down>48.6k</tokens_down>
+        <api_cost>0.7712</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 11:41 AM</datetime>
+        <message>I am delegating a subtask as part of the broader goal to resolve failing tests in
+            the Venice AI client library, ensuring the reliability of the test suite after achieving
+            an overall coverage of 87%. This subtask focuses on debugging the failing tests related
+            to embeddings.py ....</message>
+        <tokens_up>447.8k</tokens_up>
+        <tokens_down>11.8k</tokens_down>
+        <api_cost>0.7643</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 24, 1:42 PM</datetime>
+        <message>Objective: Resolve remaining AttributeError failures related to httpx exception
+            objects lacking a response attribute during error translation, particularly in
+            _translate_httpx_error_to_api_error.
+            ...</message>
+        <tokens_up>861.5k</tokens_up>
+        <tokens_down>7.6k</tokens_down>
+        <api_cost>0.7593</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 23, 10:14 PM</datetime>
+        <message>Project: Venice AI Python Client - Robust Error Translation
+            Objective: ...</message>
+        <tokens_up>665.1k</tokens_up>
+        <tokens_down>7.8k</tokens_down>
+        <api_cost>0.7557</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 5:51 PM</datetime>
+        <message>Please do a deep dive investigation in to the codebase and then report back!</message>
+        <tokens_up>203.5k</tokens_up>
+        <tokens_down>8.5k</tokens_down>
+        <api_cost>0.7374</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 7, 2:55 AM</datetime>
+        <message>Please get well acquainted with the codebase and report back!</message>
+        <tokens_up>254.3k</tokens_up>
+        <tokens_down>8.9k</tokens_down>
+        <api_cost>0.7364</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 26, 4:52 PM</datetime>
+        <message>== FAILURES ========================================
+            test_upscale_image_from_file_sync _________
+            ...</message>
+        <tokens_up>445.8k</tokens_up>
+        <tokens_down>33.8k</tokens_down>
+        <api_cost>0.7174</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 20, 5:23 PM</datetime>
+        <message>Overall Goal:
+            Resolve logging-related assertion failures identified in Group 6 of the test report.
+            ...</message>
+        <tokens_up>1.4m</tokens_up>
+        <tokens_down>7.6k</tokens_down>
+        <api_cost>0.7025</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 26, 1:19 AM</datetime>
+        <message>Project Context:
+            The main project is venice-ai, a Python client library for the Venice.ai API, located at
+            /Users/sethbangert/Code/cloud/venice-ai. We are in the process of improving code
+            documentation ...</message>
+        <tokens_up>842.1k</tokens_up>
+        <tokens_down>21.6k</tokens_down>
+        <api_cost>0.7018</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 21, 8:29 PM</datetime>
+        <message>Project: Venice AI Python Client Library - Test Coverage Debugging
+            Your Role: You are an AI Coding Agent. Your task is to execute a test script, capture
+            its output, and ...</message>
+        <tokens_up>440.8k</tokens_up>
+        <tokens_down>3.1k</tokens_down>
+        <api_cost>0.6973</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 8, 3:02 AM</datetime>
+        <message>Your task is to ensure that the E2E test file test_06_audio.py (selected by input
+            "7" to run_tests.sh) runs successfully and all its tests pass. The initial
+            implementation for this test file was recently completed.
+            ...</message>
+        <tokens_up>207.3k</tokens_up>
+        <tokens_down>3.8k</tokens_down>
+        <api_cost>0.6788</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 8, 12:56 AM</datetime>
+        <message>Please investigate the results of the test_03 run:
+            =============================== test session starts ===============================...</message>
+        <tokens_up>210.3k</tokens_up>
+        <tokens_down>8.4k</tokens_down>
+        <api_cost>0.6771</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 21, 6:32 PM</datetime>
+        <message>Project: Venice AI Python Client Library - Test Coverage Debugging
+            Your Role: You are an AI Coding Agent. Your task is to execute a specific shell command
+            and report i...</message>
+        <tokens_up>60.9k</tokens_up>
+        <tokens_down>35.1k</tokens_down>
+        <api_cost>0.6650</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 24, 11:41 AM</datetime>
+        <message>Objective: Review all 68 XPassing tests (tests marked @pytest.mark.xfail that are
+            currently passing) and remove the xfail marker if the underlying functionality is
+            confirmed to be working correctly.
+            ...</message>
+        <tokens_up>1.0m</tokens_up>
+        <tokens_down>12.0k</tokens_down>
+        <api_cost>0.6645</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 21, 8:33 PM</datetime>
+        <message>Project: Venice AI Python Client Library - Test Coverage Debugging
+            Your Role: You are an AI Coding Agent. Your task is to execute a test script and
+            meticulously report it...</message>
+        <tokens_up>395.8k</tokens_up>
+        <tokens_down>2.5k</tokens_down>
+        <api_cost>0.6603</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 20, 9:56 PM</datetime>
+        <message>Project Context:
+            This task is part of the v1.0.0 release preparation for the venice-ai Python client
+            library. The objective is to significantly improve unit test coverage for the chat
+            completions module, specifically ...</message>
+        <tokens_up>944.0k</tokens_up>
+        <tokens_down>10.2k</tokens_down>
+        <api_cost>0.6575</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 21, 6:47 PM</datetime>
+        <message>Project: Venice AI Python Client Library - Test Coverage Debugging
+            Your Role: You are an AI Coding Agent. Your task is to read a specific file and provide
+            its content. Yo...</message>
+        <tokens_up>61.7k</tokens_up>
+        <tokens_down>34.2k</tokens_down>
+        <api_cost>0.6554</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 21, 7:32 PM</datetime>
+        <message>Project: Venice AI Python Client Library - Test Coverage Debugging
+            Your Role: You are an AI Coding Agent. Your task is to read a specific file and provide
+            its content. Yo...</message>
+        <tokens_up>61.6k</tokens_up>
+        <tokens_down>34.2k</tokens_down>
+        <api_cost>0.6547</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 21, 7:58 PM</datetime>
+        <message>Project: Venice AI Python Client Library - Test Coverage Debugging
+            Your Role: You are an AI Coding Agent. Your task is to read a specific file and provide
+            its content. Yo...</message>
+        <tokens_up>61.5k</tokens_up>
+        <tokens_down>34.0k</tokens_down>
+        <api_cost>0.6518</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 24, 11:20 AM</datetime>
+        <message>Objective: Resolve 30 AttributeError failures in
+            TestAsyncTranslateHttpxErrorToApiErrorComprehensive and
+            TestTranslateHttpxErrorToApiErrorComprehensive by ensuring custom API error objects
+            correctly stor...</message>
+        <tokens_up>456.3k</tokens_up>
+        <tokens_down>6.5k</tokens_down>
+        <api_cost>0.6467</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 20, 11:40 PM</datetime>
+        <message>Task Objective:
+            Execute a sequence of coverage and pytest commands with new debug settings in
+            pyproject.toml to get verbose trace output from coverage.py. Report the full terminal
+            output for each command....</message>
+        <tokens_up>161.6k</tokens_up>
+        <tokens_down>32.4k</tokens_down>
+        <api_cost>0.6465</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 23, 10:53 PM</datetime>
+        <message>Project: Venice AI Python Client - Multipart Request Non-JSON Error Handling
+            Objective: ...</message>
+        <tokens_up>1.2m</tokens_up>
+        <tokens_down>6.1k</tokens_down>
+        <api_cost>0.6186</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 26, 1:50 AM</datetime>
+        <message>Project Context:
+            The main project is venice-ai, a Python client library. Recent changes, including
+            extensive docstring updates, have been made. A full test suite run (poetry run python
+            test_runner.py --group all --coverage...</message>
+        <tokens_up>1.4m</tokens_up>
+        <tokens_down>5.8k</tokens_down>
+        <api_cost>0.6119</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 10, 8:27 PM</datetime>
+        <message>Your task is to improve test coverage specifically for the _request_multipartmethod
+            in bothsrc/venice_ai/_client.pyandsrc/venice_ai/_async_client.pyof the Venice AI
+            project. This method is currently untested (0% coverage) as identified in a detailed
+            coverage report, and addressing this gap is ...</message>
+        <tokens_up>678.5k</tokens_up>
+        <tokens_down>11.1k</tokens_down>
+        <api_cost>0.5930</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 12:58 AM</datetime>
+        <message>You are tasked with finalizing the resolution of asynchronous client mocking issues
+            in the Venice AI package, which are causing test failures and runtime warnings in async
+            client tests. This is a follow-up to previous subtasks that have made significant
+            progress, and the parent task is to prepare the package for...</message>
+        <tokens_up>406.1k</tokens_up>
+        <tokens_down>752</tokens_down>
+        <api_cost>0.5911</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 20, 6:16 PM</datetime>
+        <message>**Overall Goal:** Conclusively resolve theRuntimeError: The _request property has
+            not been set.failures by ensuring that *no* code path directly accesses_e.requeston
+            anhttpx.TimeoutExceptionorhttpx.RequestError...</message>
+        <tokens_up>939.2k</tokens_up>
+        <tokens_down>9.0k</tokens_down>
+        <api_cost>0.5840</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 18, 12:21 AM</datetime>
+        <message>**Subtask: Modify Mock_requestSignatures intests/resources/test_image.py**
+            **Objective:** ...</message>
+        <tokens_up>291.8k</tokens_up>
+        <tokens_down>27.3k</tokens_down>
+        <api_cost>0.5745</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 21, 11:29 PM</datetime>
+        <message>**Parent Task Context:** The overall project is to prepare the Venice AI Python
+            client library for a 1.0 production release. This sub-task is part of Phase 2: Test
+            Coverage Enhancement andamp; Reliability. We are systematically improving test ...</message>
+        <tokens_up>522.7k</tokens_up>
+        <tokens_down>14.0k</tokens_down>
+        <api_cost>0.5718</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 11, 1:40 AM</datetime>
+        <message>You are tasked with resolving the API key resource test failures specifically in
+            the test files
+            tests/resources/test_api_keys_async.pyandtests/resources/test_api_keys_sync.pyfor the
+            Venice AI package. This is a targeted subtask within the broader goal of preparing the
+            package for production ...</message>
+        <tokens_up>642.5k</tokens_up>
+        <tokens_down>8.1k</tokens_down>
+        <api_cost>0.5610</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 8, 7:53 PM</datetime>
+        <message>Your task is to ensure that the E2E test filetest_09_client_config.py(selected by
+            input "10" torun_tests.sh) runs successfully and all its tests pass. The initial
+            implementation for this test file was recently completed....</message>
+        <tokens_up>166.6k</tokens_up>
+        <tokens_down>4.1k</tokens_down>
+        <api_cost>0.5608</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 24, 6:15 PM</datetime>
+        <message>**Objective:** Definitively resolve test failures where MissingStreamClassErroris
+            not raised (or other errors occur) whenstream=Truebutstream_clsisNonein chat completion
+            methods. ...</message>
+        <tokens_up>581.3k</tokens_up>
+        <tokens_down>4.0k</tokens_down>
+        <api_cost>0.5556</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 24, 11:54 AM</datetime>
+        <message>**Objective:** Investigate and resolveUserWarnings related to tiktokenthat occur
+            during token estimation inTestEstimateTokenCounttests, aiming to ensuretiktokenis used
+            correctly and reliably. ...</message>
+        <tokens_up>664.3k</tokens_up>
+        <tokens_down>5.8k</tokens_down>
+        <api_cost>0.5393</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 6:05 AM</datetime>
+        <message>**Objective:** Implement comprehensive tests for the synchronous and asynchronous
+            chat completion functionality usingpytestandpytest-httpx. ...</message>
+        <tokens_up>820.6k</tokens_up>
+        <tokens_down>12.4k</tokens_down>
+        <api_cost>0.5370</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 13, 12:43 AM</datetime>
+        <message>**Project:** Venice AI Gradio Showcase Application **Objective:** Implement the
+            "Image" tab within the existing app.pyGradio application....</message>
+        <tokens_up>501.3k</tokens_up>
+        <tokens_down>13.1k</tokens_down>
+        <api_cost>0.5265</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 7, 4:51 AM</datetime>
+        <message>Please investigate holistically: poetry run pytest --cov=src/venice_ai...</message>
+        <tokens_up>162.9k</tokens_up>
+        <tokens_down>2.3k</tokens_down>
+        <api_cost>0.5234</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 12, 7:58 PM</datetime>
+        <message>Please conduct a holistic and thorough investigation in to this python package.</message>
+        <tokens_up>478.2k</tokens_up>
+        <tokens_down>12.6k</tokens_down>
+        <api_cost>0.5226</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 21, 10:59 PM</datetime>
+        <message>**Parent Task Context:** The overall project is to prepare the Venice AI Python
+            client library for a 1.0 production release. This sub-task is part of Phase 2: Test
+            Coverage Enhancement andamp; Reliability. We have just completed adding tests f...</message>
+        <tokens_up>836.8k</tokens_up>
+        <tokens_down>10.3k</tokens_down>
+        <api_cost>0.5161</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 13, 2:13 AM</datetime>
+        <message>**Project:** Venice AI Gradio Showcase Application **Objective:** Perform a final
+            review and apply refinements to theapp.pyGradio application....</message>
+        <tokens_up>240.2k</tokens_up>
+        <tokens_down>22.0k</tokens_down>
+        <api_cost>0.5154</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 23, 8:47 PM</datetime>
+        <message>**Project:** Venice AI Python Client Chat Resource and Completions Bug Fixes
+            **Objective:** ...</message>
+        <tokens_up>918.0k</tokens_up>
+        <tokens_down>9.3k</tokens_down>
+        <api_cost>0.5153</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 10, 9:31 PM</datetime>
+        <message>Your task is to improve test coverage forsrc/venice_ai/_client.py(currently at 66%
+            coverage, 122 out of 184 statements covered) andsrc/venice_ai/_async_client.py(currently
+            at 67% coverage, 139 out of 206 statements covered) in the Venice AI project. This task
+            is part of a larger effort to increase test coverage...</message>
+        <tokens_up>556.7k</tokens_up>
+        <tokens_down>8.5k</tokens_down>
+        <api_cost>0.5112</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 21, 11:45 PM</datetime>
+        <message>**Parent Task Context:** The overall project is to prepare the Venice AI Python
+            client library for a 1.0 production release. We are in Phase 2: Test Coverage
+            Enhancement andamp; Reliability. We have just completed extensive unit test coverage ...</message>
+        <tokens_up>446.4k</tokens_up>
+        <tokens_down>17.0k</tokens_down>
+        <api_cost>0.5100</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 23, 8:39 PM</datetime>
+        <message>**Project:** Venice AI Python Client Test Suite Error Handling Enhancement
+            **Objective:** ...</message>
+        <tokens_up>876.2k</tokens_up>
+        <tokens_down>5.2k</tokens_down>
+        <api_cost>0.5060</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 7, 3:36 AM</datetime>
+        <message>I am delegating a task to verify the implementation status of each Venice API
+            endpoint as listed in the provided checklist. This task is part of a broader effort to
+            ensure comprehensive coverage of the Venice API in our project located
+            at/Users/sethbangert/Code/cloud/venice-ai`. Below is the context and detaile...</message>
+        <tokens_up>563.0k</tokens_up>
+        <tokens_down>11.5k</tokens_down>
+        <api_cost>0.5053</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 7, 3:14 AM</datetime>
+        <message>Please review the Venice API docs and create a checklist of all of the different
+            API endpoints and any related information necessary for development purposes!
+            ...</message>
+        <tokens_up>435.9k</tokens_up>
+        <tokens_down>16.4k</tokens_down>
+        <api_cost>0.5046</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 23, 9:55 PM</datetime>
+        <message>Project: Venice AI Python Client Image Upscaling Bug Fix (Re-attempt)
+            Objective: ...</message>
+        <tokens_up>374.8k</tokens_up>
+        <tokens_down>4.3k</tokens_down>
+        <api_cost>0.5032</api_cost>
+    </entry>
+    <entry>
+        <datetime>MAY 5, 9:28 AM</datetime>
+        <message>I am delegating a subtask as part of the broader goal to increase test coverage for
+            the Venice AI client library from 67% to above 80%. This subtask focuses on verifying
+            the underlying client methods necessary for the resource classes to function correctly
+            during testing....</message>
+        <tokens_up>386.8k</tokens_up>
+        <tokens_down>5.2k</tokens_down>
+        <api_cost>0.4991</api_cost>
+    </entry>
+</log_entries>
