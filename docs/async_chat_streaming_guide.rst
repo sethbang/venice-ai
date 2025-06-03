@@ -79,6 +79,7 @@ The following example shows how to send a prompt and stream the response:
 
    if __name__ == "__main__":
        asyncio.run(main())
+
 Explanation
 -----------
 
