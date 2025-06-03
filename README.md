@@ -75,7 +75,7 @@ pip install venice-ai
 Alternatively, to install the latest development version from source (recommended if you want to contribute or need the absolute latest changes not yet released on PyPI):
 
 ```bash
-git clone https://github.com/venice-ai/venice-ai-python.git # Or your fork
+git clone https://github.com/sethbang/venice-ai.git # Or your fork
 cd venice-ai-python
 poetry install
 ```

@@ -5,18 +5,13 @@ from venice_ai import VeniceClient, AsyncVeniceClient
 from venice_ai.exceptions import VeniceError, InvalidRequestError
 from venice_ai.types.chat import ChatCompletionChunk, MessageParam, Tool, FunctionDefinition
 
-# Define a default chat model for testing.
-# This should ideally be configurable or fetched dynamically as per the plan (Section 7.1.1).
-# For now, using a placeholder. Replace with a known working model ID.
-DEFAULT_CHAT_MODEL = "llama-3.2-3b" # Using a model that supports tool calls
-
 # Functional Tests for Chat Completions API
 
-def test_create_completion_non_streaming_sync(venice_client: VeniceClient):
+def test_create_completion_non_streaming_sync(venice_client: VeniceClient, default_chat_model_id: str):
     """Tests synchronous basic chat completion."""
     messages: List[MessageParam] = [{"role": "user", "content": "Hello, how are you?"}]
     response = venice_client.chat.completions.create(
-        model=DEFAULT_CHAT_MODEL,
+        model=default_chat_model_id,
         messages=messages
     )
     assert isinstance(response, dict)
@@ -28,11 +23,11 @@ def test_create_completion_non_streaming_sync(venice_client: VeniceClient):
     assert isinstance(response["choices"][0]["message"]["content"], str)
 
 @pytest.mark.asyncio
-async def test_create_completion_non_streaming_async(async_venice_client: AsyncVeniceClient):
+async def test_create_completion_non_streaming_async(async_venice_client: AsyncVeniceClient, default_chat_model_id: str):
     """Tests asynchronous basic chat completion."""
     messages: List[MessageParam] = [{"role": "user", "content": "Hello, how are you?"}]
     response = await async_venice_client.chat.completions.create(
-        model=DEFAULT_CHAT_MODEL,
+        model=default_chat_model_id,
         messages=messages
     )
     assert isinstance(response, dict)
@@ -43,11 +38,11 @@ async def test_create_completion_non_streaming_async(async_venice_client: AsyncV
     assert "content" in response["choices"][0]["message"]
     assert isinstance(response["choices"][0]["message"]["content"], str)
 
-def test_create_completion_streaming_sync(venice_client: VeniceClient):
+def test_create_completion_streaming_sync(venice_client: VeniceClient, default_chat_model_id: str):
     """Tests synchronous streaming chat completion."""
     messages: List[MessageParam] = [{"role": "user", "content": "Tell me a short story."}]
     stream = venice_client.chat.completions.create(
-        model=DEFAULT_CHAT_MODEL,
+        model=default_chat_model_id,
         messages=messages,
         stream=True
     )
@@ -78,11 +73,11 @@ def test_create_completion_streaming_sync(venice_client: VeniceClient):
     assert content_chunks > 0, "No content chunks received in stream"
 
 @pytest.mark.asyncio
-async def test_create_completion_streaming_async(async_venice_client: AsyncVeniceClient):
+async def test_create_completion_streaming_async(async_venice_client: AsyncVeniceClient, default_chat_model_id: str):
     """Tests asynchronous streaming chat completion."""
     messages: List[MessageParam] = [{"role": "user", "content": "Tell me a short story."}]
     stream = await async_venice_client.chat.completions.create(
-        model=DEFAULT_CHAT_MODEL,
+        model=default_chat_model_id,
         messages=messages,
         stream=True
     )
@@ -115,7 +110,7 @@ async def test_create_completion_streaming_async(async_venice_client: AsyncVenic
     assert content_chunks > 0, "No content chunks received in stream"
 
 
-def test_create_completion_with_tool_calls_sync(venice_client: VeniceClient):
+def test_create_completion_with_tool_calls_sync(venice_client: VeniceClient, default_chat_model_id: str):
     """Tests synchronous chat completion with tool call request."""
     # Define a simple mock tool
     tools: List[Tool] = [
@@ -149,15 +144,15 @@ def test_create_completion_with_tool_calls_sync(venice_client: VeniceClient):
             capabilities = model_info.get("model_spec", {}).get("capabilities", {})
             supports_tool_calls = capabilities.get("supportsFunctionCalling", False)
             print(f"  Model: {model_id}, Supports Tool Calls: {supports_tool_calls}")
-            if model_id == DEFAULT_CHAT_MODEL:
-                 print(f"  {DEFAULT_CHAT_MODEL} supports tool calls: {supports_tool_calls}")
-                 print(f"  {DEFAULT_CHAT_MODEL} capabilities: {capabilities}") # Added logging for full capabilities
+            if model_id == default_chat_model_id:
+                 print(f"  {default_chat_model_id} supports tool calls: {supports_tool_calls}")
+                 print(f"  {default_chat_model_id} capabilities: {capabilities}") # Added logging for full capabilities
     except Exception as e:
         print(f"Error listing models (sync): {e}")
     print(f"--- End Debugging ---")
 
     response = venice_client.chat.completions.create(
-        model=DEFAULT_CHAT_MODEL, # Ensure this model supports tool calls
+        model=default_chat_model_id, # Ensure this model supports tool calls
         messages=messages,
         tools=tools,
         tool_choice="auto"
@@ -179,7 +174,7 @@ def test_create_completion_with_tool_calls_sync(venice_client: VeniceClient):
     assert isinstance(tool_call["function"]["arguments"], str) # Arguments are typically a JSON string
 
 @pytest.mark.asyncio
-async def test_create_completion_with_tool_calls_async(async_venice_client: AsyncVeniceClient):
+async def test_create_completion_with_tool_calls_async(async_venice_client: AsyncVeniceClient, default_chat_model_id: str):
     """Tests asynchronous chat completion with tool call request."""
     # Define a simple mock tool
     tools: List[Tool] = [
@@ -213,15 +208,15 @@ async def test_create_completion_with_tool_calls_async(async_venice_client: Asyn
             capabilities = model_info.get("model_spec", {}).get("capabilities", {})
             supports_tool_calls = capabilities.get("supportsFunctionCalling", False)
             print(f"  Model: {model_id}, Supports Tool Calls: {supports_tool_calls}")
-            if model_id == DEFAULT_CHAT_MODEL:
-                 print(f"  {DEFAULT_CHAT_MODEL} supports tool calls: {supports_tool_calls}")
-                 print(f"  {DEFAULT_CHAT_MODEL} capabilities: {capabilities}") # Added logging for full capabilities
+            if model_id == default_chat_model_id:
+                 print(f"  {default_chat_model_id} supports tool calls: {supports_tool_calls}")
+                 print(f"  {default_chat_model_id} capabilities: {capabilities}") # Added logging for full capabilities
     except Exception as e:
         print(f"Error listing models (async): {e}")
     print(f"--- End Debugging ---")
 
     response = await async_venice_client.chat.completions.create(
-        model=DEFAULT_CHAT_MODEL, # Ensure this model supports tool calls
+        model=default_chat_model_id, # Ensure this model supports tool calls
         messages=messages,
         tools=tools,
         tool_choice="auto"
@@ -243,11 +238,11 @@ async def test_create_completion_with_tool_calls_async(async_venice_client: Asyn
     assert isinstance(tool_call["function"]["arguments"], str) # Arguments are typically a JSON string
 
 
-def test_create_completion_with_various_params_sync(venice_client: VeniceClient):
+def test_create_completion_with_various_params_sync(venice_client: VeniceClient, default_chat_model_id: str):
     """Tests synchronous chat completion with various parameters."""
     messages: List[MessageParam] = [{"role": "user", "content": "Write a short poem about nature."}]
     response = venice_client.chat.completions.create(
-        model=DEFAULT_CHAT_MODEL,
+        model=default_chat_model_id,
         messages=messages,
         temperature=0.7,
         max_completion_tokens=50,
@@ -261,11 +256,11 @@ def test_create_completion_with_various_params_sync(venice_client: VeniceClient)
     # Add assertions to check if parameters influenced the response as expected (qualitative or quantitative checks)
 
 @pytest.mark.asyncio
-async def test_create_completion_with_various_params_async(async_venice_client: AsyncVeniceClient):
+async def test_create_completion_with_various_params_async(async_venice_client: AsyncVeniceClient, default_chat_model_id: str):
     """Tests asynchronous chat completion with various parameters."""
     messages: List[MessageParam] = [{"role": "user", "content": "Write a short poem about the sea."}]
     response = await async_venice_client.chat.completions.create(
-        model=DEFAULT_CHAT_MODEL,
+        model=default_chat_model_id,
         messages=messages,
         temperature=0.5,
         max_completion_tokens=75,

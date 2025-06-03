@@ -24,8 +24,61 @@ Example: Streaming a Chat Response
 
 The following example shows how to send a prompt and stream the response:
 
-.. TODO: Add or link async_chat_stream.py example here.
+.. code-block:: python
+   :linenos:
 
+   import os
+   import asyncio
+   from venice_ai import AsyncVeniceClient, APIError
+
+   async def main():
+       """Demonstrates asynchronous chat streaming with Venice AI."""
+       try:
+           # Ensure VENICE_API_KEY is set in your environment
+           if not os.getenv("VENICE_API_KEY"):
+               print("Error: VENICE_API_KEY environment variable not set.")
+               return
+
+           async with AsyncVeniceClient() as client:
+               print("Streaming chat response from Venice AI...")
+               print("---")
+               
+               prompt_messages = [
+                   {"role": "user", "content": "Tell me a short story about a brave knight and a friendly dragon."}
+               ]
+               
+               # Using a common model, replace if needed
+               model_id = "llama-3.2-3b"
+
+               stream = await client.chat.completions.create(
+                   model=model_id,
+                   messages=prompt_messages,
+                   stream=True,
+                   max_completion_tokens=150 # Optional: limit response length
+               )
+               
+               full_response = []
+               async for chunk in stream:
+                   # Ensure 'choices' and 'delta' are present and valid
+                   if chunk.choices and len(chunk.choices) > 0:
+                       delta = chunk.choices[0].delta
+                       if delta and delta.content:
+                           content_delta = delta.content
+                           print(content_delta, end="", flush=True)
+                           full_response.append(content_delta)
+               
+               print("\n---\nStream finished.")
+               # print(f"Full assembled response: {''.join(full_response)}")
+
+       except APIError as e:
+           print(f"\nAn API Error occurred: {e.status_code} - {e.message}")
+           if e.body:
+               print(f"Error details: {e.body}")
+       except Exception as e:
+           print(f"\nAn unexpected error occurred: {e}")
+
+   if __name__ == "__main__":
+       asyncio.run(main())
 Explanation
 -----------
 

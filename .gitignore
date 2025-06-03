@@ -152,3 +152,4 @@ e2e_tests/output/
 examples/factcheck-bench/factm-answers.json
 examples/factcheck-bench/factm.json
 api.xml
+local/

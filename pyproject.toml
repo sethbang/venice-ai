@@ -38,8 +38,8 @@ beautifulsoup4 = "^4.13.4"
 pytest-asyncio = "^1.0.0"
 
 [tool.poetry.urls]
-Homepage = "https://github.com/venice-ai/venice-ai-python"
-Repository = "https://github.com/venice-ai/venice-ai-python"
+Homepage = "https://github.com/sethbang/venice-ai"
+Repository = "https://github.com/sethbang/venice-ai"
 Documentation = "https://venice-ai.readthedocs.io/"
 
 [tool.poetry.group.dev.dependencies]

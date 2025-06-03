@@ -39,7 +39,7 @@ html_theme = 'furo'
 if not AI_FRIENDLY_BUILD:
     intersphinx_mapping = {
         'python': ('https://docs.python.org/3', None),
-        # 'httpx': ('https://www.encode.net/', None), # TODO: Find correct objects.inv URL for httpx
+        'httpx': ('https://www.python-httpx.org/', 'https://www.python-httpx.org/objects.inv'),
     }
 else:
     intersphinx_mapping = {} # Or remove this block entirely if AI_FRIENDLY_BUILD is true
