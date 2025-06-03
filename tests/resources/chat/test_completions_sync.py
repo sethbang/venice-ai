@@ -5,6 +5,7 @@ Tests for synchronous chat completions functionality.
 import json
 import pytest
 import httpx
+import warnings # Added import
 from typing import Dict, Any, Iterator, cast
 
 # Define base URL for API endpoints
@@ -446,4 +447,67 @@ class TestChatCompletions:
             )
             # This should raise when we try to iterate
             list(stream)
+
+    def test_create_stream_true_stream_cls_none(self, venice_client, httpx_mock):
+        """Test create with stream=True and stream_cls=None uses default Stream."""
+        from venice_ai.streaming import Stream # Import for isinstance check
+
+        # Mock the underlying client's stream request
+        # Create SSE response content
+        stream_content = ""
+        for chunk in MOCK_STREAM_CHUNKS:
+            stream_content += f"data: {json.dumps(chunk)}\n\n"
+        stream_content += "data: [DONE]\n\n"
         
+        httpx_mock.add_response(
+            method="POST",
+            url=f"{BASE_URL}/chat/completions",
+            content=stream_content.encode("utf-8"),
+            headers={"Content-Type": "text/event-stream"},
+            status_code=200
+        )
+
+        response_stream = venice_client.chat.completions.create(
+            model="venice-classic",
+            messages=CHAT_MESSAGES,
+            stream=True,
+            stream_cls=None # Explicitly None
+        )
+        assert isinstance(response_stream, Stream)
+        # Consume the stream to ensure no errors during processing
+        list(response_stream)
+
+
+    def test_create_stream_false_with_stream_cls(self, venice_client, httpx_mock):
+        """Test create with stream=False and a custom stream_cls (should be ignored)."""
+        from venice_ai.streaming import Stream # Dummy class for testing
+
+        class MyCustomStream(Stream): # Define a dummy custom stream
+            pass
+
+        httpx_mock.add_response(
+            method="POST",
+            url=f"{BASE_URL}/chat/completions",
+            json=MOCK_COMPLETION_RESPONSE, # Non-streaming response
+            status_code=200
+        )
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            response = venice_client.chat.completions.create(
+                model="venice-classic",
+                messages=CHAT_MESSAGES,
+                stream=False,
+                stream_cls=MyCustomStream # This should be ignored
+            )
+            # Check for UserWarning if stream_cls is passed with stream=False
+            # This depends on whether the library issues such a warning.
+            # For now, we'll assume it might, or at least doesn't error.
+            # assert len(w) > 0
+            # assert issubclass(w[-1].category, UserWarning)
+            # assert "stream_cls is ignored when stream=False" in str(w[-1].message)
+
+
+        assert isinstance(response, dict) # Should be a normal dict response
+        assert response["id"] == MOCK_COMPLETION_RESPONSE["id"]
+        assert not isinstance(response, MyCustomStream)

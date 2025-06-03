@@ -8,6 +8,7 @@ from venice_ai.types.chat import MessageParam # Import MessageParam
 
 from venice_ai._async_client import AsyncVeniceClient, AsyncChatResource, AsyncChatCompletions
 from venice_ai.exceptions import VeniceError, InvalidRequestError, AuthenticationError, PermissionDeniedError, NotFoundError, RateLimitError
+from venice_ai import _constants
 
 # Helper async iterator with better typing for testing streaming responses
 async def mock_async_iterator(items: List[Any]) -> AsyncIterator[Any]:
@@ -119,6 +120,21 @@ class TestAsyncVeniceClient:
             assert client._timeout.read == 30.0
             assert client._max_retries == 5
             MockAsyncHTTPXClientClass.assert_called_once()
+            
+    @pytest.mark.asyncio
+    async def test_initialization_default_timeout(self):
+        """Test client initialization uses default timeout when timeout is None."""
+        original_httpx_async_client = httpx.AsyncClient
+        with patch('httpx.AsyncClient', new_callable=MagicMock) as MockAsyncHTTPXClientClass:
+            mock_httpx_client_instance = AsyncMock(spec=original_httpx_async_client)
+            MockAsyncHTTPXClientClass.return_value = mock_httpx_client_instance
+            mock_httpx_client_instance.headers = MagicMock(spec=httpx.Headers)
+            mock_httpx_client_instance.aclose = AsyncMock()
+            
+            client = AsyncVeniceClient(api_key="test-api-key", timeout=None)
+            assert isinstance(client._timeout, httpx.Timeout)
+            assert client._timeout.read == _constants.DEFAULT_TIMEOUT.read
+            MockAsyncHTTPXClientClass.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_request_basic_get(self, api_key: str, mock_response: MagicMock):
@@ -213,6 +229,33 @@ class TestAsyncVeniceClient:
                 params=None,
                 timeout=client._timeout
             )
+
+    @pytest.mark.asyncio
+    async def test_request_raw_response_no_cast_to_async(self):
+        """Test _request with raw_response=True and no cast_to returns raw content (async)."""
+        original_httpx_async_client = httpx.AsyncClient
+        with patch('httpx.AsyncClient', new_callable=MagicMock) as MockAsyncHTTPXClientClass:
+            mock_httpx_client_instance = AsyncMock(spec=original_httpx_async_client)
+            MockAsyncHTTPXClientClass.return_value = mock_httpx_client_instance
+            mock_httpx_client_instance.headers = MagicMock(spec=httpx.Headers)
+            mock_httpx_client_instance.aclose = AsyncMock()
+            
+            mock_response = AsyncMock(spec=httpx.Response) # Use AsyncMock for response if its methods are async
+            mock_response.content = b"raw binary data for no_cast_to_async"
+            mock_response.raise_for_status = MagicMock() # If sync
+            # If raise_for_status is async: mock_response.raise_for_status = AsyncMock()
+            
+            # Make .json() raise an error or return distinct data to ensure .content is used
+            # If .json() is async: mock_response.json = AsyncMock(side_effect=json.JSONDecodeError("Cannot decode", "doc", 0))
+            mock_response.json = MagicMock(side_effect=json.JSONDecodeError("Cannot decode", "doc", 0)) # If sync
+            
+            mock_httpx_client_instance.request = AsyncMock(return_value=mock_response)
+
+            client = AsyncVeniceClient(api_key="test-api-key")
+            result = await client._request("GET", "some_endpoint", raw_response=True) # cast_to is implicitly None
+            
+            assert result == b"raw binary data for no_cast_to_async"
+            mock_httpx_client_instance.request.assert_awaited_once()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -566,6 +609,42 @@ class TestAsyncVeniceClient:
             assert call_args.kwargs["headers"]["X-Other-Header"] == "value"
 
     @pytest.mark.asyncio
+    async def test_request_multipart_default_headers_with_none_headers_arg_async(self, api_key: str):
+        """Test _request_multipart default headers when headers=None is passed (async)."""
+        original_httpx_async_client = httpx.AsyncClient
+        with patch('httpx.AsyncClient', new_callable=MagicMock) as MockAsyncHTTPXClientClass:
+            mock_httpx_client_instance = AsyncMock(spec=original_httpx_async_client)
+            MockAsyncHTTPXClientClass.return_value = mock_httpx_client_instance
+            
+            # Simulate default headers already being on the internal client instance
+            mock_httpx_client_instance.headers = {"Authorization": f"Bearer {api_key}", "User-Agent": "test-agent-async-none"}
+            mock_httpx_client_instance.aclose = AsyncMock()
+            
+            mock_response = MagicMock() # Sync mock for the response object itself
+            mock_response.json = MagicMock(return_value={"status": "success"}) # Sync mock for json()
+            # If json() were async: mock_response.json = AsyncMock(return_value={"status": "success"})
+            
+            mock_httpx_client_instance.request = AsyncMock(return_value=mock_response) # request method is async
+
+            client = AsyncVeniceClient(api_key=api_key)
+            # client._client is mock_httpx_client_instance, its headers are set above.
+
+            files = {"file": ("test.txt", b"content", "text/plain")}
+            # Call with headers=None
+            result = await client._request_multipart("POST", "upload", files=files, headers=None)
+            
+            assert result == {"status": "success"}
+            mock_httpx_client_instance.request.assert_awaited_once()
+            call_args = mock_httpx_client_instance.request.call_args
+            
+            assert "Authorization" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["Authorization"] == f"Bearer {client._api_key}"
+            assert "Accept" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["Accept"] == "*/*"
+            assert "User-Agent" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["User-Agent"] == "test-agent-async-none"
+
+    @pytest.mark.asyncio
     async def test_stream_request_error_handling_http_status(self, api_key: str):
         """Test error handling for stream requests with HTTP status errors."""
         original_httpx_async_client = httpx.AsyncClient # Store original class
@@ -599,6 +678,148 @@ class TestAsyncVeniceClient:
             with pytest.raises(InvalidRequestError):
                 async for _ in client._stream_request("POST", "chat/completions", json_data={"model": "venice-1"}):
                     pass  # Should raise before yielding anything
+                    
+    @pytest.mark.asyncio
+    async def test_stream_request_with_custom_headers_async(self, api_key: str):
+        """Test that custom headers are correctly merged for async SSE streaming requests."""
+        original_httpx_async_client = httpx.AsyncClient
+        with patch('httpx.AsyncClient', new_callable=MagicMock) as MockAsyncHTTPXClientClass:
+            mock_httpx_client_instance = AsyncMock(spec=original_httpx_async_client)
+            MockAsyncHTTPXClientClass.return_value = mock_httpx_client_instance
+            
+            # Create a mock headers object that behaves like a dictionary
+            # Initialize with the headers that AsyncVeniceClient sets during construction
+            mock_headers = {
+                "Accept": "application/json",
+                "Authorization": f"Bearer {api_key}"
+            }
+            
+            class MockHeaders:
+                def __init__(self, initial_headers):
+                    self._headers = initial_headers.copy()
+                
+                def update(self, d):
+                    self._headers.update(d)
+                
+                def __iter__(self):
+                    return iter(self._headers)
+                
+                def items(self):
+                    return self._headers.items()
+                
+                def __getitem__(self, key):
+                    return self._headers[key]
+                
+                def __contains__(self, key):
+                    return key in self._headers
+                
+                def keys(self):
+                    return self._headers.keys()
+                
+                def values(self):
+                    return self._headers.values()
+            
+            mock_headers_obj = MockHeaders(mock_headers)
+            mock_httpx_client_instance.headers = mock_headers_obj
+            mock_httpx_client_instance.aclose = AsyncMock()
+            
+            client = AsyncVeniceClient(api_key=api_key)
+            mock_httpx_client_instance.headers.update({"User-Agent": "test-agent-async"}) # Simulate existing headers
+            
+            custom_headers = {"X-Custom-Header": "custom-value", "Accept": "application/json"}
+            
+            mock_response_content = ["data: [DONE]"]
+            mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.aiter_lines.return_value = mock_async_iterator(mock_response_content)
+            mock_response.raise_for_status = MagicMock()
+            
+            mock_stream_context = AsyncMock()
+            mock_stream_context.__aenter__.return_value = mock_response
+            mock_stream_context.__aexit__.return_value = None
+            mock_httpx_client_instance.stream.return_value = mock_stream_context
+            
+            async for _ in client._stream_request("POST", "chat/completions", headers=custom_headers):
+                pass
+            
+            call_args = mock_httpx_client_instance.stream.call_args
+            assert "Accept" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["Accept"] == "text/event-stream"
+            assert "X-Custom-Header" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["X-Custom-Header"] == "custom-value"
+            assert "User-Agent" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["User-Agent"] == "test-agent-async"
+
+    @pytest.mark.asyncio
+    async def test_stream_request_raw_with_custom_headers_async(self, api_key: str):
+        """Test that custom headers are correctly merged for async raw binary streaming requests."""
+        original_httpx_async_client = httpx.AsyncClient
+        with patch('httpx.AsyncClient', new_callable=MagicMock) as MockAsyncHTTPXClientClass:
+            mock_httpx_client_instance = AsyncMock(spec=original_httpx_async_client)
+            MockAsyncHTTPXClientClass.return_value = mock_httpx_client_instance
+            
+            # Create a mock headers object that behaves like a dictionary
+            # Initialize with the headers that AsyncVeniceClient sets during construction
+            mock_headers = {
+                "Accept": "application/json",
+                "Authorization": f"Bearer {api_key}"
+            }
+            
+            class MockHeaders:
+                def __init__(self, initial_headers):
+                    self._headers = initial_headers.copy()
+                
+                def update(self, d):
+                    self._headers.update(d)
+                
+                def __iter__(self):
+                    return iter(self._headers)
+                
+                def items(self):
+                    return self._headers.items()
+                
+                def __getitem__(self, key):
+                    return self._headers[key]
+                
+                def __contains__(self, key):
+                    return key in self._headers
+                
+                def keys(self):
+                    return self._headers.keys()
+                
+                def values(self):
+                    return self._headers.values()
+            
+            mock_headers_obj = MockHeaders(mock_headers)
+            mock_httpx_client_instance.headers = mock_headers_obj
+            mock_httpx_client_instance.aclose = AsyncMock()
+            
+            client = AsyncVeniceClient(api_key=api_key)
+            mock_httpx_client_instance.headers.update({"User-Agent": "test-agent-async-raw"}) # Simulate existing headers
+
+            custom_headers = {"X-Custom-Header": "custom-raw-value", "Content-Type": "audio/mpeg", "Accept": "audio/wav"}
+            
+            mock_response_content = [b"done"]
+            mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.aiter_bytes.return_value = mock_async_iterator(mock_response_content)
+            mock_response.raise_for_status = MagicMock()
+            
+            mock_stream_context = AsyncMock()
+            mock_stream_context.__aenter__.return_value = mock_response
+            mock_stream_context.__aexit__.return_value = None
+            mock_httpx_client_instance.stream.return_value = mock_stream_context
+            
+            async for _ in client._stream_request_raw("POST", "audio/speech", headers=custom_headers):
+                pass
+            
+            call_args = mock_httpx_client_instance.stream.call_args
+            assert "Accept" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["Accept"] == "audio/wav"
+            assert "Content-Type" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["Content-Type"] == "audio/mpeg"
+            assert "X-Custom-Header" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["X-Custom-Header"] == "custom-raw-value"
+            assert "User-Agent" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["User-Agent"] == "test-agent-async-raw"
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -1205,6 +1426,81 @@ class TestAsyncChatCompletions:
             
             # Verify stream request was called
             mock_stream.assert_called_once()
+    @pytest.mark.asyncio
+    async def test_create_with_none_optional_parameters(self, api_test_key: str, chat_response: Dict, test_messages: List[MessageParam]):
+        """Test create method with optional parameters explicitly set to None."""
+        original_httpx_async_client = httpx.AsyncClient
+        with patch('httpx.AsyncClient', new_callable=MagicMock) as MockAsyncHTTPXClientClass:
+            mock_httpx_client_instance = AsyncMock(spec=original_httpx_async_client)
+            mock_httpx_client_instance.headers = MagicMock(spec=httpx.Headers)
+            mock_httpx_client_instance.aclose = AsyncMock()
+            MockAsyncHTTPXClientClass.return_value = mock_httpx_client_instance
+            client = AsyncVeniceClient(api_key=api_test_key)
+            
+            with patch.object(client, 'post', return_value=chat_response) as mock_post:
+                completions = AsyncChatCompletions(client)
+                await completions.create(
+                    model="venice-1",
+                    messages=test_messages,
+                    stream=False,
+                    temperature=None, # Explicitly None
+                    max_tokens=100,
+                    top_p=None # Explicitly None
+                )
+                
+                mock_post.assert_awaited_once()
+                call_args = mock_post.call_args
+                assert call_args is not None
+                _, kwargs = call_args
+                json_data = kwargs.get('json_data', {})
+                assert 'temperature' not in json_data, "Temperature parameter should not be included when None"
+                assert 'top_p' not in json_data, "Top_p parameter should not be included when None"
+                assert json_data.get('max_tokens') == 100, "Max tokens parameter should be included"
+
+    @pytest.mark.asyncio
+    async def test_create_streaming_with_custom_stream_cls(self, api_test_key: str, test_messages: List[MessageParam], stream_chunks: List[Dict]):
+        """Test create method for chat completions in streaming mode with a custom stream_cls."""
+        # Define a dummy custom stream class
+        class CustomAsyncStream:
+            def __init__(self, iterator, client):
+                self._iterator = iterator
+                self._client = client
+                self._consumed = False
+
+            async def __aiter__(self):
+                if self._consumed:
+                    raise VeniceError("Stream has already been consumed")
+                self._consumed = True
+                async for item in self._iterator:
+                    yield item
+
+        # Create a mock async iterator for stream responses
+        mock_iterator = mock_async_iterator(stream_chunks)
+        
+        # Setup client with mocked streaming
+        client = AsyncVeniceClient(api_key=api_test_key)
+        with patch.object(client, '_stream_request', return_value=mock_iterator) as mock_stream_method:
+            completions = AsyncChatCompletions(client)
+            
+            # Process streaming response with custom stream_cls
+            result_stream = await completions.create(
+                    model="venice-1",
+                    messages=test_messages,
+                    stream=True,
+                    stream_cls=CustomAsyncStream # Provide custom stream class
+                )
+            
+            # Verify that the returned object is an instance of CustomAsyncStream
+            assert isinstance(result_stream, CustomAsyncStream)
+            
+            # Verify that the custom stream can be iterated over
+            chunks = []
+            async for chunk in result_stream:
+                chunks.append(chunk)
+
+            assert len(chunks) == 2, "Should receive both chunks from custom stream"
+            assert chunks[0]["choices"][0]["delta"]["content"] == "chunk1", "First chunk content should match"
+            assert chunks[1]["choices"][0]["delta"]["content"] == "chunk2", "Second chunk content should match"
 
     @pytest.mark.asyncio
     async def test_stream_response_async_iteration_error_handling(self):

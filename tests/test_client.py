@@ -3,6 +3,7 @@ import httpx
 from unittest.mock import patch, MagicMock
 from venice_ai._client import VeniceClient, ChatResource
 from venice_ai.exceptions import VeniceError
+from venice_ai import _constants
 import json
 import os
 
@@ -48,6 +49,12 @@ class TestVeniceClient:
             client = VeniceClient(api_key="test-api-key", timeout=30.0, max_retries=5)
             assert client._timeout.read == 30.0
             assert client._max_retries == 5
+            mock_httpx_client.assert_called_once()
+            
+    def test_initialization_default_timeout(self):
+        with patch('httpx.Client') as mock_httpx_client:
+            client = VeniceClient(api_key="test-api-key", timeout=None)
+            assert client._timeout.read == _constants.DEFAULT_TIMEOUT.read
             mock_httpx_client.assert_called_once()
 
     def test_request_basic_get(self):
@@ -137,6 +144,22 @@ class TestVeniceClient:
             result = client._request("GET", "test_endpoint", raw_response=True)
             assert isinstance(result, bytes)
             assert result == b"raw bytes content"
+            mock_httpx_client.return_value.request.assert_called_once()
+
+    def test_request_raw_response_no_cast_to(self):
+        """Test _request with raw_response=True and no cast_to returns raw content."""
+        with patch('httpx.Client') as mock_httpx_client:
+            mock_response = MagicMock(spec=httpx.Response)
+            mock_response.content = b"raw binary data for no_cast_to"
+            mock_response.raise_for_status = MagicMock()
+            # Make .json() raise an error to ensure .content is used
+            mock_response.json.side_effect = json.JSONDecodeError("Cannot decode", "doc", 0)
+            mock_httpx_client.return_value.request.return_value = mock_response
+
+            client = VeniceClient(api_key="test-api-key")
+            result = client._request("GET", "some_endpoint", raw_response=True) # cast_to is implicitly None
+            
+            assert result == b"raw binary data for no_cast_to"
             mock_httpx_client.return_value.request.assert_called_once()
 
     def test_stream_request_basic(self):
@@ -253,6 +276,124 @@ class TestVeniceClient:
             with pytest.raises(VeniceError, match="Stream request failed"):
                 for _ in client._stream_request_raw("POST", "audio/speech", json_data={"text": "test"}):
                     pass  # Should raise before yielding anything
+                    
+    def test_stream_request_with_custom_headers(self):
+        with patch('httpx.Client') as mock_httpx_client:
+            mock_httpx_client.return_value.stream.return_value.__enter__.return_value = MagicMock(spec=httpx.Response)
+            
+            # Create a mock headers object that behaves like a dictionary
+            # Initialize with the headers that VeniceClient sets during construction
+            mock_headers = {
+                "Accept": "application/json",
+                "Authorization": "Bearer test-api-key"
+            }
+            
+            class MockHeaders:
+                def __init__(self, initial_headers):
+                    self._headers = initial_headers.copy()
+                
+                def update(self, d):
+                    self._headers.update(d)
+                
+                def __iter__(self):
+                    return iter(self._headers)
+                
+                def items(self):
+                    return self._headers.items()
+                
+                def __getitem__(self, key):
+                    return self._headers[key]
+                
+                def __contains__(self, key):
+                    return key in self._headers
+                
+                def keys(self):
+                    return self._headers.keys()
+                
+                def values(self):
+                    return self._headers.values()
+            
+            mock_headers_obj = MockHeaders(mock_headers)
+            mock_httpx_client.return_value.headers = mock_headers_obj
+            client = VeniceClient(api_key="test-api-key")
+            client._client.headers.update({"User-Agent": "test-agent"}) # Simulate existing headers
+            
+            custom_headers = {"X-Custom-Header": "custom-value", "Accept": "application/json"}
+            
+            # Call _stream_request with a mocked async iterator
+            mock_response_content = ["data: [DONE]"]
+            mock_httpx_client.return_value.stream.return_value.__enter__.return_value.iter_lines.return_value = iter(mock_response_content)
+            
+            list(client._stream_request("POST", "chat/completions", headers=custom_headers))
+            
+            # Assert that httpx.Client's stream method was called with the correct headers
+            call_args = mock_httpx_client.return_value.stream.call_args
+            assert "Accept" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["Accept"] == "text/event-stream" # Should be overridden
+            assert "X-Custom-Header" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["X-Custom-Header"] == "custom-value"
+            assert "User-Agent" in call_args.kwargs["headers"] # Existing headers should be preserved
+            assert call_args.kwargs["headers"]["User-Agent"] == "test-agent"
+            
+    def test_stream_request_raw_with_custom_headers(self):
+        with patch('httpx.Client') as mock_httpx_client:
+            mock_httpx_client.return_value.stream.return_value.__enter__.return_value = MagicMock(spec=httpx.Response)
+            
+            # Create a mock headers object that behaves like a dictionary
+            # Initialize with the headers that VeniceClient sets during construction
+            mock_headers = {
+                "Accept": "application/json",
+                "Authorization": "Bearer test-api-key"
+            }
+            
+            class MockHeaders:
+                def __init__(self, initial_headers):
+                    self._headers = initial_headers.copy()
+                
+                def update(self, d):
+                    self._headers.update(d)
+                
+                def __iter__(self):
+                    return iter(self._headers)
+                
+                def items(self):
+                    return self._headers.items()
+                
+                def __getitem__(self, key):
+                    return self._headers[key]
+                
+                def __contains__(self, key):
+                    return key in self._headers
+                
+                def keys(self):
+                    return self._headers.keys()
+                
+                def values(self):
+                    return self._headers.values()
+            
+            mock_headers_obj = MockHeaders(mock_headers)
+            mock_httpx_client.return_value.headers = mock_headers_obj
+            client = VeniceClient(api_key="test-api-key")
+            client._client.headers.update({"User-Agent": "test-agent-raw"}) # Simulate existing headers
+            
+            custom_headers = {"X-Custom-Header": "custom-raw-value", "Content-Type": "audio/mpeg", "Accept": "audio/wav"}
+            
+            # Call _stream_request_raw with a mocked async iterator
+            mock_response_content = [b"done"]
+            mock_httpx_client.return_value.stream.return_value.__enter__.return_value.iter_bytes.return_value = iter(mock_response_content)
+            
+            list(client._stream_request_raw("POST", "audio/speech", headers=custom_headers))
+            
+            # Assert that httpx.Client's stream method was called with the correct headers
+            call_args = mock_httpx_client.return_value.stream.call_args
+            assert "Accept" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["Accept"] == "audio/wav" # Should be preserved
+            assert "Content-Type" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["Content-Type"] == "audio/mpeg" # Should be preserved
+            assert "X-Custom-Header" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["X-Custom-Header"] == "custom-raw-value"
+            assert "User-Agent" in call_args.kwargs["headers"] # Existing headers should be preserved
+            assert call_args.kwargs["headers"]["User-Agent"] == "test-agent-raw"
 
     def test_request_multipart_basic(self):
         with patch('httpx.Client') as mock_httpx_client:
@@ -330,6 +471,31 @@ class TestVeniceClient:
             # Check that other headers are preserved
             assert "X-Other-Sync-Header" in call_args.kwargs["headers"]
             assert call_args.kwargs["headers"]["X-Other-Sync-Header"] == "sync-value"
+
+    def test_request_multipart_default_headers_with_none_headers_arg(self):
+        """Test _request_multipart default headers when headers=None is passed."""
+        with patch('httpx.Client') as mock_httpx_client:
+            mock_httpx_client.return_value.request.return_value = MagicMock(json=MagicMock(return_value={"status": "success"}))
+            
+            client = VeniceClient(api_key="test-api-key")
+            # Ensure the default client headers are set for this test
+            client._client.headers = {"Authorization": f"Bearer {client._api_key}", "User-Agent": "test-agent-sync-none"}
+
+            files = {"file": ("test.txt", b"content", "text/plain")}
+            # Call with headers=None
+            result = client._request_multipart("POST", "upload", files=files, headers=None)
+            
+            assert result == {"status": "success"}
+            mock_httpx_client.return_value.request.assert_called_once()
+            call_args = mock_httpx_client.return_value.request.call_args
+            
+            assert "Authorization" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["Authorization"] == f"Bearer {client._api_key}"
+            assert "Accept" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["Accept"] == "*/*"
+            assert "User-Agent" in call_args.kwargs["headers"]
+            assert call_args.kwargs["headers"]["User-Agent"] == "test-agent-sync-none"
+
     def test_request_error_handling_connect_error(self):
         """Test _request error handling for httpx.ConnectError."""
         with patch('httpx.Client') as mock_httpx_client:

@@ -417,3 +417,71 @@ def test__guess_image_type():
     assert _guess_image_type("image.gif") == "gif"
     assert _guess_image_type("image.bmp") == "octet-stream"  # Test fallback
     assert _guess_image_type("IMAGE.JPG") == "jpeg"  # Test case insensitivity
+
+
+class TestImageResourceMissedLines:
+    """Test cases for covering missed lines in synchronous Image resource."""
+
+    def test_prepare_image_content_file_like_with_name(self, httpx_mock):
+        """
+        Test _prepare_image_content with a file-like object that has a 'name' attribute.
+        Covers lines 81-82 in image.py.
+        """
+        from venice_ai.resources.image import Image # Import Image resource
+
+        client = VeniceClient(api_key="test-key")
+        image_resource = Image(client)
+
+        mock_file_content = b"dummy image data"
+        file_like_object = io.BytesIO(mock_file_content)
+        file_like_object.name = "test_image.png" # Add name attribute
+
+        content = image_resource._prepare_image_content(file_like_object)
+
+        assert content == mock_file_content
+
+    def test_prepare_image_content_unsupported_type(self):
+        """
+        Test _prepare_image_content with an unsupported image type.
+        Covers line 99 in image.py.
+        """
+        from venice_ai.resources.image import Image # Import Image resource
+        
+        client = VeniceClient(api_key="test-key")
+        image_resource = Image(client)
+
+        with pytest.raises(VeniceError, match="Unsupported image type"):
+            image_resource._prepare_image_content(12345) # type: ignore[arg-type] # Pass an integer (unsupported)
+
+    def test_upscale_invalid_enhance_type(self, httpx_mock):
+        """
+        Test upscale method with an invalid type for the 'enhance' parameter.
+        Covers line 375 in image.py.
+        """
+        client = VeniceClient(api_key="test-key")
+        test_image_bytes = b"dummy image data"
+
+        # This call should ideally raise a VeniceError or TypeError due to invalid 'enhance' type.
+        # The actual behavior depends on how strictly the Pydantic model or internal checks validate.
+        # We're testing the branch where it's not a bool and not "true"/"false".
+        with pytest.raises(VeniceError) as excinfo:
+            client.image.upscale(image=test_image_bytes, scale=2.0, enhance=123) # type: ignore[arg-type] # Invalid enhance type
+        
+        # Check if the error message indicates an issue with the 'enhance' parameter
+        # Pydantic V2-like error message for boolean
+        assert "Input should be a valid boolean" in str(excinfo.value)
+
+
+    def test_upscale_invalid_upscale_factor_type(self, httpx_mock):
+        """
+        Test upscale method with an invalid type for the 'scale' parameter.
+        Covers line 400 in image.py (related to scale validation).
+        """
+        client = VeniceClient(api_key="test-key")
+        test_image_bytes = b"dummy image data"
+
+        with pytest.raises(VeniceError) as excinfo:
+            client.image.upscale(image=test_image_bytes, scale="not_a_float") # type: ignore[arg-type] # Invalid scale type
+        
+        # Pydantic V2-like error message for float/number
+        assert "Input should be a valid number" in str(excinfo.value)

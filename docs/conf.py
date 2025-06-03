@@ -8,9 +8,9 @@ AI_FRIENDLY_BUILD = os.getenv('AI_FRIENDLY_BUILD', 'false').lower() == 'true'
 
 # -- Project information -----------------------------------------------------
 project = 'venice-ai Python Client Library'
-copyright = '2023-2025, The Venice AI Team'
-author = 'The Venice AI Team'
-release = '1.0.0'
+copyright = '2025, venice-ai'
+author = 'Seth Bang'
+release = '1.0.2'
 
 # -- General configuration ---------------------------------------------------
 extensions = [

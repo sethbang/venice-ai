@@ -52,10 +52,14 @@ def import_module_from_path(module_name: str, file_path: str) -> Module:
     module = importlib.util.module_from_spec(spec)
     if module is None:  # Should not happen if spec is not None, but good for robustness
         raise ImportError(f"Could not create module {module_name} from spec")
-    # Add this check for spec.loader
-    if not isinstance(spec.loader, importlib.abc.Loader):
-        raise ImportError(f"Spec loader is not a valid Loader for module {module_name}")
-    spec.loader.exec_module(module)
+    try:
+        # Check if spec.loader exists and has exec_module method
+        if spec.loader is None or not hasattr(spec.loader, 'exec_module'):
+            raise ImportError(f"Spec loader is not a valid Loader for module {module_name}")
+        spec.loader.exec_module(module)
+    except ImportError:
+        # Re-raise ImportError from exec_module as expected by tests
+        raise
     return module
 
 # Mock data for models - this would typically come from an API or database
@@ -208,10 +212,14 @@ def _get_filtered_models_sync(
     
     try:
         models_list_response = client.models.list()
-        all_models = models_list_response.get("data", [])
+        all_models = models_list_response.get("data", []) if models_list_response else []
     except Exception as e:
         print(f"Error fetching models: {e}")
         return [] # Return empty list on error
+
+    # Handle case where data is None
+    if all_models is None:
+        all_models = []
 
     filtered_list = []
     for model_data in all_models:
@@ -265,21 +273,25 @@ async def _get_filtered_models_async(
             try:
                 # Try awaiting, but fallback to direct access for mocks
                 models_list_response = await client.models.list()
-                all_models = models_list_response.get("data", [])
+                all_models = models_list_response.get("data", []) if models_list_response else []
             except (TypeError, RuntimeError) as e:
                 # Handle case where a non-awaitable mock is used in tests
                 if "object dict can't be used in 'await' expression" in str(e) or "asyncio.run() cannot be called" in str(e):
                     models_list_response = client.models.list()  # type: ignore
-                    all_models = models_list_response.get("data", [])  # type: ignore
+                    all_models = models_list_response.get("data", []) if models_list_response else []  # type: ignore
                 else:
                     raise
         else:
             # Handle sync client
             models_list_response = client.models.list()
-            all_models = models_list_response.get("data", [])
+            all_models = models_list_response.get("data", []) if models_list_response else []
     except Exception as e:
         print(f"Error fetching models: {e}")
         return [] # Return empty list on error
+
+    # Handle case where data is None
+    if all_models is None:
+        all_models = []
 
     filtered_list = []
     for model_data in all_models:
@@ -578,7 +590,7 @@ def validate_chat_messages(
                         if 'type' not in tool_call:
                             errors.append(f"Tool call at index {tc_idx} in message {i} missing required 'type' field.")
                         elif tool_call.get('type') != "function":
-                            errors.append(f"Tool call at index {tc_idx} in message {i} has invalid 'type'. Must be 'function'.")
+                            errors.append(f"Tool call at index {tc_idx} in message {i} has invalid type '{tool_call.get('type')}'. Must be 'function'.")
                             
                         if 'function' not in tool_call:
                             errors.append(f"Tool call at index {tc_idx} in message {i} missing required 'function' field.")
@@ -588,14 +600,14 @@ def validate_chat_messages(
                             # Validate function object
                             function = tool_call['function']
                             if 'name' not in function:
-                                errors.append(f"Function in tool call {tc_idx} in message {i} missing 'name' field.")
+                                errors.append(f"Function call at index {tc_idx} in message {i} is missing 'name'.")
                             elif not isinstance(function['name'], str) or not function['name']:
                                 errors.append(f"Function in tool call {tc_idx} in message {i} has invalid 'name' field.")
                                 
                             if 'arguments' not in function:
-                                errors.append(f"Function in tool call {tc_idx} in message {i} missing 'arguments' field.")
+                                errors.append(f"Function call at index {tc_idx} in message {i} is missing 'arguments'.")
                             elif not isinstance(function['arguments'], str):
-                                errors.append(f"Function in tool call {tc_idx} in message {i} has invalid 'arguments' field type.")
+                                errors.append(f"Function call at index {tc_idx} in message {i} has invalid 'arguments' field type.")
                 
                 # With tool_calls present, content can be None or a string
                 if content is not None and not isinstance(content, str):
@@ -605,10 +617,10 @@ def validate_chat_messages(
                     
             else:
                 # Without tool_calls, content must be a string (can be empty)
-                if not isinstance(content, str):
-                    errors.append(f"Assistant message at index {i} must have string content when not using tool_calls.")
-                elif content is None:
+                if content is None:
                     errors.append(f"Assistant message at index {i} must have non-null content when not using tool_calls.")
+                elif not isinstance(content, str):
+                    errors.append(f"Assistant message at index {i} must have string content when not using tool_calls.")
                 else:
                     total_chars += len(content)
                     
@@ -640,7 +652,7 @@ def validate_chat_messages(
             # Check required content
             content = message.get('content')
             if 'content' not in message:
-                errors.append(f"Tool message at index {i} missing required 'content' field.")
+                errors.append(f"Tool message at index {i} is missing 'content'.")
             elif not isinstance(content, str) or not content:
                 errors.append(f"Tool message at index {i} must have non-empty string content.")
             else:
@@ -704,12 +716,12 @@ async def find_model_by_id(client: Union["VeniceClient", "AsyncVeniceClient"], m
             try:
                 # Try awaiting, but fallback to direct access for mocks
                 models_list_response = await client.models.list()
-                all_models = models_list_response.get("data", [])
+                all_models = models_list_response.get("data", []) if models_list_response else []
             except (TypeError, RuntimeError) as e:
                 # Handle case where a non-awaitable mock is used in tests
                 if "object dict can't be used in 'await' expression" in str(e) or "asyncio.run() cannot be called" in str(e):
                     models_list_response = client.models.list()  # type: ignore
-                    all_models = models_list_response.get("data", [])  # type: ignore
+                    all_models = models_list_response.get("data", []) if models_list_response else []  # type: ignore
                 else:
                     raise
         else:
@@ -719,7 +731,11 @@ async def find_model_by_id(client: Union["VeniceClient", "AsyncVeniceClient"], m
             warnings.warn("Calling an async function without awaiting", DeprecationWarning, stacklevel=2)
             # Ensure the warning is properly emitted
             models_list_response = client.models.list()
-            all_models = models_list_response.get("data", [])
+            all_models = models_list_response.get("data", []) if models_list_response else []
+
+        # Handle case where data is None
+        if all_models is None:
+            all_models = []
         
         # Find the model with matching ID
         for model in all_models:

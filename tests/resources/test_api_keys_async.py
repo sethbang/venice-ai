@@ -411,7 +411,7 @@ async def test_create_success_async(httpx_mock):
     assert isinstance(response, dict)
     assert "description" in response
     assert response["description"] == "New Test API Key"
-    assert response["consumptionLimit"]["usd"] == 200.0
+    assert cast(ConsumptionLimit, response["consumptionLimits"]).get("usd") == 200.0
 
 
 @pytest.mark.asyncio
@@ -681,3 +681,63 @@ async def test_api_key_error_async(httpx_mock):
     assert excinfo.value.response is not None
     assert excinfo.value.response.status_code == 401
     assert "Invalid API key" in str(excinfo.value)
+
+
+class TestAsyncApiKeysMissedLines:
+    """Test class for covering missed lines in AsyncApiKeys methods."""
+
+    @pytest.mark.asyncio
+    async def test_create_response_unexpected_api_key_field_async(self):
+        """Test Case: Cover async create response unexpectedly contains 'api_key'."""
+        mock_async_client = AsyncMock(spec=AsyncVeniceClient)
+        # Simulate server response that includes an 'api_key' field
+        mock_async_client.post = AsyncMock(return_value={
+            "data": {
+                "id": "key_async_123",
+                "description": "test_key_async_unexpected_desc",
+                "api_key": "server_provided_key_async_when_not_expected" # Unexpected field
+            }
+        })
+        
+        async_api_keys_instance = AsyncApiKeys(mock_async_client)
+        
+        create_request: ApiKeyCreateRequest = {
+            "apiKeyType": "INFERENCE",
+            "description": "test_key_async_unexpected_desc"
+        }
+        response = await async_api_keys_instance.create(api_key_request=create_request)
+        
+        created_key = response # response is already ApiKey from the patched client
+        assert created_key.get("api_key") is None # Should be None as it's not in ApiKey TypedDict
+        assert created_key["id"] == "key_async_123"
+        assert created_key["description"] == "test_key_async_unexpected_desc"
+
+    @pytest.mark.asyncio
+    async def test_get_rate_limit_logs_malformed_response_none_async(self):
+        """Test Case: Cover async get_rate_limit_logs response is None."""
+        mock_async_client = AsyncMock(spec=AsyncVeniceClient)
+        mock_async_client.get = AsyncMock(return_value=None) # API returns None
+        
+        async_api_keys_instance = AsyncApiKeys(mock_async_client)
+        response = await async_api_keys_instance.get_rate_limit_logs()
+        assert response == []
+
+    @pytest.mark.asyncio
+    async def test_get_rate_limit_logs_malformed_response_data_not_list_async(self):
+        """Test Case: Cover async get_rate_limit_logs 'data' field is not a list."""
+        mock_async_client = AsyncMock(spec=AsyncVeniceClient)
+        mock_async_client.get = AsyncMock(return_value={"data": "not_a_list"})
+        
+        async_api_keys_instance = AsyncApiKeys(mock_async_client)
+        response = await async_api_keys_instance.get_rate_limit_logs()
+        assert response == []
+
+    @pytest.mark.asyncio
+    async def test_get_rate_limit_logs_malformed_response_no_data_key_async(self):
+        """Test Case: Cover async get_rate_limit_logs response is missing 'data' key."""
+        mock_async_client = AsyncMock(spec=AsyncVeniceClient)
+        mock_async_client.get = AsyncMock(return_value={"other_key": "value"}) # No 'data' key
+        
+        async_api_keys_instance = AsyncApiKeys(mock_async_client)
+        response = await async_api_keys_instance.get_rate_limit_logs()
+        assert response == []

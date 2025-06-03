@@ -3,7 +3,7 @@ import os
 import time
 import asyncio
 from venice_ai import VeniceClient
-from typing import Optional, cast, List
+from typing import Optional, cast, List, Tuple, Union
 from venice_ai import AsyncVeniceClient
 
 # Initialize clients
@@ -109,9 +109,10 @@ def test_chat_latency_short_prompt_streaming(venice_client):
             return first_token_time, full_response
         except Exception as e:
             print(f"Error during API call for short prompt (streaming): {e}")
-            return None, [] # Return None for time, empty list for response
+            return (None, []) # Return tuple for consistency
     
-    (first_token_time, full_response), total_duration = cast(tuple[Optional[float], list[str]], make_request()) # explicit cast for Pylance # type: ignore[reportGeneralTypeIssues]
+    result, total_duration = make_request()
+    first_token_time, full_response = cast(Tuple[Optional[float], List[str]], result)
     print(f"Latency to first token (short prompt, streaming): {first_token_time:.3f} seconds")
     print(f"Total latency for full response (short prompt, streaming): {total_duration:.3f} seconds")
     print(f"First chunk structure: {full_response[0] if full_response else 'No chunks received'}")
@@ -189,9 +190,10 @@ async def test_chat_latency_short_prompt_streaming_async(async_venice_client):
             return first_token_time, full_response
         except Exception as e:
             print(f"Error during API call for short prompt (streaming, async): {e}")
-            return None, [] # Return None for time, empty list for response
+            return (None, []) # Return tuple for consistency
     
-    (first_token_time, full_response), total_duration = cast(tuple[Optional[float], list[str]], await make_request()) # explicit cast for Pylance # type: ignore[reportGeneralTypeIssues]
+    result, total_duration = await make_request()
+    first_token_time, full_response = cast(Tuple[Optional[float], List[str]], result)
     print(f"Latency to first token (short prompt, streaming, async): {first_token_time:.3f} seconds")
     print(f"Total latency for full response (short prompt, streaming, async): {total_duration:.3f} seconds")
     assert first_token_time is not None, "First token time should be recorded"

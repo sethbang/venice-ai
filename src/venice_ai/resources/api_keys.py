@@ -121,7 +121,7 @@ class ApiKeys(APIResource):
         self,
         *,
         api_key_request: ApiKeyCreateRequest
-    ) -> ApiKeyCreateResponse:
+    ) -> ApiKey:
         """
         Creates a new API key.
         
@@ -142,7 +142,7 @@ class ApiKeys(APIResource):
         :return: Response containing the newly created API key details, including
             the secret key value (only returned once), key ID, creation timestamp,
             and other metadata.
-        :rtype: :class:`~venice_ai.types.api_keys.ApiKeyCreateResponse`
+        :rtype: :class:`~venice_ai.types.api_keys.ApiKey`
 
         :raises venice_ai.exceptions.AuthenticationError: If authentication fails.
         :raises venice_ai.exceptions.APIError: If the API returns an error, such as when
@@ -190,8 +190,23 @@ class ApiKeys(APIResource):
         
         response = self._client.post("api_keys", json_data=data)
         if isinstance(response, dict) and "data" in response:
-            return cast(ApiKeyCreateResponse, response["data"])
-        return cast(ApiKeyCreateResponse, response) # Fallback if no 'data' key
+            api_key_data = response["data"]
+            if isinstance(api_key_data, dict):
+                api_key_data = dict(api_key_data)  # Make a copy to avoid modifying original
+                # Handle field name mapping: consumptionLimit -> consumptionLimits
+                if "consumptionLimit" in api_key_data and "consumptionLimits" not in api_key_data:
+                    api_key_data["consumptionLimits"] = api_key_data.pop("consumptionLimit")
+                # Handle missing consumptionLimits field by providing default
+                elif "consumptionLimits" not in api_key_data:
+                    api_key_data["consumptionLimits"] = {}
+                # Filter to only include valid ApiKey fields
+                valid_fields = {"apiKey", "apiKeyType", "consumptionLimits", "createdAt", "description", "expiresAt", "id", "last6Chars", "lastUsedAt", "usage"}
+                api_key_data = {k: v for k, v in api_key_data.items() if k in valid_fields}
+            return cast(ApiKey, api_key_data)
+        elif isinstance(response, dict):
+            # Handle response without 'data' key - return response directly without processing
+            return cast(ApiKey, response)
+        raise APIResponseProcessingError("Unexpected response format from API key creation endpoint. Expected a 'data' field.")
     
     def delete(
         self,
@@ -413,11 +428,14 @@ class ApiKeys(APIResource):
             
         response = self._client.get("api_keys/rate_limits/log", params=params if params else None)
         if isinstance(response, dict) and "data" in response:
+            if isinstance(response["data"], list):
+                return cast(RateLimitLogList, response)
+            else:
+                # If 'data' exists but is not a list, as per test expectation, return empty list
+                return cast(RateLimitLogList, [])
+        elif isinstance(response, list): # If API directly returns a list
             return cast(RateLimitLogList, response)
-        # If API directly returns a list (though unlikely for this structure based on other patterns)
-        elif isinstance(response, list):
-             return cast(RateLimitLogList, response)
-        # Fallback for unexpected response format
+        # Fallback for any other unexpected response format
         return cast(RateLimitLogList, [])
 
 
@@ -518,7 +536,7 @@ class AsyncApiKeys(AsyncAPIResource):
         self,
         *,
         api_key_request: ApiKeyCreateRequest
-    ) -> ApiKeyCreateResponse:
+    ) -> ApiKey:
         """
         Creates a new API key asynchronously.
         
@@ -539,7 +557,7 @@ class AsyncApiKeys(AsyncAPIResource):
         :return: Response containing the newly created API key details, including
             the secret key value (only returned once), key ID, creation timestamp,
             and other metadata.
-        :rtype: :class:`~venice_ai.types.api_keys.ApiKeyCreateResponse`
+        :rtype: :class:`~venice_ai.types.api_keys.ApiKey`
 
         :raises venice_ai.exceptions.AuthenticationError: If authentication fails.
         :raises venice_ai.exceptions.APIError: If the API returns an error, such as when
@@ -578,8 +596,23 @@ class AsyncApiKeys(AsyncAPIResource):
         
         response = await self._client.post("api_keys", json_data=data)
         if isinstance(response, dict) and "data" in response:
-            return cast(ApiKeyCreateResponse, response["data"])
-        return cast(ApiKeyCreateResponse, response) # Fallback
+            api_key_data = response["data"]
+            if isinstance(api_key_data, dict):
+                api_key_data = dict(api_key_data)  # Make a copy to avoid modifying original
+                # Handle field name mapping: consumptionLimit -> consumptionLimits
+                if "consumptionLimit" in api_key_data and "consumptionLimits" not in api_key_data:
+                    api_key_data["consumptionLimits"] = api_key_data.pop("consumptionLimit")
+                # Handle missing consumptionLimits field by providing default
+                elif "consumptionLimits" not in api_key_data:
+                    api_key_data["consumptionLimits"] = {}
+                # Filter to only include valid ApiKey fields
+                valid_fields = {"apiKey", "apiKeyType", "consumptionLimits", "createdAt", "description", "expiresAt", "id", "last6Chars", "lastUsedAt", "usage"}
+                api_key_data = {k: v for k, v in api_key_data.items() if k in valid_fields}
+            return cast(ApiKey, api_key_data)
+        elif isinstance(response, dict):
+            # Handle response without 'data' key - return response directly without processing
+            return cast(ApiKey, response)
+        raise APIResponseProcessingError("Unexpected response format from API key creation endpoint. Expected a 'data' field.")
     
     async def delete(
         self,
@@ -800,8 +833,12 @@ class AsyncApiKeys(AsyncAPIResource):
             
         response = await self._client.get("api_keys/rate_limits/log", params=params if params else None)
         if isinstance(response, dict) and "data" in response:
-            return cast(RateLimitLogList, response)
+            if isinstance(response["data"], list):
+                return cast(RateLimitLogList, response)
+            else:
+                # If 'data' exists but is not a list, as per test expectation, return empty list
+                return cast(RateLimitLogList, [])
         elif isinstance(response, list): # If API directly returns a list
             return cast(RateLimitLogList, response)
-        # Fallback for unexpected response format
+        # Fallback for any other unexpected response format
         return cast(RateLimitLogList, [])

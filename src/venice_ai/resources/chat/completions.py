@@ -308,29 +308,24 @@ class ChatCompletions(APIResource):
 
             if user_provided_stream_cls is not None:
                 # Check if the user_provided_stream_cls is a class and callable (basic check)
-                # A more robust check might involve checking if it's a subclass of a base StreamWrapper.
                 if inspect.isclass(user_provided_stream_cls):
                     try:
-                        # Attempt a dry run instantiation with dummy data to see if it's compatible
-                        # stream_cls is expected to be a class whose __init__ accepts **data arguments,
-                        # conforming to the ChunkModelFactory protocol defined in venice_ai.types.chat.
-                        # For now, we assume if it's a class, the user intends it as a wrapper.
-                        # If it's ChatCompletionChunk (a TypedDict), this will fail if called.
-                        # The E2E test passes ChatCompletionChunk, which is not a valid wrapper.
-                        # We will default to Stream if stream_cls is not a valid wrapper.
-                        # A simple check: if it's Stream or AsyncStream or a subclass, allow it.
-                        if issubclass(user_provided_stream_cls, (Stream, AsyncStream)): # Allow Stream/AsyncStream and their subclasses
-                             effective_stream_cls = cast(Any, user_provided_stream_cls)
-                        # else, if it's not one of our known stream types, we might log a warning
-                        # and use the default. For now, if it's not Stream/AsyncStream, we use default.
-                        # This handles the case where ChatCompletionChunk is passed.
-                        elif user_provided_stream_cls is not Stream and user_provided_stream_cls is not AsyncStream:
-                            # Log a warning that an incompatible stream_cls was provided, using default.
-                            # logger.warning(f"Incompatible stream_cls provided: {user_provided_stream_cls}. Defaulting to Stream.")
-                            pass # effective_stream_cls remains Stream
-
-                    except TypeError: # Not a class or not callable in the expected way
-                        # logger.warning(f"Provided stream_cls is not a valid wrapper class: {user_provided_stream_cls}. Defaulting to Stream.")
+                        # First check if it's a subclass of our known stream types
+                        if issubclass(user_provided_stream_cls, (Stream, AsyncStream)):
+                            effective_stream_cls = cast(Any, user_provided_stream_cls)
+                        else:
+                            # For custom classes, check if they have the proper interface
+                            # They should have __init__ with iterator and client params, and __iter__ method
+                            sig = inspect.signature(user_provided_stream_cls.__init__)
+                            params = list(sig.parameters.keys())
+                            has_proper_signature = len(params) >= 3 or 'client' in params
+                            has_iter_method = hasattr(user_provided_stream_cls, '__iter__')
+                            
+                            if has_proper_signature and has_iter_method:
+                                effective_stream_cls = cast(Any, user_provided_stream_cls)
+                            # else: incompatible, use default
+                    except (TypeError, ValueError):
+                        # If we can't inspect the signature, fall back to default
                         pass # effective_stream_cls remains Stream
                 # else: it's not a class, so use default.
 
@@ -634,12 +629,26 @@ class AsyncChatCompletions(AsyncAPIResource):
 
             if user_provided_stream_cls_async is not None:
                 if inspect.isclass(user_provided_stream_cls_async):
-                    if issubclass(user_provided_stream_cls_async, (Stream, AsyncStream)):
-                        effective_stream_cls_async = cast(Any, user_provided_stream_cls_async)
-                    elif user_provided_stream_cls_async is not Stream and user_provided_stream_cls_async is not AsyncStream:
-                        # logger.warning(f"Incompatible async stream_cls: {user_provided_stream_cls_async}. Defaulting.")
+                    try:
+                        # First check if it's a subclass of our known stream types
+                        if issubclass(user_provided_stream_cls_async, (Stream, AsyncStream)):
+                            effective_stream_cls_async = cast(Any, user_provided_stream_cls_async)
+                        else:
+                            # For custom classes, check if they have the proper interface
+                            # They should have __init__ with iterator and client params, and __aiter__ method
+                            sig = inspect.signature(user_provided_stream_cls_async.__init__)
+                            params = list(sig.parameters.keys())
+                            has_proper_signature = len(params) >= 3 or 'client' in params
+                            has_aiter_method = hasattr(user_provided_stream_cls_async, '__aiter__')
+                            
+                            if has_proper_signature and has_aiter_method:
+                                effective_stream_cls_async = cast(Any, user_provided_stream_cls_async)
+                            # else: incompatible, use default
+                    except (TypeError, ValueError):
+                        # If we can't inspect the signature, fall back to default
                         pass # effective_stream_cls_async remains AsyncStream
                 # else: not a class, use default
+            # else: stream_cls is None, use default
 
             # _stream_request is an async generator function, calling it returns the async generator object.
             raw_iterator: AsyncIterator[ChatCompletionChunk] = self._client._stream_request(

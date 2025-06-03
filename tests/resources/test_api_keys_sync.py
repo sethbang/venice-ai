@@ -401,7 +401,7 @@ def test_create_success(httpx_mock):
     assert isinstance(response, dict)
     assert "description" in response
     assert response["description"] == "New Test API Key"
-    assert response["consumptionLimit"]["usd"] == 200.0
+    assert cast(ConsumptionLimit, response["consumptionLimits"]).get("usd") == 200.0
 
 
 def test_delete_success(httpx_mock):
@@ -770,6 +770,79 @@ class TestApiKeysMissedLines:
         
         # Assert response
         assert response == {"id": "key_abc", "name": "retrieved_key"}
+
+    def test_create_response_unexpected_api_key_field(self):
+        """Test Case: Cover line 187 - create response unexpectedly contains 'api_key'."""
+        from unittest.mock import Mock
+        from venice_ai._client import VeniceClient
+        from venice_ai.resources.api_keys import ApiKeys
+
+        mock_venice_client = Mock(spec=VeniceClient)
+        # Simulate server response that includes an 'api_key' field when it shouldn't
+        # (e.g., show_key=False was implied or explicitly set in the request)
+        mock_venice_client.post.return_value = {
+            "data": {
+                "id": "key_123",
+                "description": "test_key_unexpected_desc", # Use description
+                "api_key": "server_provided_key_when_not_expected" # Unexpected field
+            }
+        }
+        
+        api_keys_instance = ApiKeys(mock_venice_client)
+        
+        # Provide a valid ApiKeyCreateRequest
+        create_request: ApiKeyCreateRequest = {
+            "apiKeyType": "INFERENCE",
+            "description": "test_key_unexpected_desc"
+        }
+        response = api_keys_instance.create(api_key_request=create_request)
+        
+        # The returned ApiKey object should NOT have the api_key attribute populated from this unexpected field.
+        # It should be None or not present, depending on ApiKey TypedDict definition.
+        # Assuming ApiKey can have api_key as Optional[str].
+        # The response from create() is now directly the ApiKey (not wrapped in 'data' dictionary).
+        assert response.get("api_key") is None # Should be None as it's not in ApiKey TypedDict
+        assert response["id"] == "key_123"
+        assert response["description"] == "test_key_unexpected_desc" # Assert using description
+
+    def test_get_rate_limit_logs_malformed_response_none(self):
+        """Test Case: Cover line 320 - get_rate_limit_logs response is None."""
+        from unittest.mock import Mock
+        from venice_ai._client import VeniceClient
+        from venice_ai.resources.api_keys import ApiKeys
+
+        mock_venice_client = Mock(spec=VeniceClient)
+        mock_venice_client.get.return_value = None # API returns None
+        
+        api_keys_instance = ApiKeys(mock_venice_client)
+        response = api_keys_instance.get_rate_limit_logs()
+        assert response == []
+
+    def test_get_rate_limit_logs_malformed_response_data_not_list(self):
+        """Test Case: Cover line 320 - get_rate_limit_logs 'data' field is not a list."""
+        from unittest.mock import Mock
+        from venice_ai._client import VeniceClient
+        from venice_ai.resources.api_keys import ApiKeys
+
+        mock_venice_client = Mock(spec=VeniceClient)
+        mock_venice_client.get.return_value = {"data": "not_a_list"}
+        
+        api_keys_instance = ApiKeys(mock_venice_client)
+        response = api_keys_instance.get_rate_limit_logs()
+        assert response == []
+
+    def test_get_rate_limit_logs_malformed_response_no_data_key(self):
+        """Test Case: Cover line 320 - get_rate_limit_logs response is missing 'data' key."""
+        from unittest.mock import Mock
+        from venice_ai._client import VeniceClient
+        from venice_ai.resources.api_keys import ApiKeys
+
+        mock_venice_client = Mock(spec=VeniceClient)
+        mock_venice_client.get.return_value = {"other_key": "value"} # No 'data' key
+        
+        api_keys_instance = ApiKeys(mock_venice_client)
+        response = api_keys_instance.get_rate_limit_logs()
+        assert response == []
 
 
 class TestApiKeysCreateWeb3KeyMissedLines:

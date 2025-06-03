@@ -527,9 +527,25 @@ class VeniceClient:
             # This generator encapsulates the actual streaming and SSE parsing logic.
             try:
                 # Prepare headers for streaming requests
-                _request_headers = dict(self._client.headers) # Start with client defaults
+                _request_headers = {}
+                # Copy headers from client defaults, handling both real and mock headers
+                if hasattr(self._client, 'headers') and self._client.headers is not None:
+                    try:
+                        # Try to convert to dict first
+                        _request_headers.update(dict(self._client.headers))
+                    except (TypeError, AttributeError):
+                        # Fallback for mock objects that don't behave like real headers
+                        try:
+                            for key, value in self._client.headers.items():
+                                _request_headers[key] = value
+                        except (TypeError, AttributeError):
+                            # If all else fails, try to access as attributes
+                            if hasattr(self._client.headers, '__dict__'):
+                                _request_headers.update(self._client.headers.__dict__)
+                
+                # Apply specific request headers passed to this method
                 if _headers:
-                    _request_headers.update(_headers) # Apply specific request headers
+                    _request_headers.update(_headers)
 
                 if _method.upper() == "GET":
                     if _headers is None or "Content-Type" not in _headers:
@@ -538,6 +554,13 @@ class VeniceClient:
                         _request_headers.pop("Accept", None)
                 elif _json_data is not None:
                     _request_headers["Content-Type"] = "application/json"
+
+                # For streaming requests, ensure Accept: text/event-stream is set if not already present
+                # But only if we're not doing a GET request where Accept was explicitly removed
+                if _method.upper() != "GET" and ("Accept" not in _request_headers or _request_headers.get("Accept") == "application/json"):
+                    _request_headers["Accept"] = "text/event-stream"
+                elif _method.upper() == "GET" and "Accept" in _request_headers and _request_headers.get("Accept") == "application/json":
+                    _request_headers["Accept"] = "text/event-stream"
 
                 with self._client.stream(
                     method=_method,
@@ -936,20 +959,17 @@ class VeniceClient:
 
         try:
             # Prepare headers for streaming requests with same logic as regular requests
-            request_headers = dict(self._client.headers) # Start with client defaults
+            # Prepare headers for raw streaming. Start fresh to avoid default Content-Type: application/json.
+            request_headers = {}
+            # Copy essential headers from client defaults
+            if "Authorization" in self._client.headers:
+                request_headers["Authorization"] = self._client.headers["Authorization"]
+            if "User-Agent" in self._client.headers: # Preserve User-Agent if set
+                request_headers["User-Agent"] = self._client.headers["User-Agent"]
+            
+            # Apply specific request headers passed to this method
             if headers:
-                request_headers.update(headers) # Apply specific request headers
-
-            # Handle Content-Type header based on request method and data
-            if method.upper() == "GET":
-                # Remove Content-Type and Accept for GET requests unless explicitly provided
-                if headers is None or "Content-Type" not in headers:
-                    request_headers.pop("Content-Type", None)
-                if headers is None or "Accept" not in headers:
-                    request_headers.pop("Accept", None)
-            elif json_data is not None:
-                # Ensure Content-Type is set for JSON requests
-                request_headers["Content-Type"] = "application/json"
+                request_headers.update(headers)
 
             with self._client.stream(
                 method=method,

@@ -459,7 +459,20 @@ def run_tests(options: dict) -> int:
                              check=False, env=env)
             except Exception as e:
                 console.print(f"Error generating HTML coverage report: {e}", style=Style.ERROR)
-    
+        
+        # Generate XML coverage report for Codecov
+        console.print("Generating XML coverage report...", style=Style.INFO)
+        try:
+            subprocess.run(["poetry", "run", "python", "-m", "coverage", "xml"],
+                         check=False, env=env)
+            # Check if coverage.xml was created
+            if Path("coverage.xml").exists():
+                console.print("coverage.xml generated successfully.", style=Style.SUCCESS)
+            else:
+                console.print("coverage.xml was NOT generated.", style=Style.WARNING)
+        except Exception as e:
+            console.print(f"Error generating XML coverage report: {e}", style=Style.ERROR)
+            
     # Display results
     if return_code == 0:
         console.print("\n✓ All selected tests passed!", style=Style.SUCCESS)

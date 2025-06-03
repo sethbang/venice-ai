@@ -415,3 +415,66 @@ async def test_generate_api_error_async(httpx_mock):
     assert excinfo.value.response is not None
     assert excinfo.value.response.status_code == 401
     assert "Invalid API key" in str(excinfo.value)
+
+
+class TestAsyncImageResourceMissedLines:
+    """Test cases for covering missed lines in asynchronous Image resource."""
+
+    @pytest.mark.asyncio
+    async def test_prepare_image_content_file_like_with_name_async(self, httpx_mock):
+        """
+        Test _prepare_image_content with a file-like object that has a 'name' attribute (async).
+        Covers lines 517-518 in image.py.
+        """
+        from venice_ai.resources.image import AsyncImage # Import AsyncImage resource
+
+        async with AsyncVeniceClient(api_key="test-key") as client:
+            image_resource = AsyncImage(client)
+
+            mock_file_content = b"dummy image data async"
+            file_like_object = io.BytesIO(mock_file_content)
+            file_like_object.name = "test_image_async.png" # Add name attribute
+
+            content = await image_resource._prepare_image_content(file_like_object)
+
+            assert content == mock_file_content
+
+    @pytest.mark.asyncio
+    async def test_prepare_image_content_unsupported_type_async(self):
+        """
+        Test _prepare_image_content with an unsupported image type (async).
+        Covers line 542 in image.py.
+        """
+        from venice_ai.resources.image import AsyncImage # Import AsyncImage resource
+        
+        async with AsyncVeniceClient(api_key="test-key") as client:
+            image_resource = AsyncImage(client)
+
+            with pytest.raises(VeniceError, match="Unsupported image type"):
+                await image_resource._prepare_image_content(12345) # type: ignore[arg-type] # Pass an integer
+
+    @pytest.mark.asyncio
+    async def test_upscale_invalid_enhance_type_async(self, httpx_mock):
+        """
+        Test async upscale method with an invalid type for the 'enhance' parameter.
+        Covers line 820 in image.py.
+        """
+        async with AsyncVeniceClient(api_key="test-key") as client:
+            test_image_bytes = b"dummy image data async"
+            with pytest.raises(VeniceError) as excinfo:
+                await client.image.upscale(image=test_image_bytes, scale=2.0, enhance=123) # type: ignore[arg-type]
+            
+            assert "Input should be a valid boolean" in str(excinfo.value)
+
+    @pytest.mark.asyncio
+    async def test_upscale_invalid_upscale_factor_type_async(self, httpx_mock):
+        """
+        Test async upscale method with an invalid type for the 'scale' parameter.
+        Covers line 837 in image.py (related to scale validation).
+        """
+        async with AsyncVeniceClient(api_key="test-key") as client:
+            test_image_bytes = b"dummy image data async"
+            with pytest.raises(VeniceError) as excinfo:
+                await client.image.upscale(image=test_image_bytes, scale="not_a_float") # type: ignore[arg-type]
+            
+            assert "Input should be a valid number" in str(excinfo.value)

@@ -60,15 +60,15 @@ class Stream(Generic[ChunkType]):
             raise StreamConsumedError("Stream has already been consumed.", request=getattr(e, 'request', None)) from e
         except httpx.RequestError as e:
             # Handle httpx RequestError (which includes ReadError, ConnectError, etc.) during stream iteration
-            # Create a fallback request if e.request is not available
-            fallback_request = httpx.Request(method="POST", url="https://api.venice.ai/api/v1/chat/completions")
-            api_error = self._client._translate_httpx_error_to_api_error(e, fallback_request, is_stream=True)
+            self._consumed = True # Stream is consumed on this error
+            self.close() # Ensure resources are cleaned up
+            api_error = self._client._translate_httpx_error_to_api_error(e, e.request, is_stream=True) # Pass e.request directly
             raise api_error from e
         except httpx.HTTPStatusError as e:
             # Handle httpx HTTPStatusError during stream iteration
-            # Create a fallback request if e.request is not available
-            fallback_request = httpx.Request(method="POST", url="https://api.venice.ai/api/v1/chat/completions")
-            api_error = self._client._translate_httpx_error_to_api_error(e, fallback_request, is_stream=True)
+            self._consumed = True # Stream is consumed on this error
+            self.close() # Ensure resources are cleaned up
+            api_error = self._client._translate_httpx_error_to_api_error(e, e.request, is_stream=True) # Pass e.request directly
             raise api_error from e
     
     def __iter__(self) -> Iterator[ChunkType]:
@@ -153,15 +153,15 @@ class AsyncStream(Generic[ChunkType]):
             raise StreamConsumedError("Stream has already been consumed.", request=getattr(e, 'request', None)) from e
         except httpx.RequestError as e:
             # Handle httpx RequestError (which includes ReadError, ConnectError, etc.) during stream iteration
-            # Create a fallback request if e.request is not available
-            fallback_request = httpx.Request(method="POST", url="https://api.venice.ai/api/v1/chat/completions")
-            api_error = await self._client._translate_httpx_error_to_api_error(e, fallback_request, is_stream=True)
+            self._consumed = True # Stream is consumed on this error
+            await self.close() # Ensure resources are cleaned up
+            api_error = await self._client._translate_httpx_error_to_api_error(e, e.request, is_stream=True) # Pass e.request directly
             raise api_error from e
         except httpx.HTTPStatusError as e:
             # Handle httpx HTTPStatusError during stream iteration
-            # Create a fallback request if e.request is not available
-            fallback_request = httpx.Request(method="POST", url="https://api.venice.ai/api/v1/chat/completions")
-            api_error = await self._client._translate_httpx_error_to_api_error(e, fallback_request, is_stream=True)
+            self._consumed = True # Stream is consumed on this error
+            await self.close() # Ensure resources are cleaned up
+            api_error = await self._client._translate_httpx_error_to_api_error(e, e.request, is_stream=True) # Pass e.request directly
             raise api_error from e
 
     def __aiter__(self) -> AsyncIterator[ChunkType]:

@@ -4,7 +4,9 @@ Tests for utility functions in the venice_ai.utils module.
 
 import pytest
 import json
-from unittest.mock import patch, MagicMock
+import warnings
+from unittest.mock import patch, MagicMock, AsyncMock
+import importlib.util
 
 from venice_ai import VeniceClient, AsyncVeniceClient
 from venice_ai.exceptions import VeniceError
@@ -14,10 +16,182 @@ from venice_ai.utils import (
     estimate_token_count,
     validate_chat_messages,
     find_model_by_id,
+    find_model_by_id_or_name_or_slug,
+    get_model_capabilities_by_id_or_name_or_slug,
     get_model_capabilities,
     format_tool_response,
-    _import_tiktoken_module
+    _import_tiktoken_module,
+    import_module_from_path, # Add import
+    _get_filtered_models_async # Add import for direct testing if needed, or test via get_filtered_models
 )
+
+
+class TestTiktokenFallback:
+    """Tests for tiktoken fallback logic."""
+    
+    def test_estimate_token_count_without_tiktoken(self):
+        """Test estimate_token_count fallback when tiktoken is not available."""
+        with patch('venice_ai.utils._TIKTOKEN_AVAILABLE', False):
+            with pytest.warns(UserWarning, match="tiktoken library not found or unavailable"):
+                result = estimate_token_count("Hello world")
+                # Fallback should use max(1, int(len(s) / 4.0))
+                expected = max(1, int(len("Hello world") / 4.0))
+                assert result == expected
+
+
+class TestModelLookupFunctions:
+    """Tests for model lookup utility functions."""
+    
+    def test_find_model_by_id_or_name_or_slug_by_id(self):
+        """Test finding model by ID."""
+        # Mock MODELS_DATA with a test model
+        test_model = {"id": "test-model-id", "name": "Test Model", "slug": "test-model"}
+        with patch('venice_ai.utils.MODELS_DATA', [test_model]):
+            result = find_model_by_id_or_name_or_slug("test-model-id")
+            assert result == test_model
+    
+    def test_find_model_by_id_or_name_or_slug_by_name(self):
+        """Test finding model by name."""
+        test_model = {"id": "test-model-id", "name": "Test Model", "slug": "test-model"}
+        with patch('venice_ai.utils.MODELS_DATA', [test_model]):
+            result = find_model_by_id_or_name_or_slug("Test Model")
+            assert result == test_model
+    
+    def test_find_model_by_id_or_name_or_slug_by_slug(self):
+        """Test finding model by slug."""
+        test_model = {"id": "test-model-id", "name": "Test Model", "slug": "test-model"}
+        with patch('venice_ai.utils.MODELS_DATA', [test_model]):
+            result = find_model_by_id_or_name_or_slug("test-model")
+            assert result == test_model
+    
+    def test_find_model_by_id_or_name_or_slug_not_found(self):
+        """Test finding model that doesn't exist."""
+        test_model = {"id": "test-model-id", "name": "Test Model", "slug": "test-model"}
+        with patch('venice_ai.utils.MODELS_DATA', [test_model]):
+            result = find_model_by_id_or_name_or_slug("nonexistent-model")
+            assert result is None
+    
+    def test_get_model_capabilities_by_id_or_name_or_slug_not_found(self):
+        """Test getting capabilities for non-existent model."""
+        with patch('venice_ai.utils.MODELS_DATA', []):
+            result = get_model_capabilities_by_id_or_name_or_slug("nonexistent-model")
+            assert result is None
+    
+    def test_get_model_capabilities_by_id_or_name_or_slug_invalid_spec(self):
+        """Test getting capabilities when model_spec is invalid."""
+        test_model = {"id": "test-model-id", "model_spec": "invalid_spec"}  # Not a dict
+        with patch('venice_ai.utils.MODELS_DATA', [test_model]):
+            result = get_model_capabilities_by_id_or_name_or_slug("test-model-id")
+            assert result is None
+    
+    def test_get_model_capabilities_by_id_or_name_or_slug_missing_capabilities(self):
+        """Test getting capabilities when capabilities key is missing."""
+        test_model = {"id": "test-model-id", "model_spec": {"other_key": "value"}}  # No capabilities
+        with patch('venice_ai.utils.MODELS_DATA', [test_model]):
+            result = get_model_capabilities_by_id_or_name_or_slug("test-model-id")
+            assert result is None
+
+
+class TestValidateChatMessagesHighPriority:
+    """Tests for validate_chat_messages function - high priority coverage."""
+    
+    def test_validate_chat_messages_tool_call_not_dict(self):
+        """Test validation when tool_calls contains non-dict items."""
+        messages = [
+            {"role": "assistant", "tool_calls": ["not_a_dict"]}
+        ]
+        result = validate_chat_messages(messages)
+        assert "Tool call at index 0 in message 0 must be a dictionary." in result["errors"]
+    
+    def test_validate_chat_messages_tool_call_invalid_type(self):
+        """Test validation when tool call has invalid type."""
+        messages = [
+            {"role": "assistant", "tool_calls": [{"type": "invalid_type", "function": {"name": "test"}}]}
+        ]
+        result = validate_chat_messages(messages)
+        assert "Tool call at index 0 in message 0 has invalid type 'invalid_type'. Must be 'function'." in result["errors"]
+    
+    def test_validate_chat_messages_function_call_missing_name(self):
+        """Test validation when function call is missing name."""
+        messages = [
+            {"role": "assistant", "tool_calls": [{"type": "function", "function": {"arguments": "{}"}}]}
+        ]
+        result = validate_chat_messages(messages)
+        assert "Function call at index 0 in message 0 is missing 'name'." in result["errors"]
+    
+    def test_validate_chat_messages_function_call_missing_arguments(self):
+        """Test validation when function call is missing arguments."""
+        messages = [
+            {"role": "assistant", "tool_calls": [{"type": "function", "function": {"name": "test"}}]}
+        ]
+        result = validate_chat_messages(messages)
+        assert "Function call at index 0 in message 0 is missing 'arguments'." in result["errors"]
+    
+    def test_validate_chat_messages_assistant_no_content_no_tool_calls(self):
+        """Test validation when assistant message has no content and no tool_calls."""
+        messages = [
+            {"role": "assistant"}  # No content, no tool_calls
+        ]
+        result = validate_chat_messages(messages)
+        assert "Assistant message at index 0 must have non-null content when not using tool_calls." in result["errors"]
+    
+    def test_validate_chat_messages_tool_message_missing_content(self):
+        """Test validation when tool message is missing content."""
+        messages = [
+            {"role": "tool", "tool_call_id": "test_id"}  # No content
+        ]
+        result = validate_chat_messages(messages)
+        assert "Tool message at index 0 is missing 'content'." in result["errors"]
+
+
+class TestImportModuleFromPath:
+    """Tests for import_module_from_path utility function."""
+
+    @patch('importlib.util.spec_from_file_location')
+    def test_import_module_spec_is_none(self, mock_spec_from_file_location):
+        """Test ImportError when spec_from_file_location returns None."""
+        mock_spec_from_file_location.return_value = None
+        with pytest.raises(ImportError, match="Could not load spec for module non_existent_module from path/to/module.py"):
+            import_module_from_path("non_existent_module", "path/to/module.py")
+
+    @patch('importlib.util.spec_from_file_location')
+    @patch('importlib.util.module_from_spec')
+    def test_import_module_module_is_none(self, mock_module_from_spec, mock_spec_from_file_location):
+        """Test ImportError when module_from_spec returns None."""
+        mock_spec = MagicMock()
+        mock_spec.name = "test_module"
+        mock_spec_from_file_location.return_value = mock_spec
+        mock_module_from_spec.return_value = None
+        with pytest.raises(ImportError, match="Could not create module test_module from spec"):
+            import_module_from_path("test_module", "path/to/test_module.py")
+
+    @patch('importlib.util.spec_from_file_location')
+    @patch('importlib.util.module_from_spec')
+    def test_import_module_loader_attribute_error(self, mock_module_from_spec, mock_spec_from_file_location):
+        """Test ImportError when spec.loader is missing exec_module."""
+        mock_spec = MagicMock()
+        mock_spec.name = "test_module"
+        mock_spec.loader = object()  # A loader without exec_module
+        mock_spec_from_file_location.return_value = mock_spec
+        mock_module_from_spec.return_value = MagicMock() # A dummy module object
+        
+        with pytest.raises(ImportError, match="Spec loader is not a valid Loader for module test_module"):
+            import_module_from_path("test_module", "path/to/test_module.py")
+
+    @patch('importlib.util.spec_from_file_location')
+    @patch('importlib.util.module_from_spec')
+    def test_import_module_exec_module_raises_import_error(self, mock_module_from_spec, mock_spec_from_file_location):
+        """Test that an ImportError during exec_module is re-raised."""
+        mock_spec = MagicMock()
+        mock_spec.name = "test_module"
+        mock_loader = MagicMock()
+        mock_loader.exec_module.side_effect = ImportError("Simulated exec error")
+        mock_spec.loader = mock_loader
+        mock_spec_from_file_location.return_value = mock_spec
+        mock_module_from_spec.return_value = MagicMock()
+
+        with pytest.raises(ImportError, match="Simulated exec error"):
+            import_module_from_path("test_module", "path/to/test_module.py")
 
 
 class TestGetFilteredModels:
@@ -178,6 +352,27 @@ class TestGetFilteredModels:
             
         # Verify results
         assert len(result) == 2  # type: ignore[arg-type]
+
+    @pytest.mark.asyncio
+    async def test_get_filtered_models_async_client_models_list_returns_none(self, async_venice_client):
+        """Test _get_filtered_models_async when client.models.list() returns None."""
+        async_venice_client.models.list = AsyncMock(return_value=None)
+        result = await get_filtered_models(async_venice_client)  # type: ignore[misc]
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_get_filtered_models_async_client_models_list_missing_data_key(self, async_venice_client):
+        """Test _get_filtered_models_async when client.models.list() response is missing 'data' key."""
+        async_venice_client.models.list = AsyncMock(return_value={"other_key": "value"}) # No 'data' key
+        result = await get_filtered_models(async_venice_client)  # type: ignore[misc]
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_get_filtered_models_async_client_models_list_data_is_none(self, async_venice_client):
+        """Test _get_filtered_models_async when client.models.list() response 'data' is None."""
+        async_venice_client.models.list = AsyncMock(return_value={"data": None})
+        result = await get_filtered_models(async_venice_client)  # type: ignore[misc]
+        assert result == []
 
 
 class TestImportTiktokenModule:
@@ -470,7 +665,7 @@ class TestValidateChatMessages:
         
         result = validate_chat_messages(messages)
         assert len(result["errors"]) > 0
-        assert "must have string content when not using tool_calls" in result["errors"][0]
+        assert "must have non-null content when not using tool_calls" in result["errors"][0]
     
     def test_assistant_with_tool_calls_and_content(self):
         """Should validate that an assistant message with tool_calls can have content."""
@@ -562,6 +757,27 @@ class TestFindModelById:
         result = await find_model_by_id(async_venice_client, "nonexistent")
         
         # Verify results
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_find_model_by_id_client_models_list_returns_none(self, async_venice_client):
+        """Test find_model_by_id when client.models.list() returns None."""
+        async_venice_client.models.list = AsyncMock(return_value=None)
+        result = await find_model_by_id(async_venice_client, "any_id")
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_find_model_by_id_client_models_list_missing_data_key(self, async_venice_client):
+        """Test find_model_by_id when client.models.list() response is missing 'data' key."""
+        async_venice_client.models.list = AsyncMock(return_value={"other_key": "value"})
+        result = await find_model_by_id(async_venice_client, "any_id")
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_find_model_by_id_client_models_list_data_is_none(self, async_venice_client):
+        """Test find_model_by_id when client.models.list() response 'data' is None."""
+        async_venice_client.models.list = AsyncMock(return_value={"data": None})
+        result = await find_model_by_id(async_venice_client, "any_id")
         assert result is None
 
 

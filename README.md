@@ -565,9 +565,11 @@ The test runner ([`test_runner.py`](test_runner.py)) also supports an interactiv
 
 ## Documentation
 
-Detailed API documentation for the Venice.ai API itself is available at: [https://docs.venice.ai/api-reference](https://docs.venice.ai/api-reference)
+This project, venice-ai, has docs @ [venice-ai docs](https://venice-ai.readthedocs.io/)
 
-Documentation for this Python client library is generated using Sphinx from the docstrings within the codebase. It can be built locally from the `docs/` directory (instructions to be added) or will be hosted online (link to be added).
+This Python client library is generated using Sphinx from the docstrings within the codebase. It can be built locally from the `docs/` directory.
+
+Detailed API documentation for the Venice.ai API itself is available @ [https://docs.venice.ai/api-reference](https://docs.venice.ai/api-reference)
 
 ## Contributing
 

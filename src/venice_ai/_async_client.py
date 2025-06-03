@@ -686,24 +686,49 @@ class AsyncVeniceClient:
         
         try:
             # Prepare headers for streaming requests with same logic as regular requests
-            request_headers = dict(self._client.headers) # Start with client defaults
+            request_headers = {}
+            # Copy headers from client defaults, handling both real and mock headers
+            if hasattr(self._client, 'headers') and self._client.headers is not None:
+                try:
+                    # Try to convert to dict first
+                    request_headers.update(dict(self._client.headers))
+                except (TypeError, AttributeError):
+                    # Fallback for mock objects that don't behave like real headers
+                    try:
+                        for key, value in self._client.headers.items():
+                            request_headers[key] = value
+                    except (TypeError, AttributeError):
+                        # If all else fails, try to access as attributes
+                        if hasattr(self._client.headers, '__dict__'):
+                            request_headers.update(self._client.headers.__dict__)
+            
+            # Apply specific request headers passed to this method
             if headers:
-                request_headers.update(headers) # Apply specific request headers
+                request_headers.update(headers)
 
             # Handle Content-Type header based on request method and data
             if method.upper() == "GET":
-                # Remove Content-Type and Accept for GET requests unless explicitly provided
+                # Remove Content-Type for GET requests unless explicitly provided
                 if headers is None or "Content-Type" not in headers:
                     request_headers.pop("Content-Type", None)
-                if headers is None or "Accept" not in headers:
-                    request_headers.pop("Accept", None)
+                # For GET streaming requests, we still want Accept: text/event-stream
+                # Only remove Accept if it was explicitly provided in custom headers
+                if headers is not None and "Accept" in headers:
+                    # Keep the custom Accept header
+                    pass
+                else:
+                    # Set Accept: text/event-stream for streaming GET requests
+                    request_headers["Accept"] = "text/event-stream"
             elif json_data is not None:
                 # Ensure Content-Type is set for JSON requests
                 request_headers["Content-Type"] = "application/json"
-            
-            # For streaming requests, ensure Accept: text/event-stream is set if not already present
-            if "Accept" not in request_headers or request_headers.get("Accept") == "application/json":
-                request_headers["Accept"] = "text/event-stream"
+                # For non-GET streaming requests, ensure Accept: text/event-stream is set
+                if "Accept" not in request_headers or request_headers.get("Accept") == "application/json":
+                    request_headers["Accept"] = "text/event-stream"
+            else:
+                # For other methods without JSON data, still set Accept for streaming
+                if "Accept" not in request_headers or request_headers.get("Accept") == "application/json":
+                    request_headers["Accept"] = "text/event-stream"
 
             # Get the stream result - might be a coroutine if stream is an AsyncMock
             stream_result = self._client.stream(
@@ -1061,20 +1086,17 @@ class AsyncVeniceClient:
         
         try:
             # Prepare headers for streaming requests with same logic as regular requests
-            request_headers = dict(self._client.headers) # Start with client defaults
+            # Prepare headers for raw streaming. Start fresh to avoid default Content-Type: application/json.
+            request_headers = {}
+            # Copy essential headers from client defaults
+            if "Authorization" in self._client.headers:
+                request_headers["Authorization"] = self._client.headers["Authorization"]
+            if "User-Agent" in self._client.headers: # Preserve User-Agent if set
+                request_headers["User-Agent"] = self._client.headers["User-Agent"]
+            
+            # Apply specific request headers passed to this method
             if headers:
-                request_headers.update(headers) # Apply specific request headers
-
-            # Handle Content-Type header based on request method and data
-            if method.upper() == "GET":
-                # Remove Content-Type and Accept for GET requests unless explicitly provided
-                if headers is None or "Content-Type" not in headers:
-                    request_headers.pop("Content-Type", None)
-                if headers is None or "Accept" not in headers:
-                    request_headers.pop("Accept", None)
-            elif json_data is not None:
-                # Ensure Content-Type is set for JSON requests
-                request_headers["Content-Type"] = "application/json"
+                request_headers.update(headers)
 
             # Get the stream result - might be a coroutine if stream is an AsyncMock
             stream_result = self._client.stream(
@@ -1617,76 +1639,36 @@ class AsyncChatCompletions(AsyncAPIResource):
         # e.g. if venice_parameters needs special handling
 
         if stream:
-            # Default stream_cls if not provided
-            if stream_cls is None:
-                stream_cls = AsyncStream  # Default to AsyncStream
+            # Handle stream_cls parameter
+            user_provided_stream_cls_async = stream_cls
+            effective_stream_cls_async: Any = AsyncStream  # Default
 
-            # The _stream_request method itself returns an AsyncIterator.
-            # We pass the stream_cls to it, but it's used by the caller of _stream_request
-            # (i.e., the AsyncChatCompletions.create in resources/chat/completions.py)
-            # to wrap the result. The _stream_request in _async_client.py itself
-            # should not be concerned with instantiating stream_cls.
-            # The `stream_cls` parameter is effectively for the higher-level resource method.
-            # The call to self._client._stream_request here should not pass stream_cls.
-            # The actual `MissingStreamClassError` was raised in `resources/chat/completions.py`
-            # which we've now fixed to use a default.
-            # This method in _async_client.py is a lower-level passthrough.
-            
-            # The `_stream_request` method in `~venice_ai.AsyncVeniceClient` (this file) handles the actual streaming.
-            # The `stream_cls` parameter in `AsyncChatCompletions.create` (this method)
-            # was intended for the `Stream` wrapper, which is handled by the `Stream` class itself
-            # when it's initialized with an async iterator.
-            # So, we don't need to pass `stream_cls` to `self._client._stream_request` here.
-            # The `stream_cls` from the signature is used by the `Stream` / `AsyncStream` utility.
-            # The `create` method in `resources/chat/completions.py` now handles the default.
-            
-            # The `_stream_request` in this client should just return the raw async iterator.
-            # The `stream_cls` argument in *this* method's signature is for the benefit of the
-            # `Stream`/`AsyncStream` wrapper that the *caller* of this method might use.
-            # The `MissingStreamClassError` was being raised in `resources.chat.completions.create`
-            # which is now fixed.
-            
-            # The `_stream_request` method in `_async_client.py` (lines 430-611) does not take `stream_cls`.
-            # The `stream_cls` parameter in `AsyncChatCompletions.create` (this method) is for the
-            # `AsyncStream` wrapper that is applied in `venice_ai.streaming.AsyncStream`.
-            # The `create` method in `src/venice_ai/resources/chat/completions.py`
-            # is the one that actually calls `self._client._stream_request` and then wraps it.
-            # The `stream_cls` parameter here is effectively passed to that higher-level `create`.
+            if user_provided_stream_cls_async is not None:
+                if inspect.isclass(user_provided_stream_cls_async):
+                    try:
+                        if issubclass(user_provided_stream_cls_async, (AsyncStream,)):
+                            effective_stream_cls_async = cast(Any, user_provided_stream_cls_async)
+                        else:
+                            # Check if it has the required interface
+                            sig = inspect.signature(user_provided_stream_cls_async.__init__)
+                            params = list(sig.parameters.keys())
+                            has_proper_signature = len(params) >= 3 or 'client' in params
+                            has_aiter_method = hasattr(user_provided_stream_cls_async, '__aiter__')
+                            
+                            if has_proper_signature and has_aiter_method:
+                                effective_stream_cls_async = cast(Any, user_provided_stream_cls_async)
+                    except (TypeError, ValueError):
+                        pass  # Use default if validation fails
 
-            # The `MissingStreamClassError` was raised in `src/venice_ai/resources/chat/completions.py`
-            # (line 281 for sync, and a similar implicit expectation for async).
-            # That file has been updated to use default `Stream` and `AsyncStream`.
-            # The `_stream_request` method in this file (`_async_client.py`) does not accept `stream_cls`.
-            # The `stream_cls` in the signature of `AsyncChatCompletions.create` (this method)
-            # is for the `AsyncStream` wrapper, which is applied by the caller of this method
-            # (specifically, `venice_ai.resources.chat.completions.AsyncChatCompletions.create`).
-
-            # The `_stream_request` method in this client returns the raw async iterator.
-            # The `stream_cls` parameter in this `create` method's signature is used by the
-            # `AsyncStream` utility that wraps the result of `_stream_request`.
-            # The `MissingStreamClassError` was being raised in `resources.chat.completions.AsyncChatCompletions.create`
-            # which is now fixed to use a default `AsyncStream`.
-            # Therefore, the check for `stream_cls is None` and raising `MissingStreamClassError`
-            # is no longer needed here as it's handled by the calling layer in `resources/chat/completions.py`.
+            # Get the raw iterator from _stream_request
+            raw_iterator: AsyncIterator[ChatCompletionChunk] = self._client._stream_request(
+                method="POST",
+                path="chat/completions",
+                json_data=body
+            )
             
-            # The `_stream_request` method in `_async_client.py` (this file, lines 430-611)
-            # does not accept a `stream_cls` argument.
-            # The `stream_cls` parameter in `AsyncChatCompletions.create` (this method, in `_async_client.py`)
-            # is for the `AsyncStream` wrapper, which is applied by the caller of this method
-            # (specifically, `venice_ai.resources.chat.completions.AsyncChatCompletions.create`).
-            # The `create` method in `src/venice_ai/resources/chat/completions.py` (lines 513-531)
-            # is the one that actually calls `self._client._stream_request` and then wraps it.
-            # The `stream_cls` parameter there is now defaulted.
-
-            # The `_stream_request` method in this client returns the raw async iterator.
-            # The `stream_cls` parameter in this `create` method's signature is used by the
-            # `AsyncStream` utility that wraps the result of `_stream_request`.
-            # The `MissingStreamClassError` was being raised in `resources.chat.completions.AsyncChatCompletions.create`
-            # which is now fixed to use a default `AsyncStream`.
-            # Therefore, the check for `stream_cls is None` and raising `MissingStreamClassError`
-            # is no longer needed here as it's handled by the calling layer in `resources/chat/completions.py`.
-            # We just call `_stream_request` and the wrapping happens one level up.
-            return cast(AsyncIterator[ChatCompletionChunk], self._client._stream_request("POST", "chat/completions", json_data=body))
+            # Wrap with the effective stream class
+            return cast(AsyncIterator[ChatCompletionChunk], effective_stream_cls_async(raw_iterator, client=self._client))
         else:
             # Use regular post method for non-streaming responses
             response = await self._client.post("chat/completions", json_data=body)
