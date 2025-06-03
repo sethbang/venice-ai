@@ -8,6 +8,15 @@
 
 Developed to benchmark and explore the full capabilities of the Venice.ai API, the venice-ai Python package has evolved into a comprehensive client library for developers. This library provides convenient access to Venice.ai's powerful features, including chat completions, image generation, audio synthesis, embeddings, model management, API key management, billing information, and more, with support for both synchronous and asynchronous operations.
 
+## Powered by
+
+<div align="center">
+  <a href="https://venice.ai/chat?ref=6sxLV1">
+    <img src="./venice-logo-lockup-red.svg" alt="Venice.ai" width="250">
+  </a>
+  <sub><em>*This is a referral link</em></sub>
+</div>
+
 ## Table of Contents
 
 - [Features](#features)
@@ -578,3 +587,5 @@ Contributions are welcome! Please feel free to open issues for bugs or feature r
 ## License
 
 This project is licensed under the MIT License.
+
+---
