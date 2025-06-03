@@ -333,6 +333,7 @@ async def test_simple_generate_image_with_all_params_async(async_venice_client):
         raise
 
 # Refactored test_upscale_image_from_file
+@pytest.mark.xfail(reason="Image upscale/enhance endpoint is temporarily offline")
 def test_upscale_image_from_file_sync(venice_client):
     """Test image upscaling from a file path (Sync)"""
     if not os.path.exists(DUMMY_IMAGE_PATH):
@@ -349,6 +350,7 @@ def test_upscale_image_from_file_sync(venice_client):
         raise
 
 @pytest.mark.asyncio
+@pytest.mark.xfail(reason="Image upscale/enhance endpoint is temporarily offline")
 async def test_upscale_image_from_file_async(async_venice_client):
     """Test image upscaling from a file path (Async)"""
     if not os.path.exists(DUMMY_IMAGE_PATH):
@@ -365,6 +367,7 @@ async def test_upscale_image_from_file_async(async_venice_client):
         raise
 
 # Refactored test_upscale_image_from_bytes
+@pytest.mark.xfail(reason="Image upscale/enhance endpoint is temporarily offline")
 def test_upscale_image_from_bytes_sync(venice_client):
     """Test image upscaling from bytes (Sync)"""
     image_bytes = read_test_image()
@@ -381,6 +384,7 @@ def test_upscale_image_from_bytes_sync(venice_client):
         raise
 
 @pytest.mark.asyncio
+@pytest.mark.xfail(reason="Image upscale/enhance endpoint is temporarily offline")
 async def test_upscale_image_from_bytes_async(async_venice_client):
     """Test image upscaling from bytes (Async)"""
     image_bytes = read_test_image()
