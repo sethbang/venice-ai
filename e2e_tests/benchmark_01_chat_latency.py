@@ -5,6 +5,7 @@ import asyncio
 from venice_ai import VeniceClient
 from typing import Optional, cast, List, Tuple, Union
 from venice_ai import AsyncVeniceClient
+from venice_ai.types.chat import ChatCompletion, ChatCompletionChunk
 
 # Initialize clients
 # Clients are provided via fixtures from conftest.py
@@ -55,7 +56,8 @@ def test_chat_latency_short_prompt_non_streaming(venice_client):
     print(f"Latency for short prompt (non-streaming): {duration:.3f} seconds")
     print(f"Response structure: {response}")
     assert response is not None, "Response should not be None"
-    assert "choices" in response and len(response.get("choices", [])) > 0, "Response should have at least one choice"
+    assert isinstance(response, ChatCompletion), "Response should be a ChatCompletion object"
+    assert response.choices and len(response.choices) > 0, "Response should have at least one choice"
 
 def test_chat_latency_long_prompt_non_streaming(api_key): # Use api_key fixture
     """Test latency for a long prompt without streaming."""
@@ -83,7 +85,8 @@ def test_chat_latency_long_prompt_non_streaming(api_key): # Use api_key fixture
     print(f"Response structure: {response}")
     assert response is not None, "Response should not be None"
     if response is not None: # Ensure response is not None for Pylance
-        assert isinstance(response, dict) and "choices" in response and len(response.get("choices", [])) > 0, "Response should have at least one choice"
+        assert isinstance(response, ChatCompletion), "Response should be a ChatCompletion object"
+        assert response.choices and len(response.choices) > 0, "Response should have at least one choice"
 
 def test_chat_latency_short_prompt_streaming(venice_client):
     """Test latency for a short prompt with streaming, measuring time to first token and full response."""
@@ -101,11 +104,11 @@ def test_chat_latency_short_prompt_streaming(venice_client):
             for chunk in stream:
                 if first_token_time is None:
                     first_token_time = time.perf_counter() - start_time
-                choices = chunk.get("choices", [])
-                if choices and len(choices) > 0:
-                    delta = choices[0].get("delta", {})
-                    content = delta.get("content", "")
-                    full_response.append(content or "")
+                if chunk.choices and len(chunk.choices) > 0:
+                    delta = chunk.choices[0].delta
+                    if delta and delta.content:
+                        content = delta.content
+                        full_response.append(content)
             return first_token_time, full_response
         except Exception as e:
             print(f"Error during API call for short prompt (streaming): {e}")
@@ -135,7 +138,8 @@ async def test_chat_latency_short_prompt_non_streaming_async(async_venice_client
     response, duration = await make_request()
     print(f"Latency for short prompt (non-streaming, async): {duration:.3f} seconds")
     assert response is not None, "Response should not be None"
-    assert "choices" in response and len(response.get("choices", [])) > 0, "Response should have at least one choice"
+    assert isinstance(response, ChatCompletion), "Response should be a ChatCompletion object"
+    assert response.choices and len(response.choices) > 0, "Response should have at least one choice"
 
 @pytest.mark.asyncio
 async def test_chat_latency_long_prompt_non_streaming_async(api_key): # Use api_key fixture
@@ -163,7 +167,8 @@ async def test_chat_latency_long_prompt_non_streaming_async(api_key): # Use api_
     print(f"Response structure: {response}")
     assert response is not None, "Response should not be None"
     if response is not None: # Ensure response is not None for Pylance
-        assert isinstance(response, dict) and "choices" in response and len(response.get("choices", [])) > 0, "Response should have at least one choice"
+        assert isinstance(response, ChatCompletion), "Response should be a ChatCompletion object"
+        assert response.choices and len(response.choices) > 0, "Response should have at least one choice"
 
 @pytest.mark.asyncio
 async def test_chat_latency_short_prompt_streaming_async(async_venice_client):
@@ -182,11 +187,11 @@ async def test_chat_latency_short_prompt_streaming_async(async_venice_client):
             async for chunk in stream:
                 if first_token_time is None:
                     first_token_time = time.perf_counter() - start_time
-                choices = chunk.get("choices", [])
-                if choices and len(choices) > 0:
-                    delta = choices[0].get("delta", {})
-                    content = delta.get("content", "")
-                    full_response.append(content)
+                if chunk.choices and len(chunk.choices) > 0:
+                    delta = chunk.choices[0].delta
+                    if delta and delta.content:
+                        content = delta.content
+                        full_response.append(content)
             return first_token_time, full_response
         except Exception as e:
             print(f"Error during API call for short prompt (streaming, async): {e}")

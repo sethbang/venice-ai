@@ -20,7 +20,7 @@ def test_characters_list_return_coverage(monkeypatch):
     # Create a mock client with a get method that returns a valid response
     class MockClient:
         def get(self, path: str, **kwargs) -> Dict[str, Any]:
-            assert path == "/characters"
+            assert path == "characters"
             return {
                 "data": [
                     {
@@ -62,7 +62,7 @@ async def test_async_characters_list_return_coverage(monkeypatch):
     # Create a mock client with an async get method that returns a valid response
     class MockAsyncClient:
         async def get(self, path: str, **kwargs) -> Dict[str, Any]:
-            assert path == "/characters"
+            assert path == "characters"
             return {
                 "data": [
                     {

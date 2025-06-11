@@ -17,6 +17,7 @@ async def test_create_speech_success_async(httpx_mock):
     """Tests successful asynchronous speech generation (non-streaming)."""
     # Mock binary audio data
     mock_audio_data = b"mock audio binary data"
+    
 
     httpx_mock.add_response(
         method="POST",

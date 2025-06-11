@@ -21,7 +21,8 @@ from .utils import get_filtered_models
 
 # Optional: Configure logging
 import logging
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+# Note: Removed NullHandler to allow retry log messages to be displayed
+# logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
     "VeniceClient",

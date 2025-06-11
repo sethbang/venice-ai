@@ -33,6 +33,7 @@ class TestExceptionsCoverage:
         # Create mock response with status code
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 418  # I'm a teapot
+        mock_response.headers = {}
 
         # Initialize APIError
         error = APIError("Test API error", response=mock_response)
@@ -47,6 +48,7 @@ class TestExceptionsCoverage:
         # Create mock response with status code
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 400
+        mock_response.headers = {}
 
         # Create body with error dict containing code and message
         body = {
@@ -69,6 +71,7 @@ class TestExceptionsCoverage:
         # Create mock response with 403 status code
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 403
+        mock_response.headers = {}
 
         # Call _make_status_error
         error = _make_status_error("Permission denied", body=None, response=mock_response)
@@ -82,6 +85,7 @@ class TestExceptionsCoverage:
         # Create mock response with 409 status code
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 409
+        mock_response.headers = {}
 
         # Call _make_status_error
         error = _make_status_error("Resource already exists", body=None, response=mock_response)
@@ -95,6 +99,7 @@ class TestExceptionsCoverage:
         # Create mock response with 413 status code
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 413
+        mock_response.headers = {}
 
         # Call _make_status_error
         error = _make_status_error("File too large", body=None, response=mock_response)
@@ -108,6 +113,7 @@ class TestExceptionsCoverage:
         # Create mock response with 415 status code
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 415
+        mock_response.headers = {}
 
         # Call _make_status_error
         error = _make_status_error("Unsupported media type", body=None, response=mock_response)
@@ -121,6 +127,7 @@ class TestExceptionsCoverage:
         # Create mock response with 422 status code
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 422
+        mock_response.headers = {}
 
         # Call _make_status_error
         error = _make_status_error("Invalid data format", body=None, response=mock_response)
@@ -134,6 +141,7 @@ class TestExceptionsCoverage:
         # Create mock response with 429 status code
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 429
+        mock_response.headers = {}
 
         # Call _make_status_error
         error = _make_status_error("Too many requests", body=None, response=mock_response)
@@ -147,6 +155,7 @@ class TestExceptionsCoverage:
         # Create mock response with 500 status code
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 500
+        mock_response.headers = {}
 
         # Call _make_status_error
         error = _make_status_error("Internal server error", body=None, response=mock_response)
@@ -166,6 +175,7 @@ class TestExceptionsCoverage:
         # Create mock response with an unhandled 4xx status code (e.g., 418)
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 418
+        mock_response.headers = {}
 
         # Call _make_status_error
         error = _make_status_error("I'm a teapot", body=None, response=mock_response)
@@ -180,6 +190,7 @@ class TestExceptionsCoverage:
         # Create mock response with unusual status code (e.g., 999)
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 999
+        mock_response.headers = {}
 
         # Call _make_status_error
         error = _make_status_error("Unknown status code", body=None, response=mock_response)
@@ -194,6 +205,7 @@ class TestExceptionsCoverage:
         # Create mock response with status code
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 400
+        mock_response.headers = {}
 
         # Create body with error dict containing code and detail (not message)
         body = {
@@ -216,6 +228,7 @@ class TestExceptionsCoverage:
         # Create mock response with status code
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 400
+        mock_response.headers = {}
 
         # Create body with error dict containing code only
         body = {

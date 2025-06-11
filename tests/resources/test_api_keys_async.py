@@ -297,7 +297,9 @@ async def test_async_api_keys_list_with_pagination_params():
     # Create a mock async client
     mock_async_client = MagicMock(spec=AsyncVeniceClient)
     mock_httpx_response = MagicMock(spec=httpx.Response)
-    mock_httpx_response.json.return_value = {"data": [], "object": "list"}
+    mock_httpx_response.json = AsyncMock(return_value={"data": [], "object": "list"})
+    mock_httpx_response.aread = AsyncMock()
+    mock_httpx_response.aclose = AsyncMock()
     mock_async_client.get = AsyncMock(return_value=mock_httpx_response)
 
     # Create AsyncApiKeys resource with the mock client
@@ -325,7 +327,9 @@ async def test_async_api_keys_list_with_limit_only_param():
     # Create a mock async client
     mock_async_client = MagicMock(spec=AsyncVeniceClient)
     mock_httpx_response = MagicMock(spec=httpx.Response)
-    mock_httpx_response.json.return_value = {"data": [], "object": "list"}
+    mock_httpx_response.json = AsyncMock(return_value={"data": [], "object": "list"})
+    mock_httpx_response.aread = AsyncMock()
+    mock_httpx_response.aclose = AsyncMock()
     mock_async_client.get = AsyncMock(return_value=mock_httpx_response)
 
     # Create AsyncApiKeys resource with the mock client
@@ -352,7 +356,9 @@ async def test_async_api_keys_list_with_page_only_param():
     # Create a mock async client
     mock_async_client = MagicMock(spec=AsyncVeniceClient)
     mock_httpx_response = MagicMock(spec=httpx.Response)
-    mock_httpx_response.json.return_value = {"data": [], "object": "list"}
+    mock_httpx_response.json = AsyncMock(return_value={"data": [], "object": "list"})
+    mock_httpx_response.aread = AsyncMock()
+    mock_httpx_response.aclose = AsyncMock()
     mock_async_client.get = AsyncMock(return_value=mock_httpx_response)
 
     # Create AsyncApiKeys resource with the mock client
@@ -426,7 +432,7 @@ async def test_delete_success_async(httpx_mock):
 
     httpx_mock.add_response(
         method="DELETE",
-        url=f"https://api.venice.ai/api/v1/api_keys/{api_key_id}", # Include ID in URL path
+        url=f"https://api.venice.ai/api/v1/api_keys?id={api_key_id}", # Use query parameter
         json=mock_response_data,
         status_code=200,
     )

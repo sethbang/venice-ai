@@ -40,7 +40,9 @@ class TestAsyncClientMultipart:
         with caplog.at_level(logging.DEBUG):
             # Set up mock response
             mock_response = MagicMock()
-            mock_response.json.return_value = {"status": "success"}
+            mock_response.json = AsyncMock(return_value={"status": "success"})
+            mock_response.aread = AsyncMock()
+            mock_response.aclose = AsyncMock()
             mock_response.status_code = 200
             mock_response.headers = {}  # Add headers attribute to prevent AttributeError
             mock_client._client.request = AsyncMock(return_value=mock_response)
@@ -74,7 +76,9 @@ class TestAsyncClientMultipart:
         """Test _request_multipart with all possible parameters."""
         # Set up mock response
         mock_response = MagicMock()
-        mock_response.json.return_value = {"status": "success"}
+        mock_response.json = AsyncMock(return_value={"status": "success"})
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.status_code = 200
         mock_response.headers = {}  # Add headers attribute to prevent AttributeError
         mock_client._client.request = AsyncMock(return_value=mock_response)
@@ -119,7 +123,9 @@ class TestAsyncClientMultipart:
         """Test that request-specific headers override client defaults."""
         # Set up mock response
         mock_response = MagicMock()
-        mock_response.json.return_value = {"status": "success"}
+        mock_response.json = AsyncMock(return_value={"status": "success"})
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.status_code = 200  # Add status_code
         mock_response.headers = {}  # Add headers attribute to prevent AttributeError
         mock_client._client.request = AsyncMock(return_value=mock_response)
@@ -144,7 +150,9 @@ class TestAsyncClientMultipart:
         """Test _request_multipart with different file formats."""
         # Set up mock response
         mock_response = MagicMock()
-        mock_response.json.return_value = {"status": "success"}
+        mock_response.json = AsyncMock(return_value={"status": "success"})
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.status_code = 200  # Add status_code
         mock_response.headers = {}  # Add headers attribute to prevent AttributeError
         mock_client._client.request = AsyncMock(return_value=mock_response)
@@ -175,7 +183,9 @@ class TestAsyncClientMultipart:
         """Test _request_multipart with file-like objects."""
         # Set up mock response
         mock_response = MagicMock()
-        mock_response.json.return_value = {"status": "success"}
+        mock_response.json = AsyncMock(return_value={"status": "success"})
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.status_code = 200  # Add status_code
         mock_response.headers = {}  # Add headers attribute to prevent AttributeError
         mock_client._client.request = AsyncMock(return_value=mock_response)
@@ -199,7 +209,9 @@ class TestAsyncClientMultipart:
         with caplog.at_level(logging.DEBUG):
             # Set up mock response
             mock_response = MagicMock()
-            mock_response.json.return_value = {"status": "success"}
+            mock_response.json = AsyncMock(return_value={"status": "success"})
+            mock_response.aread = AsyncMock()
+            mock_response.aclose = AsyncMock()
             mock_response.status_code = 200  # Add status_code
             mock_response.headers = {}  # Add headers attribute to prevent AttributeError
             mock_client._client.request = AsyncMock(return_value=mock_response)
@@ -224,7 +236,9 @@ class TestAsyncClientMultipart:
         mock_request.method = "POST"
         mock_request.url = httpx.URL("https://api.venice.ai/api/v1/upload")
         mock_response.request = mock_request
-        mock_response.json.return_value = {"error": "Bad request", "code": "invalid_file"}
+        mock_response.json = AsyncMock(return_value={"error": "Bad request", "code": "invalid_file"})
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.text = '{"error": "Bad request", "code": "invalid_file"}'
         mock_response.headers = {}  # Add headers attribute to prevent AttributeError
         mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
@@ -257,7 +271,9 @@ class TestAsyncClientMultipart:
         mock_response.request = mock_request
         mock_response.text = "Internal Server Error"
         mock_response.headers = {}  # Add headers attribute to prevent AttributeError
-        mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
+        mock_response.json = AsyncMock(side_effect=json.JSONDecodeError("Invalid JSON", "", 0))
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
             "500 Internal Server Error",
             request=mock_response.request,
@@ -322,7 +338,9 @@ class TestAsyncClientMultipart:
         """Test _request_multipart with empty files dict."""
         # Set up mock response
         mock_response = MagicMock()
-        mock_response.json.return_value = {"status": "success"}
+        mock_response.json = AsyncMock(return_value={"status": "success"})
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.status_code = 200  # Add status_code
         mock_response.headers = {}  # Add headers attribute to prevent AttributeError
         mock_client._client.request = AsyncMock(return_value=mock_response)
@@ -341,7 +359,9 @@ class TestAsyncClientMultipart:
         """Test _request_multipart with only files, no data."""
         # Set up mock response
         mock_response = MagicMock()
-        mock_response.json.return_value = {"status": "success"}
+        mock_response.json = AsyncMock(return_value={"status": "success"})
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.status_code = 200  # Add status_code
         mock_response.headers = {}  # Add headers attribute to prevent AttributeError
         mock_client._client.request = AsyncMock(return_value=mock_response)
@@ -362,7 +382,9 @@ class TestAsyncClientMultipart:
         """Test _request_multipart with no URL parameters."""
         # Set up mock response
         mock_response = MagicMock()
-        mock_response.json.return_value = {"status": "success"}
+        mock_response.json = AsyncMock(return_value={"status": "success"})
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.status_code = 200  # Add status_code
         mock_response.headers = {}  # Add headers attribute to prevent AttributeError
         mock_client._client.request = AsyncMock(return_value=mock_response)
@@ -384,7 +406,9 @@ class TestAsyncClientMultipart:
         with caplog.at_level(logging.DEBUG):
             # Set up mock response with specific attributes for logging
             mock_response = MagicMock()
-            mock_response.json.return_value = {"key": "value"}
+            mock_response.json = AsyncMock(return_value={"key": "value"})
+            mock_response.aread = AsyncMock()
+            mock_response.aclose = AsyncMock()
             mock_response.text = '{"key": "value"}'
             mock_response.status_code = 200
             mock_response.headers = {"Content-Type": "application/json"}

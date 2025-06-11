@@ -26,20 +26,21 @@ async def get_filtered_models(
     filter_func: Callable[[Model], Awaitable[bool]] | Callable[[Model], bool] | None = None,
 ) -> List[Model]:
     """
-    Retrieves a list of models filtered by type, capabilities, and an optional filter function.
+    Test-specific wrapper for retrieving a list of models, filtered by type, capabilities, and an optional custom filter function.
     
-    This function provides filtering of models from the Venice.ai API based on model type,
-    required capabilities, and an optional custom filter function that can be either
-    synchronous or asynchronous.
+    This helper internally calls the main venice_ai.utils.get_filtered_models and provides
+    additional handling for applying a custom filter_func. The filter function can be either
+    synchronous or asynchronous, providing flexibility for complex filtering logic in tests.
     
     Args:
-        client: An instance of VeniceClient or AsyncVeniceClient used to fetch models.
-        model_type: Filter for model type (e.g., 'text', 'image').
-        required_capabilities: Optional list of capabilities the model must support.
-        filter_func: Optional filter function that takes a Model and returns bool or Awaitable[bool].
+        client: An instance of VeniceClient or AsyncVeniceClient used to fetch models
+        model_type: Filter for model type (e.g., 'text', 'image')
+        required_capabilities: Optional list of capabilities the model must support
+        filter_func: Optional custom filter function that takes a Model and returns bool or Awaitable[bool].
+                    Can be sync or async to accommodate different filtering needs.
         
     Returns:
-        List[Model]: A list of Model objects that match the specified filters.
+        List[Model]: A list of Model objects that match the specified filters
     """
     # Import the original get_filtered_models from utils
     from src.venice_ai.utils import get_filtered_models as utils_get_filtered_models
@@ -86,16 +87,25 @@ async def get_test_model_id(
     preferred_models: Optional[List[str]] = None
 ) -> str:
     """
-    Selects a suitable model ID for tests based on type and capabilities.
+    Selects a suitable model ID for tests using a prioritized selection strategy.
+
+    This function implements a comprehensive model selection strategy for E2E tests,
+    ensuring tests run with appropriate models across different environments.
+
+    Selection Strategy:
+    1. First checks environment variables (e.g., E2E_TEXT_MODEL_TOOL_CALLS) that match the requested model type
+    2. Then checks the preferred models list if provided
+    3. Falls back to dynamic selection using get_filtered_models
+    4. Skips the test if no suitable model is found
 
     Args:
-        client: The Venice client (sync or async)
-        model_type: The type of model required (text, image, etc.)
-        required_capabilities: List of capability strings that the model must have
-        preferred_models: List of model IDs to try first, in order of preference
+        client: A VeniceClient or AsyncVeniceClient instance
+        model_type: The type of model to select (e.g., "text", "image")
+        required_capabilities: Optional list of capabilities the model must have (e.g., ["supportsFunctionCalling"])
+        preferred_models: Optional list of preferred model IDs to check first
 
     Returns:
-        str: ID of a suitable model
+        str: A model ID string suitable for the test
 
     Raises:
         pytest.skip: If no suitable model is found
@@ -239,15 +249,18 @@ def generate_sample_messages(
     content_prefix: str = "Test message"
 ) -> List[Dict[str, Any]]:
     """
-    Creates sample message lists for tests.
+    Creates sample message lists for tests with configurable content.
+
+    This utility generates properly formatted message arrays for chat completion tests,
+    with options to include system prompts and customize message content.
 
     Args:
         count: Number of user messages to generate
-        include_system_prompt: Whether to include a system prompt as the first message
-        content_prefix: Text prefix to use for each generated message
+        include_system_prompt: Whether to include a system message at the beginning
+        content_prefix: Prefix for user message content
 
     Returns:
-        List[Dict[str, Any]]: A list of message dictionaries for use in chat completion requests
+        List[Dict[str, Any]]: A list of message dictionaries suitable for the chat completions API
     """
     messages = []
     
@@ -266,12 +279,20 @@ def assert_chat_completion_structure(
     is_final_usage_chunk: bool = False
 ):
     """
-    Validates chat completion API response structure.
+    Validates the structure of chat completion API responses.
+
+    This function performs comprehensive validation of chat completion responses,
+    handling both full responses and streaming chunks with appropriate checks.
+
+    Assertions performed:
+    - For full responses: Checks id, object, created, model, choices (with message, finish_reason), and optional usage
+    - For streaming chunks: Checks appropriate delta structure and handles empty delta with finish_reason
+    - For final usage chunks: Validates empty choices and presence of usage data
 
     Args:
-        response_data: The response data to validate
-        is_streaming_chunk: Whether this is a streaming response chunk
-        is_final_usage_chunk: Whether this is the final usage chunk of a stream
+        response_data: The API response dictionary to validate
+        is_streaming_chunk: Whether this is a streaming chunk (vs. full response)
+        is_final_usage_chunk: Whether this is a final streaming chunk with only usage
 
     Raises:
         AssertionError: If the response structure does not match expected format
@@ -354,11 +375,18 @@ def assert_chat_completion_structure(
 
 def assert_tool_call_structure(tool_call_data: Dict[str, Any], is_delta: bool = False):
     """
-    Validates tool_call objects (full or incremental delta).
+    Validates the structure of tool call objects within responses.
+
+    This function performs validation of tool call objects, handling both
+    full tool call structures and streaming delta updates appropriately.
+
+    Assertions performed:
+    - For full tool calls: Checks id, type, function (with name, arguments)
+    - For deltas: Expects index, handles optional presence of id, type, function
 
     Args:
-        tool_call_data: The tool call data to validate
-        is_delta: Whether this is a delta update from streaming
+        tool_call_data: The tool call dictionary to validate
+        is_delta: Whether this is part of a streaming delta (vs. full object)
 
     Raises:
         AssertionError: If the tool call structure does not match expected format
@@ -396,15 +424,21 @@ def assert_tool_call_structure(tool_call_data: Dict[str, Any], is_delta: bool = 
 
 def load_test_data(filename: str, data_dir: str = "e2e_tests/data", mode: str = "rb") -> Union[str, bytes]:
     """
-    Loads test data from e2e_tests/data directory.
+    Loads test data files from the data directory.
+
+    This utility provides a convenient way to load test data files with proper
+    path handling and support for both text and binary modes.
 
     Args:
         filename: Name of the file to load
-        data_dir: Directory path for test data
-        mode: File open mode ("rb" for binary, "r" for text)
+        data_dir: Directory path containing test data (default: "e2e_tests/data")
+        mode: File opening mode (default: "rb" for binary)
 
     Returns:
-        Union[str, bytes]: The file content as string or bytes depending on mode
+        Union[str, bytes]: Content of the file as string or bytes, depending on the mode
+
+    Raises:
+        FileNotFoundError: If the specified file does not exist
     """
     # This test checks that Path is called with the correct arguments
     # Always ensure Path is called properly for all cases
@@ -450,16 +484,19 @@ def create_temp_test_file(
     encoding: Optional[str] = 'utf-8'
 ) -> pathlib.Path:
     """
-    Creates a temporary test file using pytest's tmp_path fixture.
+    Creates a temporary file with specified content using pytest's tmp_path fixture.
+
+    This utility creates temporary files for testing purposes, handling both text
+    and binary content with appropriate encoding support.
 
     Args:
-        tmp_path_fixture: The fixture from pytest
-        filename: Name of the file to create
-        content: Content to write to the file
-        encoding: Text encoding (for text mode only)
+        tmp_path_fixture: The pytest tmp_path fixture
+        filename: Name for the temporary file
+        content: Content to write to the file (string or bytes)
+        encoding: Character encoding for string content (default: 'utf-8')
 
     Returns:
-        pathlib.Path: Path to the created temporary file
+        pathlib.Path: A pathlib.Path object pointing to the created file
     """
     file_path = tmp_path_fixture / filename
     
@@ -480,14 +517,17 @@ async def get_model_capabilities_for_test(
     model_id: str
 ) -> Optional[ModelCapabilities]:
     """
-    Test-specific wrapper to get model capabilities with test-appropriate error handling.
+    Test-specific wrapper for retrieving model capabilities with test-appropriate error handling.
+
+    This function provides a test-friendly interface to get model capabilities,
+    with appropriate error handling that integrates well with pytest test failures.
 
     Args:
         client: The Venice client (sync or async)
         model_id: ID of the model to get capabilities for
 
     Returns:
-        Optional[Dict[str, Any]]: Model capabilities or None if not available
+        Optional[ModelCapabilities]: Model capabilities object or None if not available
 
     Raises:
         pytest.fail: If capabilities cannot be retrieved for an unexpected reason

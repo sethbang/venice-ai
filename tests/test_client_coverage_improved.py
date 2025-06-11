@@ -354,5 +354,5 @@ class TestClientContextManager:
         with VeniceClient(api_key="test-api-key", http_client=custom_client) as client:
             assert client._client is custom_client
         
-        # Verify client was closed on exit
-        custom_client.close.assert_called_once()
+        # Verify the user-provided client was NOT closed on exit
+        custom_client.close.assert_not_called()

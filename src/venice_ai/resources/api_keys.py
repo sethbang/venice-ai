@@ -247,9 +247,10 @@ class ApiKeys(APIResource):
                     client.api_keys.delete(api_key_id=test_key.id)
                     print(f"Deleted test key: {test_key.id}")
         """
-        # Construct the URL path with the API key ID
-        path = f"api_keys/{api_key_id}"
-        return cast(Dict[str, Any], self._client.delete(path))
+        # Construct the URL with the API key ID as a query parameter
+        path = "api_keys"
+        params = {"id": api_key_id}
+        return cast(Dict[str, Any], self._client.delete(path, params=params))
 
     def retrieve(
         self,
@@ -283,8 +284,19 @@ class ApiKeys(APIResource):
                 print(f"Key description: {key_details['description']}")
                 print(f"Created at: {key_details['createdAt']}")
         """
-        path = f"api_keys/{api_key_id}"
-        return cast(Dict[str, Any], self._client.get(path))
+        path = "api_keys"
+        params = {"id": api_key_id}
+        response = self._client.get(path, params=params)
+        if isinstance(response, dict) and "data" in response and isinstance(response["data"], list) and len(response["data"]) > 0:
+            return cast(Dict[str, Any], response["data"][0])
+        # If the structure is not as expected, or data is empty,
+        # this will either raise an error in _client.get or return an unexpected structure.
+        # For now, we assume _client.get handles 404s by raising NotFoundError.
+        # If data is empty, it implies not found or an issue.
+        # Consider raising NotFoundError explicitly if response["data"] is empty.
+        return cast(Dict[str, Any], response) # Fallback, though ideally an error or specific handling.
+        return cast(Dict[str, Any], self._client.get(path, params=params))
+        return cast(Dict[str, Any], self._client.get(path, params=params))
 
     def get_web3_token(self) -> ApiKeyGenerateWeb3KeyGetResponse:
         """
@@ -652,9 +664,10 @@ class AsyncApiKeys(AsyncAPIResource):
                     await client.api_keys.delete(api_key_id=test_key.id)
                     print(f"Deleted test key: {test_key.id}")
         """
-        # Construct the URL path with the API key ID
-        path = f"api_keys/{api_key_id}"
-        return cast(Dict[str, Any], await self._client.delete(path))
+        # Construct the URL with the API key ID as a query parameter
+        path = "api_keys"
+        params = {"id": api_key_id}
+        return cast(Dict[str, Any], await self._client.delete(path, params=params))
 
     async def retrieve(
         self,
@@ -688,8 +701,16 @@ class AsyncApiKeys(AsyncAPIResource):
                 print(f"Key description: {key_details['description']}")
                 print(f"Created at: {key_details['createdAt']}")
         """
-        path = f"api_keys/{api_key_id}"
-        return cast(Dict[str, Any], await self._client.get(path))
+        path = "api_keys"
+        params = {"id": api_key_id}
+        response = await self._client.get(path, params=params)
+        if isinstance(response, dict) and "data" in response and isinstance(response["data"], list) and len(response["data"]) > 0:
+            return cast(Dict[str, Any], response["data"][0])
+        # Similar to sync: handle cases where data might be empty or response malformed.
+        return cast(Dict[str, Any], response) # Fallback
+        path = "api_keys"
+        params = {"id": api_key_id}
+        return cast(Dict[str, Any], await self._client.get(path, params=params))
 
     async def get_web3_token(self) -> ApiKeyGenerateWeb3KeyGetResponse:
         """

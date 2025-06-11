@@ -153,3 +153,5 @@ examples/factcheck-bench/factm-answers.json
 examples/factcheck-bench/factm.json
 api.xml
 local/
+venice-ai-streamlit-demo/
+venice_ai_test_runs/

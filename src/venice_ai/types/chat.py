@@ -1,13 +1,14 @@
 """
 Type definitions for Venice AI Chat Completions API.
 
-This module contains TypedDict definitions for request and response objects
-in the Venice AI Chat Completions API, including support for tools, tool calls,
-log probabilities, and streaming.
+This module contains Pydantic models for response objects and TypedDict definitions
+for request objects in the Venice AI Chat Completions API, including support for
+tools, tool calls, log probabilities, and streaming.
 """
 
 from typing import Optional, List, Dict, Any, Union, Literal, Sequence, Protocol, TypeVar
 from typing_extensions import TypedDict, NotRequired
+from pydantic import BaseModel, Field
 
 __all__ = [
     "FunctionDefinition", "Tool", "ToolChoiceFunction", "ToolChoiceObject", "ToolChoice",
@@ -34,430 +35,194 @@ class ChunkModelFactory(Protocol[_ChunkModelT]):
         ...
 
 
-# --- Tool and Function Types ---
+# --- Tool and Function Types (Request-related: TypedDict) ---
 
 class FunctionDefinition(TypedDict):
     """
     Defines the structure and parameters of a function that can be called by the model.
-    
-    This class represents the schema for function definitions used in tool calling,
-    providing the model with information about available functions, their parameters,
-    and descriptions. Used as part of the :class:`Tool` definition in chat completion
-    requests to enable function calling capabilities.
-    
-    The function definition follows JSON Schema conventions for parameter specification,
-    allowing the model to understand the expected input format and generate appropriate
-    function calls during conversation.
     """
-    
     name: str
-    """The name of the function to be called."""
     description: NotRequired[str]
-    """Optional. A description of what the function does."""
     parameters: NotRequired[Dict[str, Any]]
-    """Optional. The parameters the function accepts, described as a JSON Schema object."""
 
 
 class Tool(TypedDict):
     """
     Represents a tool that the model can invoke during chat completion.
-    
-    This class defines the structure for tools available to the model, currently
-    supporting function-type tools. Used in chat completion requests to specify
-    which functions the model can call to extend its capabilities beyond text
-    generation, such as retrieving information, performing calculations, or
-    interacting with external systems.
-    
-    Tools are provided to the model via the ``tools`` parameter in chat completion
-    requests and can be controlled using the ``tool_choice`` parameter.
     """
-    
     type: Literal["function"]
-    """The type of the tool. Currently, only "function" is supported."""
     function: FunctionDefinition
-    """The definition of the function."""
     id: NotRequired[str]
-    """Optional. A unique identifier for the tool."""
 
 
 class ToolChoiceFunction(TypedDict):
     """
     Specifies a particular function to be called when using structured tool choice.
-    
-    This class is used within :class:`ToolChoiceObject` to force the model to call
-    a specific function rather than allowing it to choose between available tools
-    or generating a regular text response. Provides precise control over model
-    behavior when function calling is required.
     """
-    
     name: str
-    """The name of the function."""
 
 
 class ToolChoiceObject(TypedDict):
     """
     Defines the object form of tool choice specification for forcing specific tool usage.
-    
-    This class represents the structured way to specify that the model must call
-    a particular tool, rather than using string literals like "auto" or "none".
-    Used in chat completion requests when you need to ensure the model calls a
-    specific function rather than generating a text response or choosing from
-    multiple available tools.
     """
-    
     type: Literal["function"]
-    """The type of the tool choice. Must be "function"."""
     function: ToolChoiceFunction
-    """The specific function to force the model to call."""
 
 
-# ToolChoice can be a string literal or an object
 ToolChoice = Union[Literal["none", "auto"], ToolChoiceObject]
 
 
 # --- Message and Tool Call Types ---
 
-class ToolCallFunction(TypedDict):
+class ToolCallFunction(BaseModel):
     """
-    Contains the details of a function call made by the model.
-    
-    This class represents the specific function that was called by the model,
-    including the function name and the arguments provided. The arguments are
-    serialized as a JSON string and need to be parsed by the client application
-    to extract the actual parameter values for function execution.
-    
-    Used within :class:`ToolCall` to provide complete information about model-
-    generated function calls in chat completion responses.
+    Contains the details of a function call made by the model. (Response DTO)
     """
-    
     name: str
-    """The name of the function that was called."""
     arguments: str
-    """The arguments to call the function with, as a JSON string."""
 
-
-class ToolCall(TypedDict):
+class ToolCall(BaseModel):
     """
-    Represents a complete tool call made by the model during chat completion.
-    
-    This class encapsulates all information about a tool invocation, including
-    a unique identifier, the tool type, and the specific function details.
-    Appears in chat completion responses when the model decides to call a tool
-    rather than generate text content.
-    
-    Tool calls can be used by client applications to execute the requested
-    functions and provide results back to the model in subsequent messages.
+    Represents a complete tool call made by the model during chat completion. (Response DTO)
     """
-    
     id: str
-    """The ID of the tool call."""
     type: Literal["function"]
-    """The type of the tool called. Currently, only "function" is supported."""
     function: ToolCallFunction
-    """The details of the function call."""
 
 
-class MessageParam(TypedDict):
+class MessageParam(TypedDict): # Request DTO
     """
-    Defines the structure of a message in a chat conversation.
-    
-    This class represents a single message within a chat completion request,
-    supporting different roles (system, user, assistant) and various content
-    types. Used to build conversation history and provide context to the model
-    for generating appropriate responses.
-    
-    The content field supports multiple formats: plain text strings for simple
-    messages, structured content blocks for multimodal inputs (such as images),
-    and None for special cases like tool response messages.
+    Defines the structure of a message in a chat conversation for requests.
     """
-    
     role: Literal["system", "user", "assistant"]
-    """The role of the author of this message. 'system' sets the assistant's behavior, 'user' represents the human input, 'assistant' represents the AI's response."""
     content: Union[str, Sequence[Dict[str, Any]], None]
-    """The contents of the message. Can be a string for text, a list of content blocks for multimodal inputs (such as images), or None for special cases like tool response messages."""
 
 
-class ChatCompletionMessage(MessageParam):
+class ChatCompletionMessage(BaseModel): # Response DTO
     """
     Represents a message returned by the model in a chat completion response.
-    
-    This class extends :class:`MessageParam` to include additional fields that
-    may be present in model-generated messages, particularly tool calls. Used
-    in chat completion responses to represent the model's output, which may
-    include both text content and function calls.
-    
-    When the model generates tool calls, the content may be None and the tool
-    calls will be specified in the ``tool_calls`` field.
     """
-    
-    tool_calls: NotRequired[List[ToolCall]]
-    """Optional. A list of tool calls generated by the model, if any."""
+    role: Literal["system", "user", "assistant"]
+    content: Union[str, Sequence[Dict[str, Any]], None] = None # Content can be None if tool_calls is present
+    tool_calls: Optional[List[ToolCall]] = Field(default=None)
 
 
-# --- Logprobs Types ---
+# --- Logprobs Types (Response DTOs) ---
 
-class ChatCompletionTopLogprob(TypedDict):
+class ChatCompletionTopLogprob(BaseModel):
     """
     Represents log probability information for alternative tokens at a specific position.
-    
-    This class provides detailed information about token alternatives that the model
-    considered at a particular position in the generated text. Used within log
-    probability analysis to understand the model's confidence and decision-making
-    process during text generation.
-    
-    Appears in the ``top_logprobs`` field of :class:`ChatCompletionTokenLogprob`
-    when detailed probability information is requested via the ``top_logprobs``
-    parameter in chat completion requests.
     """
-    
     token: str
-    """The token."""
     logprob: float
-    """The log probability of this token."""
-    bytes: NotRequired[List[int]]
-    """Optional. A list of integers representing the UTF-8 bytes representation of the token. Useful in instances where characters are represented by multiple tokens."""
+    bytes: Optional[List[int]] = Field(default=None)
 
 
-class ChatCompletionTokenLogprob(TypedDict):
+class ChatCompletionTokenLogprob(BaseModel):
     """
     Contains comprehensive log probability information for a single token.
-    
-    This class provides detailed probability information for each token in the
-    model's output, including the token itself, its log probability, and
-    optionally the most likely alternative tokens at that position. Used for
-    analyzing model confidence and understanding the generation process.
-    
-    Available in chat completion responses when log probabilities are requested
-    via the ``logprobs`` parameter, enabling detailed analysis of model behavior
-    and uncertainty quantification.
     """
-    
     token: str
-    """The token."""
     logprob: float
-    """The log probability of this token."""
-    bytes: NotRequired[List[int]]
-    """Optional. A list of integers representing the UTF-8 bytes representation of the token."""
-    top_logprobs: NotRequired[List[ChatCompletionTopLogprob]]
-    """Optional. A list of the most likely tokens and their log probabilities at this token position."""
+    bytes: Optional[List[int]] = Field(default=None)
+    top_logprobs: Optional[List[ChatCompletionTopLogprob]] = Field(default=None)
 
 
-class ChatCompletionChoiceLogprobs(TypedDict):
+class ChatCompletionChoiceLogprobs(BaseModel):
     """
     Aggregates log probability information for all tokens in a completion choice.
-    
-    This class contains the complete log probability data for a chat completion
-    choice, providing token-level probability information for the entire generated
-    response. Used for detailed analysis of model confidence and generation
-    patterns across the full output.
-    
-    Appears in :class:`ChatCompletionChoice` when log probabilities are requested,
-    enabling comprehensive analysis of the model's decision-making process
-    throughout the generation.
     """
-    
-    content: NotRequired[List[ChatCompletionTokenLogprob]]
-    """Optional. A list of log probability information for each token in the generated content."""
+    content: Optional[List[ChatCompletionTokenLogprob]] = Field(default=None)
 
 
-# --- Response Types ---
+# --- Response Types (Response DTOs) ---
 
-class UsageData(TypedDict):
+class UsageData(BaseModel):
     """
     Provides token usage statistics for a chat completion request.
-    
-    This class tracks the computational cost of a chat completion by counting
-    tokens used in the prompt, generated in the completion, and the total
-    consumption. Essential for monitoring API usage, cost calculation, and
-    understanding the efficiency of different prompting strategies.
-    
-    Appears in chat completion responses and optionally in streaming responses
-    when usage tracking is enabled, providing transparency into resource
-    consumption for each API call.
     """
-    
     prompt_tokens: int
-    """Number of tokens in the prompt."""
     completion_tokens: int
-    """Number of tokens in the generated completion."""
     total_tokens: int
-    """Total number of tokens used in the request (prompt + completion)."""
 
 
-class ChatCompletionChoice(TypedDict):
+class ChatCompletionChoice(BaseModel):
     """
     Represents a single completion choice generated by the model.
-    
-    This class encapsulates one possible response from the model, including the
-    generated message, completion metadata, and optional probability information.
-    Multiple choices can be generated when the ``n`` parameter is greater than 1,
-    allowing comparison of different model outputs for the same input.
-    
-    Each choice includes information about why the model stopped generating
-    (finish reason) and optionally detailed log probability data for analysis
-    of model confidence and decision-making.
     """
-    
     index: int
-    """The index of the choice in the list of choices."""
     message: ChatCompletionMessage
-    """A chat completion message generated by the model."""
-    finish_reason: Optional[Literal["stop", "length", "tool_calls"]]
-    """The reason the model stopped generating tokens. This will be `stop` if the model hit a natural stop point or a provided stop sequence,
-    `length` if the maximum number of tokens specified in the request was reached, or `tool_calls` if the model called a tool."""
-    logprobs: NotRequired[ChatCompletionChoiceLogprobs]
-    """Optional. Log probability information for the choice."""
+    finish_reason: Optional[Literal["stop", "length", "tool_calls"]] = None
+    logprobs: Optional[ChatCompletionChoiceLogprobs] = Field(default=None)
 
 
-class ChatCompletion(TypedDict):
+class ChatCompletion(BaseModel):
     """
     Represents the complete response from a chat completion request.
-    
-    This class encapsulates the full response from the Venice AI chat completions
-    endpoint, including metadata about the completion, all generated choices,
-    usage statistics, and optional additional features like web search citations.
-    
-    Used as the return type for non-streaming chat completion requests, providing
-    all information needed to process the model's response, track usage, and
-    handle any additional features that were enabled during the request.
     """
-    
     id: str
-    """A unique identifier for the chat completion."""
     object: Literal["chat.completion"]
-    """The object type, which is always `chat.completion`."""
     created: int
-    """The Unix timestamp (in seconds) of when the chat completion was created."""
     model: str
-    """The model used for the chat completion."""
     choices: List[ChatCompletionChoice]
-    """A list of chat completion choices. Can be more than one if `n` is greater than 1."""
-    usage: Optional[UsageData]
-    """Optional. Usage statistics for the completion request."""
-    web_search_citations: NotRequired[List[Any]]
-    """Optional. Citations for web search results, if web search was enabled for the request."""
-    system_fingerprint: NotRequired[str]
-    """Optional. This fingerprint represents the backend configuration that the model runs with.
-    You can use this value to track changes in the backend configuration that may impact results."""
+    usage: Optional[UsageData] = Field(default=None)
+    web_search_citations: Optional[List[Any]] = Field(default=None)
+    system_fingerprint: Optional[str] = Field(default=None)
 
 
-# --- Streaming Types ---
+# --- Streaming Types (Response DTOs) ---
 
-class ChatCompletionChunkToolCallFunction(TypedDict, total=False):
+class ChatCompletionChunkToolCallFunction(BaseModel):
     """
     Represents function call details within a streaming chat completion chunk.
-    
-    This class provides incremental function call information during streaming
-    responses, where function arguments may be built up progressively across
-    multiple chunks. The arguments field may contain partial JSON strings that
-    need to be accumulated and parsed once the function call is complete.
-    
-    Used within :class:`ChatCompletionChunkToolCall` to provide real-time
-    updates about function calls as they are generated by the model during
-    streaming responses.
+    Fields are optional as they arrive incrementally.
     """
-    
-    name: str
-    """The name of the function."""
-    arguments: str
-    """The arguments to the function, which may be a partial JSON string during streaming."""
+    name: Optional[str] = Field(default=None)
+    arguments: Optional[str] = Field(default=None)
 
 
-class ChatCompletionChunkToolCall(TypedDict, total=False):
+class ChatCompletionChunkToolCall(BaseModel):
     """
     Represents an incremental tool call within a streaming chat completion chunk.
-    
-    This class provides progressive updates about tool calls during streaming
-    responses, allowing clients to process function calls as they are generated
-    rather than waiting for the complete response. Tool call information may
-    be spread across multiple chunks and needs to be accumulated.
-    
-    Used within :class:`ChatCompletionChunkChoiceDelta` to provide real-time
-    tool call updates during streaming chat completions.
+    Fields are optional as they arrive incrementally.
     """
-    
-    id: str
-    """The ID of the tool call."""
-    type: Literal["function"]
-    """The type of the tool call. Currently, only `function` is supported."""
-    function: ChatCompletionChunkToolCallFunction
-    """The details of the function call."""
+    id: Optional[str] = Field(default=None) # ID should be present once the tool call starts
+    type: Optional[Literal["function"]] = Field(default=None)
+    function: Optional[ChatCompletionChunkToolCallFunction] = Field(default=None)
+    index: Optional[int] = Field(default=None) # OpenAI includes index for parallel tool calls in chunks
 
 
-class ChatCompletionChunkChoiceDelta(TypedDict, total=False):
+class ChatCompletionChunkChoiceDelta(BaseModel):
     """
     Contains the incremental changes for a choice in a streaming chat completion.
-    
-    This class represents the delta (incremental update) for a single choice
-    during streaming responses, containing new content, role information, and
-    tool call updates. Each chunk provides only the new information since the
-    last chunk, requiring accumulation to build the complete response.
-    
-    Used within :class:`ChatCompletionChunkChoice` to provide progressive
-    updates during streaming chat completions, enabling real-time processing
-    of model output as it is generated.
     """
-    
-    role: Literal["assistant"]
-    """The role of the author of this message, typically `assistant`."""
-    content: Optional[str]
-    """Optional. The incremental content of the delta message."""
-    tool_calls: NotRequired[List[ChatCompletionChunkToolCall]]
-    """Optional. A list of tool calls made by the model, if any. These are incremental during streaming."""
+    role: Optional[Literal["system", "user", "assistant", "tool"]] = Field(default=None) # Added tool role
+    content: Optional[str] = Field(default=None)
+    tool_calls: Optional[List[ChatCompletionChunkToolCall]] = Field(default=None)
 
 
-class ChatCompletionChunkChoice(TypedDict):
+class ChatCompletionChunkChoice(BaseModel):
     """
     Represents a single choice within a streaming chat completion chunk.
-    
-    This class encapsulates one choice's incremental updates during streaming
-    responses, including the delta changes, completion metadata, and optional
-    log probability information. Multiple choices may be present when the ``n``
-    parameter is greater than 1.
-    
-    Each chunk choice provides incremental updates that must be accumulated
-    with previous chunks to build the complete response for that choice.
     """
-    
     index: int
-    """The index of the choice in the list of choices."""
     delta: ChatCompletionChunkChoiceDelta
-    """The incremental changes (delta) to the message content or tool calls."""
-    finish_reason: Optional[Literal["stop", "length", "tool_calls"]]
-    """The reason the model stopped generating tokens for this choice.
-    This will be `stop` if the model hit a natural stop point or a provided stop sequence,
-    `length` if the maximum number of tokens specified in the request was reached, or `tool_calls` if the model called a tool."""
-    logprobs: NotRequired[ChatCompletionChoiceLogprobs]
-    """Optional. Log probability information for the choice."""
+    finish_reason: Optional[Literal["stop", "length", "tool_calls"]] = None
+    logprobs: Optional[ChatCompletionChoiceLogprobs] = Field(default=None) # Typically not in chunks, but for completeness
 
 
-class ChatCompletionChunk(TypedDict):
+class ChatCompletionChunk(BaseModel):
     """
     Represents a single chunk in a streaming chat completion response.
-    
-    This class encapsulates one incremental update in a streaming chat completion,
-    containing delta information for all choices, metadata about the completion,
-    and optional usage statistics. Streaming responses consist of multiple chunks
-    that must be processed sequentially to build the complete response.
-    
-    Used as the unit of data in streaming chat completions, enabling real-time
-    processing of model output as it is generated, with each chunk providing
-    incremental updates to the overall response.
     """
-    
     id: str
-    """A unique identifier for the chat completion chunk."""
     object: Literal["chat.completion.chunk"]
-    """The object type, which is always `chat.completion.chunk`."""
     created: int
-    """The Unix timestamp (in seconds) of when the chat completion chunk was created."""
     model: str
-    """The model used for the chat completion."""
     choices: List[ChatCompletionChunkChoice]
-    """A list of chat completion choices. Can be more than one if `n` is greater than 1."""
-    usage: NotRequired[UsageData]
-    """Optional. An object describing the usage statistics for the completion request.
-    Only present if `stream_options.include_usage` is set to `true`."""
+    usage: Optional[UsageData] = Field(default=None) # Only if stream_options.include_usage is true
+    system_fingerprint: Optional[str] = Field(default=None)
 
 
 # --- Request Parameter Types ---

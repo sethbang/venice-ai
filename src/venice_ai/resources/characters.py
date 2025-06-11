@@ -1,7 +1,9 @@
-from typing import List
+from typing import Any, Dict, Optional
+import httpx
 
 from .._resource import APIResource, AsyncAPIResource
 from ..types.characters import CharacterList
+
 
 class Characters(APIResource):
     """
@@ -9,7 +11,7 @@ class Characters(APIResource):
     
     Characters represent pre-defined personalities or specialized AI assistants
     that can be referenced in chat completions requests. This resource provides
-    methods to list and interact with available characters.
+    methods to list available characters.
     
     :param client: The Venice AI client instance used for API requests.
     :type client: venice_ai._client.VeniceClient
@@ -19,14 +21,29 @@ class Characters(APIResource):
         The Characters API is currently in Preview and may change in future releases.
     """
     
-    def list(self) -> CharacterList:
+    def list(
+        self,
+        *,
+        extra_headers: Optional[httpx.Headers] = None,
+        extra_query: Optional[Dict[str, Any]] = None,
+        extra_body: Optional[Dict[str, Any]] = None,
+        timeout: Optional[float] = None,
+    ) -> CharacterList:
         """
-        Lists available characters.
+        List all characters.
 
         Retrieves a list of all characters usable with the Venice AI API.
         Each character includes details such as ID, name, and description.
 
-        :return: A paginated list of available characters.
+        :param extra_headers: Additional HTTP headers to include in the request.
+        :type extra_headers: Optional[httpx.Headers]
+        :param extra_query: Additional query parameters to include in the request.
+        :type extra_query: Optional[Dict[str, Any]]
+        :param extra_body: Additional body parameters to include in the request.
+        :type extra_body: Optional[Dict[str, Any]]
+        :param timeout: Request timeout in seconds.
+        :type timeout: Optional[float]
+        :return: A list of available characters.
         :rtype: :class:`~venice_ai.types.characters.CharacterList`
 
         :raises venice_ai.exceptions.APIError: If the API request fails.
@@ -36,23 +53,33 @@ class Characters(APIResource):
             .. code-block:: python
 
                 from venice_ai import VeniceClient
-                from venice_ai.types.characters import CharacterList
                 
                 client = VeniceClient(api_key="your-api-key")
                 characters_response = client.characters.list()
                 for character in characters_response.data:
-                    print(f"Character ID: {character.id}, Name: {character.name}")
+                    print(f"Character ID: {character.slug}, Name: {character.name}")
         """
-        response = self._client.get(
-            "/characters",
-        )
-        return CharacterList(**response)
+        headers = {}
+        if extra_headers:
+            headers.update(extra_headers)
+        
+        params = {}
+        if extra_query:
+            params.update(extra_query)
+            
+        return CharacterList.model_validate(self._client.get(
+            "characters",
+            headers=headers if headers else None,
+            params=params if params else None,
+            timeout=timeout,
+        ))
+
 
 class AsyncCharacters(AsyncAPIResource):
     """
     Provides methods for managing AI character definitions asynchronously.
     
-    Provides asynchronous methods to list and interact with available characters.
+    Provides asynchronous methods to list available characters.
     This class mirrors the functionality of the synchronous :class:`Characters` resource
     but operates in an asynchronous context.
     
@@ -64,14 +91,29 @@ class AsyncCharacters(AsyncAPIResource):
         The Characters API is currently in Preview and may change in future releases.
     """
     
-    async def list(self) -> CharacterList:
+    async def list(
+        self,
+        *,
+        extra_headers: Optional[httpx.Headers] = None,
+        extra_query: Optional[Dict[str, Any]] = None,
+        extra_body: Optional[Dict[str, Any]] = None,
+        timeout: Optional[float] = None,
+    ) -> CharacterList:
         """
-        Lists available characters asynchronously.
+        List all characters asynchronously.
 
         Retrieves a list of all characters usable with the Venice AI API asynchronously.
         Each character includes details such as ID, name, and description.
 
-        :return: A paginated list of available characters.
+        :param extra_headers: Additional HTTP headers to include in the request.
+        :type extra_headers: Optional[httpx.Headers]
+        :param extra_query: Additional query parameters to include in the request.
+        :type extra_query: Optional[Dict[str, Any]]
+        :param extra_body: Additional body parameters to include in the request.
+        :type extra_body: Optional[Dict[str, Any]]
+        :param timeout: Request timeout in seconds.
+        :type timeout: Optional[float]
+        :return: A list of available characters.
         :rtype: :class:`~venice_ai.types.characters.CharacterList`
 
         :raises venice_ai.exceptions.APIError: If the API request fails.
@@ -82,18 +124,27 @@ class AsyncCharacters(AsyncAPIResource):
 
                 import asyncio
                 from venice_ai import AsyncVeniceClient
-                from venice_ai.types.characters import CharacterList
                 
                 async def main():
                     client = AsyncVeniceClient(api_key="your-api-key")
                     characters_response = await client.characters.list()
                     for character in characters_response.data:
-                        print(f"Character ID: {character.id}, Name: {character.name}")
+                        print(f"Character ID: {character.slug}, Name: {character.name}")
                     await client.close()
 
                 asyncio.run(main())
         """
-        response = await self._client.get(
-            "/characters",
-        )
-        return CharacterList(**response)
+        headers = {}
+        if extra_headers:
+            headers.update(extra_headers)
+        
+        params = {}
+        if extra_query:
+            params.update(extra_query)
+            
+        return CharacterList.model_validate(await self._client.get(
+            "characters",
+            headers=headers if headers else None,
+            params=params if params else None,
+            timeout=timeout,
+        ))

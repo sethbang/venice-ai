@@ -6,6 +6,7 @@ import os
 import pytest
 import httpx
 from venice_ai import VeniceClient, AsyncVeniceClient
+from venice_ai._client_with_retries import VeniceClientWithRetries, AsyncVeniceClientWithRetries
 from venice_ai.exceptions import VeniceError
 
 
@@ -19,7 +20,7 @@ def test_venice_client_init_with_api_key():
     if isinstance(client._timeout, float):
         assert client._timeout == 60.0
     # If it's an httpx.Timeout object, we just confirm it's set (detailed check not necessary for this test)
-    assert client._max_retries == 2
+    # Standard client doesn't have retry attributes - those are in VeniceClientWithRetries
     client.close()
 
 
@@ -47,8 +48,8 @@ def test_venice_client_init_with_custom_timeout():
 
 
 def test_venice_client_init_with_custom_max_retries():
-    """Test initializing VeniceClient with custom max retries."""
-    client = VeniceClient(api_key="test-api-key", max_retries=5)
+    """Test initializing VeniceClientWithRetries with custom max retries."""
+    client = VeniceClientWithRetries(api_key="test-api-key", max_retries=5)
     assert client._max_retries == 5
     client.close()
 
@@ -72,7 +73,7 @@ async def test_async_venice_client_init_with_api_key():
     if isinstance(client._timeout, float):
         assert client._timeout == 60.0
     # If it's an httpx.Timeout object, we just confirm it's set (detailed check not necessary for this test)
-    assert client._max_retries == 2
+    # Standard client doesn't have retry attributes - those are in AsyncVeniceClientWithRetries
     await client.close()
 
 
@@ -104,8 +105,8 @@ async def test_async_venice_client_init_with_custom_timeout():
 
 @pytest.mark.asyncio
 async def test_async_venice_client_init_with_custom_max_retries():
-    """Test initializing AsyncVeniceClient with custom max retries."""
-    client = AsyncVeniceClient(api_key="test-api-key", max_retries=5)
+    """Test initializing AsyncVeniceClientWithRetries with custom max retries."""
+    client = AsyncVeniceClientWithRetries(api_key="test-api-key", max_retries=5)
     assert client._max_retries == 5
     await client.close()
 

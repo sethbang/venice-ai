@@ -115,6 +115,7 @@ class Image(APIResource):
         height: Optional[int] = None,
         hide_watermark: Optional[bool] = None,
         lora_strength: Optional[int] = None,
+        num_images: Optional[int] = None,
         negative_prompt: Optional[str] = None,
         return_binary: Optional[bool] = None,
         safe_mode: Optional[bool] = None,
@@ -146,6 +147,8 @@ class Image(APIResource):
         :type hide_watermark: Optional[bool]
         :param lora_strength: Optional. Strength of LoRA model adaptation (0-100).
         :type lora_strength: Optional[int]
+        :param num_images: Optional. Number of images to generate (typically 1-10).
+        :type num_images: Optional[int]
         :param negative_prompt: Optional. Text describing what to avoid in the generated image.
         :type negative_prompt: Optional[str]
         :param return_binary: Optional. If ``True``, return raw image bytes instead of JSON response with base64 data.
@@ -198,6 +201,8 @@ class Image(APIResource):
             body["hide_watermark"] = hide_watermark
         if lora_strength is not None:
             body["lora_strength"] = lora_strength
+        if num_images is not None:
+            body["num_images"] = num_images
         if negative_prompt is not None:
             body["negative_prompt"] = negative_prompt
         if return_binary is not None:
@@ -226,7 +231,7 @@ class Image(APIResource):
             )
             return cast(bytes, response)  # This would be the raw bytes
         else:
-            response = self._client.post("image/generate", json_data=body)
+            response = self._client.post("image/generate", json_data=body, cast_to=ImageResponse)
             return cast(ImageResponse, response)
     
     def simple_generate(
@@ -322,7 +327,7 @@ class Image(APIResource):
         if user is not None:
             body["user"] = user
         
-        response = self._client.post("images/generations", json_data=body)
+        response = self._client.post("images/generations", json_data=body, cast_to=SimpleImageResponse)
         return cast(SimpleImageResponse, response)
     
     def upscale(
@@ -416,10 +421,10 @@ class Image(APIResource):
         if final_enhance_to_send is not None: # Only include if explicitly set or forced
             payload["enhance"] = final_enhance_to_send # Send as boolean
 
-        if enhance_creativity is not None:
-            payload["enhance_creativity"] = enhance_creativity # API expects number
-        if enhance_prompt is not None:
-            payload["enhance_prompt"] = enhance_prompt # Use the actual prompt string
+        # if enhance_creativity is not None: # Removed based on log error
+        #     payload["enhance_creativity"] = enhance_creativity # API expects number
+        # if enhance_prompt is not None: # Removed based on log error
+        #     payload["enhance_prompt"] = enhance_prompt # Use the actual prompt string
         if replication is not None:
             payload["replication"] = replication # API expects number
             
@@ -567,6 +572,7 @@ class AsyncImage(AsyncAPIResource):
         height: Optional[int] = None,
         hide_watermark: Optional[bool] = None,
         lora_strength: Optional[int] = None,
+        num_images: Optional[int] = None,
         negative_prompt: Optional[str] = None,
         return_binary: Optional[bool] = None,
         safe_mode: Optional[bool] = None,
@@ -599,6 +605,8 @@ class AsyncImage(AsyncAPIResource):
         :type hide_watermark: Optional[bool]
         :param lora_strength: Optional. Strength of LoRA model adaptation (0-100).
         :type lora_strength: Optional[int]
+        :param num_images: Optional. Number of images to generate (typically 1-10).
+        :type num_images: Optional[int]
         :param negative_prompt: Optional. Text describing what to avoid in the generated image.
         :type negative_prompt: Optional[str]
         :param return_binary: Optional. If ``True``, return raw image bytes instead of JSON response with base64 data.
@@ -651,6 +659,8 @@ class AsyncImage(AsyncAPIResource):
             body["hide_watermark"] = hide_watermark
         if lora_strength is not None:
             body["lora_strength"] = lora_strength
+        if num_images is not None:
+            body["num_images"] = num_images
         if negative_prompt is not None:
             body["negative_prompt"] = negative_prompt
         if return_binary is not None:
@@ -679,7 +689,7 @@ class AsyncImage(AsyncAPIResource):
             )
             return cast(bytes, response)  # This would be the raw bytes
         else:
-            response = await self._client.post("image/generate", json_data=body)
+            response = await self._client.post("image/generate", json_data=body, cast_to=ImageResponse)
             return cast(ImageResponse, response)
     
     async def simple_generate(
@@ -778,7 +788,7 @@ class AsyncImage(AsyncAPIResource):
         if user is not None:
             body["user"] = user
         
-        response = await self._client.post("images/generations", json_data=body)
+        response = await self._client.post("images/generations", json_data=body, cast_to=SimpleImageResponse)
         return cast(SimpleImageResponse, response)
     
     async def upscale(
@@ -866,10 +876,10 @@ class AsyncImage(AsyncAPIResource):
         if final_enhance_to_send_async is not None:
             payload["enhance"] = final_enhance_to_send_async # Send as boolean
 
-        if enhance_creativity is not None:
-            payload["enhance_creativity"] = enhance_creativity
-        if enhance_prompt is not None:
-            payload["enhance_prompt"] = enhance_prompt  # Use the actual prompt string
+        # if enhance_creativity is not None: # Removed based on log error
+        #     payload["enhance_creativity"] = enhance_creativity
+        # if enhance_prompt is not None: # Removed based on log error
+        #     payload["enhance_prompt"] = enhance_prompt  # Use the actual prompt string
         if replication is not None:
             payload["replication"] = replication
             

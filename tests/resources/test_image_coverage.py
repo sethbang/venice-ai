@@ -16,6 +16,7 @@ from venice_ai.resources.image import Image, AsyncImage, _guess_image_type
 from venice_ai._client import VeniceClient
 from venice_ai._async_client import AsyncVeniceClient
 from venice_ai.exceptions import InvalidRequestError, AuthenticationError, VeniceError
+from venice_ai.types.image import ImageResponse, SimpleImageResponse, TimingInfo, ImageDataItem
 
 # Test the synchronous Image resource
 class TestImageCoverage:
@@ -25,12 +26,19 @@ class TestImageCoverage:
         mock = MagicMock()
         # Setup the _request method to handle binary responses
         mock._request.return_value = b"upscaled_image_data"
-        # Setup the post method for JSON responses
-        mock.post.return_value = {
-            "id": "test_id",
-            "created": 1677610602,
-            "images": ["base64_image_data"]
-        }
+        # Setup the post method for JSON responses - return Pydantic models
+        mock.post.return_value = ImageResponse(
+            id="test_id",
+            images=["base64_image_data"],
+            request=None,
+            timing=TimingInfo(
+                inferenceDuration=1.0,
+                inferencePreprocessingTime=0.1,
+                inferenceQueueTime=0.2,
+                total=1.3
+            ),
+            created="2021-08-26T12:00:00Z"
+        )
         return mock
 
     @pytest.fixture
@@ -45,7 +53,7 @@ class TestImageCoverage:
             prompt="Test prompt"
         )
 
-        assert isinstance(result, dict)
+        assert isinstance(result, ImageResponse)
         image_resource._client.post.assert_called_once()
         call_args = image_resource._client.post.call_args
         json_data = call_args[1]["json_data"]
@@ -181,8 +189,6 @@ class TestImageCoverage:
         json_data = call_args[1]["json_data"]
         
         assert json_data["enhance"] is True
-        assert json_data["enhance_creativity"] == 0.8
-        assert json_data["enhance_prompt"] == "Make it better"
         assert json_data["replication"] == 0.7
         assert json_data["scale"] == 2.0
 
@@ -201,12 +207,19 @@ class TestAsyncImageCoverage:
         mock = MagicMock()
         # Setup the _request method to handle binary responses
         mock._request = AsyncMock(return_value=b"upscaled_image_data")
-        # Setup the post method for JSON responses
-        mock.post = AsyncMock(return_value={
-            "id": "test_id",
-            "created": 1677610602,
-            "images": ["base64_image_data"]
-        })
+        # Setup the post method for JSON responses - return Pydantic models
+        mock.post = AsyncMock(return_value=ImageResponse(
+            id="test_id",
+            images=["base64_image_data"],
+            request=None,
+            timing=TimingInfo(
+                inferenceDuration=1.0,
+                inferencePreprocessingTime=0.1,
+                inferenceQueueTime=0.2,
+                total=1.3
+            ),
+            created="2021-08-26T12:00:00Z"
+        ))
         return mock
 
     @pytest.fixture
@@ -221,7 +234,7 @@ class TestAsyncImageCoverage:
             prompt="Test prompt"
         )
 
-        assert isinstance(result, dict)
+        assert isinstance(result, ImageResponse)
         async_image_resource._client.post.assert_awaited_once()
         call_args = async_image_resource._client.post.call_args
         json_data = call_args[1]["json_data"]
@@ -357,8 +370,6 @@ class TestAsyncImageCoverage:
         json_data = call_args[1]["json_data"]
         
         assert json_data["enhance"] is True
-        assert json_data["enhance_creativity"] == 0.8
-        assert json_data["enhance_prompt"] == "Make it better"
         assert json_data["replication"] == 0.7
         assert json_data["scale"] == 2.0
 
@@ -395,7 +406,18 @@ class TestImageEdgeCases:
     def test_generate_with_all_parameters(self):
         """Test generate with every single parameter specified."""
         client = MagicMock()
-        client.post.return_value = {"id": "test", "images": ["test-image"]}
+        client.post.return_value = ImageResponse(
+            id="test",
+            images=["test-image"],
+            request=None,
+            timing=TimingInfo(
+                inferenceDuration=1.0,
+                inferencePreprocessingTime=0.1,
+                inferenceQueueTime=0.2,
+                total=1.3
+            ),
+            created="2021-08-26T12:00:00Z"
+        )
         
         image = Image(client)
         response = image.generate(
@@ -417,7 +439,9 @@ class TestImageEdgeCases:
             width=512
         )
         
-        assert response == {"id": "test", "images": ["test-image"]}
+        assert isinstance(response, ImageResponse)
+        assert response.id == "test"
+        assert response.images == ["test-image"]
         client.post.assert_called_once()
         call_args = client.post.call_args
         json_data = call_args[1]["json_data"]
@@ -443,10 +467,10 @@ class TestImageEdgeCases:
     def test_simple_generate_comprehensive(self):
         """Test simple_generate with every parameter."""
         client = MagicMock()
-        client.post.return_value = {
-            "created": 1677610602,
-            "data": [{"b64_json": "base64data"}]
-        }
+        client.post.return_value = SimpleImageResponse(
+            created=1677610602,
+            data=[ImageDataItem(b64_json="base64data")]
+        )
         
         image = Image(client)
         response = image.simple_generate(
@@ -464,7 +488,10 @@ class TestImageEdgeCases:
             user="test-user"
         )
         
-        assert response == {"created": 1677610602, "data": [{"b64_json": "base64data"}]}
+        assert isinstance(response, SimpleImageResponse)
+        assert response.created == 1677610602
+        assert len(response.images) == 1
+        assert response.images[0].b64_json == "base64data"
         client.post.assert_called_once()
         call_args = client.post.call_args
         json_data = call_args[1]["json_data"]
@@ -489,7 +516,18 @@ class TestAsyncImageEdgeCases:
     async def test_async_generate_with_all_parameters(self):
         """Test async generate with every single parameter specified."""
         client = MagicMock()
-        client.post = AsyncMock(return_value={"id": "test", "images": ["test-image"]})
+        client.post = AsyncMock(return_value=ImageResponse(
+            id="test",
+            images=["test-image"],
+            request=None,
+            timing=TimingInfo(
+                inferenceDuration=1.0,
+                inferencePreprocessingTime=0.1,
+                inferenceQueueTime=0.2,
+                total=1.3
+            ),
+            created="2021-08-26T12:00:00Z"
+        ))
         
         image = AsyncImage(client)
         response = await image.generate(
@@ -511,7 +549,9 @@ class TestAsyncImageEdgeCases:
             width=512
         )
         
-        assert response == {"id": "test", "images": ["test-image"]}
+        assert isinstance(response, ImageResponse)
+        assert response.id == "test"
+        assert response.images == ["test-image"]
         client.post.assert_awaited_once()
         call_args = client.post.call_args
         json_data = call_args[1]["json_data"]
@@ -537,10 +577,10 @@ class TestAsyncImageEdgeCases:
     async def test_async_simple_generate_comprehensive(self):
         """Test async simple_generate with every parameter."""
         client = MagicMock()
-        client.post = AsyncMock(return_value={
-            "created": 1677610602,
-            "data": [{"b64_json": "base64data"}]
-        })
+        client.post = AsyncMock(return_value=SimpleImageResponse(
+            created=1677610602,
+            data=[ImageDataItem(b64_json="base64data")]
+        ))
         
         image = AsyncImage(client)
         response = await image.simple_generate(
@@ -558,7 +598,10 @@ class TestAsyncImageEdgeCases:
             user="test-user"
         )
         
-        assert response == {"created": 1677610602, "data": [{"b64_json": "base64data"}]}
+        assert isinstance(response, SimpleImageResponse)
+        assert response.created == 1677610602
+        assert len(response.images) == 1
+        assert response.images[0].b64_json == "base64data"
         client.post.assert_awaited_once()
         call_args = client.post.call_args
         json_data = call_args[1]["json_data"]

@@ -27,6 +27,7 @@ class TestAPIErrorConstructor:
         # Create mock response with status code
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 429
+        mock_response.headers = {}
         
         # Initialize APIError directly
         error = APIError("Rate limit exceeded", response=mock_response)
@@ -45,6 +46,7 @@ class TestMakeStatusErrorBodyParsing:
         """Test _make_status_error with a body that's not a dictionary."""
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 400
+        mock_response.headers = {}
         
         # Test with a string body
         error = _make_status_error(None, body="This is a string", response=mock_response)
@@ -56,6 +58,7 @@ class TestMakeStatusErrorBodyParsing:
         """Test _make_status_error with a dict that doesn't have an 'error' key."""
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 400
+        mock_response.headers = {}
         
         body = {"message": "Invalid request", "code": "INVALID_REQUEST"}
         
@@ -68,6 +71,7 @@ class TestMakeStatusErrorBodyParsing:
         """Test _make_status_error where 'error' value is not a dictionary."""
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 400
+        mock_response.headers = {}
         
         body = {"error": "Something went wrong"}
         
@@ -80,6 +84,7 @@ class TestMakeStatusErrorBodyParsing:
         """Test _make_status_error where 'error' dict doesn't have expected keys."""
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 400
+        mock_response.headers = {}
         
         # Error dict with neither 'message', 'detail', nor 'code'
         body = {"error": {"unexpected_key": "unexpected_value"}}
@@ -97,6 +102,7 @@ class TestMakeStatusErrorStatusCodes:
         """Test status code 403 returning PermissionDeniedError."""
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 403
+        mock_response.headers = {}
         
         error = _make_status_error("Permission denied", body=None, response=mock_response)
         
@@ -107,6 +113,7 @@ class TestMakeStatusErrorStatusCodes:
         """Test status code 409 returning ConflictError."""
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 409
+        mock_response.headers = {}
         
         error = _make_status_error("Resource already exists", body=None, response=mock_response)
         
@@ -117,6 +124,7 @@ class TestMakeStatusErrorStatusCodes:
         """Test status code 413 returning InvalidRequestError."""
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 413
+        mock_response.headers = {}
         
         error = _make_status_error("File too large", body=None, response=mock_response)
         
@@ -127,6 +135,7 @@ class TestMakeStatusErrorStatusCodes:
         """Test status code 415 returning InvalidRequestError."""
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 415
+        mock_response.headers = {}
         
         error = _make_status_error("Unsupported media type", body=None, response=mock_response)
         
@@ -137,6 +146,7 @@ class TestMakeStatusErrorStatusCodes:
         """Test status code 422 returning UnprocessableEntityError."""
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 422
+        mock_response.headers = {}
         
         error = _make_status_error("Invalid data format", body=None, response=mock_response)
         
@@ -147,6 +157,7 @@ class TestMakeStatusErrorStatusCodes:
         """Test status code 429 returning RateLimitError."""
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 429
+        mock_response.headers = {}
         
         error = _make_status_error("Too many requests", body=None, response=mock_response)
         
@@ -159,6 +170,7 @@ class TestMakeStatusErrorStatusCodes:
         for status_code in [500, 502, 503, 504]:
             mock_response = MagicMock(spec=httpx.Response)
             mock_response.status_code = status_code
+            mock_response.headers = {}
             
             error = _make_status_error(f"Server error {status_code}", body=None, response=mock_response)
             
@@ -171,6 +183,7 @@ class TestMakeStatusErrorStatusCodes:
         for status_code in [402, 405, 418, 451]:
             mock_response = MagicMock(spec=httpx.Response)
             mock_response.status_code = status_code
+            mock_response.headers = {}
             
             error = _make_status_error(f"Error {status_code}", body=None, response=mock_response)
             
@@ -186,6 +199,7 @@ class TestMakeStatusErrorStatusCodes:
         # Test with a status code outside the normal ranges
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 300  # Redirect
+        mock_response.headers = {}
         
         error = _make_status_error("Unexpected status", body=None, response=mock_response)
         
@@ -202,6 +216,7 @@ class TestMakeStatusErrorStatusCodes:
         # Test with a status code outside all handled ranges (to hit line 155)
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 199  # Below 400, not a 4xx or 5xx
+        mock_response.headers = {}
         
         error = _make_status_error("Edge case status", body=None, response=mock_response)
         
@@ -222,6 +237,7 @@ class TestMakeStatusErrorComprehensive:
         """Test with complete error data including code, message and custom message."""
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 400
+        mock_response.headers = {}
         
         body = {"error": {"code": "INVALID_PARAMETER", "message": "Parameter 'x' is invalid"}}
         
@@ -236,6 +252,7 @@ class TestMakeStatusErrorComprehensive:
         """Test error with detail field instead of message field."""
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 400
+        mock_response.headers = {}
         
         body = {"error": {"code": "VALIDATION_ERROR", "detail": "Validation failed"}}
         
@@ -250,6 +267,7 @@ class TestMakeStatusErrorComprehensive:
         """Test with null body to ensure fallback to default message."""
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 500
+        mock_response.headers = {}
         
         error = _make_status_error(None, body=None, response=mock_response)
         
@@ -261,6 +279,7 @@ class TestMakeStatusErrorComprehensive:
         # Test with no message but with complex error dict
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 400
+        mock_response.headers = {}
         
         body = {"error": {"code": "COMPLEX_ERROR", "detail": None, "message": None}}
         
@@ -281,6 +300,7 @@ class TestMakeStatusErrorComprehensive:
         # Test with status code that falls through all conditionals
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 100  # Not 4xx or 5xx
+        mock_response.headers = {}
         
         error = _make_status_error("Fallback error", body=None, response=mock_response)
         
@@ -291,6 +311,7 @@ class TestMakeStatusErrorComprehensive:
         # Test error dict with both message and detail being None
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 400
+        mock_response.headers = {}
         
         body = {"error": {"message": None, "detail": None, "code": "TEST_CODE"}}
         

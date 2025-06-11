@@ -332,14 +332,15 @@ class ChatCompletions(APIResource):
             raw_iterator: Iterator[ChatCompletionChunk] = self._client._stream_request(
                 method="POST",
                 path="chat/completions",
-                json_data=body
+                json_data=body,
+                cast_to=ChatCompletionChunk
             )
-            return cast(Iterator[ChatCompletionChunk], effective_stream_cls(raw_iterator, client=self._client))
+            return effective_stream_cls(raw_iterator, client=self._client)
         else:
             # Use regular post method for non-streaming responses
-            response = self._client.post("chat/completions", json_data=body)
-            # Cast the response to the expected TypedDict type
-            return cast(ChatCompletion, response)  # Assumes _client.post already returns parsed JSON dict
+            response = self._client.post("chat/completions", json_data=body, cast_to=ChatCompletion)
+            # The response is now cast by the client to ChatCompletion
+            return response
 
 
 # --- Async Resource Class ---
@@ -654,11 +655,12 @@ class AsyncChatCompletions(AsyncAPIResource):
             raw_iterator: AsyncIterator[ChatCompletionChunk] = self._client._stream_request(
                 method="POST",
                 path="chat/completions",
-                json_data=body
+                json_data=body,
+                cast_to=ChatCompletionChunk
             )
-            return cast(AsyncIterator[ChatCompletionChunk], effective_stream_cls_async(raw_iterator, client=self._client))
+            return effective_stream_cls_async(raw_iterator, client=self._client)
         else:
             # Use regular post method for non-streaming responses
-            response = await self._client.post("chat/completions", json_data=body)
-            # Cast the response to the expected TypedDict type
-            return cast(ChatCompletion, response)  # Assumes _client.post already returns parsed JSON dict
+            response = await self._client.post("chat/completions", json_data=body, cast_to=ChatCompletion)
+            # The response is now cast by the client to ChatCompletion
+            return response

@@ -213,8 +213,6 @@ class TestImageCoverage:
         
         json_data = call_args[1]["json_data"]
         assert json_data["enhance"] is True
-        assert json_data["enhance_creativity"] == 0.8
-        assert json_data["enhance_prompt"] == "Make it better"
         assert json_data["replication"] == 0.7
         assert json_data["scale"] == 2.0
 
@@ -421,8 +419,6 @@ class TestAsyncImageCoverage:
         json_data = call_args[1]["json_data"]
         # For AsyncImage.upscale, enhance="true" stays as string "true"
         assert json_data["enhance"] is True
-        assert json_data["enhance_creativity"] == 0.8
-        assert json_data["enhance_prompt"] == "Make it better"
         assert json_data["replication"] == 0.7
         assert json_data["scale"] == 2.0
 

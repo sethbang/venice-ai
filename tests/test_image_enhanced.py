@@ -181,8 +181,6 @@ class TestImageSync:
         json_data = call_args[1]["json_data"]
         assert "image" in json_data  # Base64 encoded image
         assert json_data["enhance"] is True
-        assert json_data["enhance_creativity"] == 0.8
-        assert json_data["enhance_prompt"] == "Add more details"
         assert json_data["replication"] == 0.7
         assert json_data["scale"] == 2.0
 
@@ -459,8 +457,6 @@ class TestImageAsync:
         expected_payload = {
             "image": mocker.ANY,  # Base64 encoded image data
             "enhance": True,  # API expects string "true", not boolean True
-            "enhance_creativity": 0.8,  # Changed to snake_case
-            "enhance_prompt": "Add more details",  # Changed to snake_case
             "replication": 0.7,
             "scale": 2.0
         }

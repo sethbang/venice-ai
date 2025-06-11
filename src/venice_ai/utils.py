@@ -7,6 +7,26 @@ import importlib.util
 import importlib.abc
 from types import ModuleType as Module
 
+def truncate_string(s: Optional[str], max_len: int) -> Optional[str]:
+    """Truncates a string if its length exceeds max_len, appending '...'."""
+    if s is None:
+        return None
+    if len(s) > max_len:
+        return s[:max_len - 3] + "..."
+    return s
+
+# Sentinel type and value for distinguishing between None and not provided
+class NotGivenType:
+    """
+    Sentinel type used to distinguish between a parameter not being provided
+    and a parameter being provided with a None value.
+    """
+    def __repr__(self) -> str:
+        return "NOT_GIVEN"
+
+NOT_GIVEN = NotGivenType()
+NotGiven = Union[NotGivenType, None]
+
 if TYPE_CHECKING:
     from ._client import VeniceClient
     from ._async_client import AsyncVeniceClient
@@ -96,11 +116,17 @@ MODELS_DATA = [
 
 def find_model_by_id_or_name_or_slug(identifier: str) -> Optional[Model]:
     """
-    Find a model by its ID, name, or slug.
+    Find a model by its ID, name, or slug from a predefined static list.
+
+    .. note::
+        This function queries a hardcoded list of sample model data (`MODELS_DATA`)
+        within the library and does not perform any live API requests. It is
+        intended for illustrative purposes or offline scenarios with sample data.
+        For live API model lookups, use functions that interact with a client instance.
     
     :param identifier: The model identifier (ID, name, or slug) to search for.
     :type identifier: str
-    :return: The model if found, otherwise None.
+    :return: The model if found in the static list, otherwise None.
     :rtype: Optional[Model]
     """
     for model_data in MODELS_DATA:
@@ -112,11 +138,17 @@ def find_model_by_id_or_name_or_slug(identifier: str) -> Optional[Model]:
 
 def get_model_capabilities_by_id_or_name_or_slug(identifier: str) -> Optional[ModelCapabilities]:
     """
-    Get model capabilities by ID, name, or slug.
-    
+    Get model capabilities by ID, name, or slug from a predefined static list.
+
+    .. note::
+        This function retrieves capabilities based on a hardcoded list of sample
+        model data (`MODELS_DATA`) by calling `find_model_by_id_or_name_or_slug`.
+        It does not perform any live API requests. For live API model capability
+        lookups, use functions that interact with a client instance (e.g., `get_model_capabilities`).
+
     :param identifier: The model identifier (ID, name, or slug) to search for.
     :type identifier: str
-    :return: The model capabilities if found, otherwise None.
+    :return: The model capabilities if found in the static list, otherwise None.
     :rtype: Optional[ModelCapabilities]
     """
     model_info = find_model_by_id_or_name_or_slug(identifier)

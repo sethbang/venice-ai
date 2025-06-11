@@ -6,6 +6,7 @@ from io import BytesIO
 from typing import Union, Dict, Any, Optional, Callable, List, Tuple
 from venice_ai import VeniceClient, AsyncVeniceClient
 from venice_ai.exceptions import VeniceError, InvalidRequestError, NotFoundError
+from venice_ai.types.image import ImageResponse, SimpleImageResponse, ImageDataItem
 
 # Configure minimal logging format
 logging.basicConfig(
@@ -75,12 +76,12 @@ def read_test_image() -> Optional[bytes]:
         return f.read()
 
 
-def validate_image_response(response: Union[Dict[str, Any], bytes], expected_format: Optional[str] = None) -> None:
+def validate_image_response(response: Union[ImageResponse, SimpleImageResponse, bytes], expected_format: Optional[str] = None) -> None:
     """
     Validate common aspects of image API responses
     
     Args:
-        response: API response dictionary or raw bytes for image data
+        response: API response (ImageResponse, SimpleImageResponse, or raw bytes for image data)
         expected_format: Expected image format if known (url or b64_json)
     """
     if isinstance(response, bytes):
@@ -91,56 +92,43 @@ def validate_image_response(response: Union[Dict[str, Any], bytes], expected_for
             logger.info("Response starts with PNG header, likely valid image data")
         return
 
-    assert isinstance(response, dict), "Response should be a dictionary"
-    logger.info(f"Validating response. Keys: {list(response.keys())}")
+    # Handle ImageResponse (from client.image.generate)
+    if isinstance(response, ImageResponse):
+        logger.info(f"Validating ImageResponse. ID: {response.id}")
+        assert isinstance(response.id, str), "Response ID should be a string"
+        assert isinstance(response.images, list), "Images should be a list"
+        assert len(response.images) > 0, "Images list should not be empty"
+        logger.info(f"Response images count: {len(response.images)}")
+        if response.images:
+            logger.info(f"First image data length: {len(response.images[0])}")
+        return
 
-    # Check for ID in generation responses
-    if "id" in response:
-        assert isinstance(response["id"], str), "Response ID should be a string"
-
-    # Check for data in responses (most common pattern)
-    if "data" in response:
-        logger.info(f"Response 'data' type: {type(response['data'])}")
-        if isinstance(response['data'], list) and response['data']:
-            logger.info(f"Response 'data[0]' type: {type(response['data'][0])}")
-            item_data = response['data'][0]
-            if isinstance(item_data, dict):
-                logger.info(f"Response 'data[0]' keys: {list(item_data.keys())}")
-                if "b64_json" in item_data:
-                    logger.info(f"Response 'data[0]['b64_json']' type: {type(item_data['b64_json'])}, length (if str): {len(item_data['b64_json']) if isinstance(item_data['b64_json'], str) else 'N/A'}")
-                if "url" in item_data:
-                    logger.info(f"Response 'data[0]['url']' type: {type(item_data['url'])}")
-            elif isinstance(item_data, bytes):
-                logger.info(f"Response 'data[0]' is bytes, length: {len(item_data)}")
-        elif isinstance(response['data'], bytes): # If data itself is bytes
-            logger.info(f"Response 'data' is bytes, length: {len(response['data'])}")
+    # Handle SimpleImageResponse (from client.image.simple_generate)
+    if isinstance(response, SimpleImageResponse):
+        logger.info(f"Validating SimpleImageResponse. Created: {response.created}")
+        assert isinstance(response.created, int), "Response created should be an integer"
+        assert isinstance(response.images, list), "Response images should be a list"
+        assert len(response.images) > 0, "Response images list should not be empty"
         
-        assert isinstance(response["data"], (dict, list)), "Response data should be a dict or list"
+        logger.info(f"Response images count: {len(response.images)}")
+        image_data_item = response.images[0]
+        assert isinstance(image_data_item, ImageDataItem), "Image data should be an ImageDataItem"
+        
+        # Check format if specified - for SimpleImageResponse, images are ImageDataItem objects
+        if expected_format == "url":
+            assert image_data_item.url is not None, "Image URL should be present"
+            assert image_data_item.url.startswith("http"), "Image URL should be valid"
+        elif expected_format == "b64_json":
+            assert image_data_item.b64_json is not None, "Base64 data should be present"
+            assert len(image_data_item.b64_json) > 0, "Base64 data should not be empty"
+        else:
+            # If no specific format expected, check that at least one field is populated
+            assert image_data_item.b64_json is not None or image_data_item.url is not None, "Either b64_json or url should be present"
+        
+        return
 
-        # For list responses (like in simple_generate)
-        if isinstance(response["data"], list):
-            assert len(response["data"]) > 0, "Response data list should not be empty"
-
-            # Check format if specified and applicable to this API
-            if expected_format and "url" in response["data"][0] and isinstance(response["data"][0], dict):
-                assert response["data"][0]["url"].startswith("http"), "Image URL should be valid"
-            elif expected_format and "b64_json" in response["data"][0] and isinstance(response["data"][0], dict):
-                assert len(response["data"][0]["b64_json"]) > 0, "Base64 data should not be empty"
-
-    # Alternative response structure with "images"
-    elif "images" in response:
-        logger.info(f"Response 'images' type: {type(response['images'])}")
-        if isinstance(response['images'], list) and response['images']:
-            logger.info(f"Response 'images[0]' type: {type(response['images'][0])}")
-            image_item = response['images'][0]
-            if isinstance(image_item, dict):
-                logger.info(f"Response 'images[0]' keys: {list(image_item.keys())}")
-                # Add checks for expected binary data keys here if applicable
-            elif isinstance(image_item, bytes):
-                logger.info(f"Response 'images[0]' is bytes, length: {len(image_item)}")
-
-        assert isinstance(response["images"], list), "Images should be a list"
-        assert len(response["images"]) > 0, "Images list should not be empty"
+    # If we get here, it's an unexpected type
+    raise AssertionError(f"Unexpected response type: {type(response)}")
 
 
 # Parametrized tests
@@ -160,6 +148,7 @@ async def test_generate_image_basic_async_isolated(async_venice_client):
             height=512
         )
         logger.info(f"Async isolated response received: {str(response)[:200]}")
+        assert isinstance(response, ImageResponse)
         validate_image_response(response)
     except Exception as e:
         logger.error(f"Error in test_generate_image_basic_async_isolated: {e}", exc_info=True)
@@ -195,6 +184,7 @@ async def test_generate_image_basic(request, client_fixture, is_async):
             height=512
         )
     
+    assert isinstance(response, ImageResponse)
     validate_image_response(response)
 
 
@@ -212,6 +202,7 @@ def test_generate_image_with_all_params_sync(venice_client):
             height=768,
         )
         logger.info(f"Sync all_params response received: {str(response)[:200]}")
+        assert isinstance(response, ImageResponse)
         validate_image_response(response)
     except Exception as e:
         logger.error(f"Error in test_generate_image_with_all_params_sync: {e}", exc_info=True)
@@ -231,6 +222,7 @@ async def test_generate_image_with_all_params_async(async_venice_client):
             height=768,
         )
         logger.info(f"Async all_params response received: {str(response)[:200]}")
+        assert isinstance(response, ImageResponse)
         validate_image_response(response)
     except Exception as e:
         logger.error(f"Error in test_generate_image_with_all_params_async: {e}", exc_info=True)
@@ -254,11 +246,13 @@ def test_simple_generate_image_basic_sync(venice_client):
             quality="standard",
         )
         logger.info(f"Sync simple_generate_image_basic response: {str(response)[:200]}")
+        assert isinstance(response, SimpleImageResponse)
         validate_image_response(response)
-        assert "data" in response
-        assert isinstance(response["data"], list)
-        assert len(response["data"]) > 0
-        assert any(key in response["data"][0] for key in ["url", "b64_json"])
+        assert isinstance(response.images, list)
+        assert len(response.images) > 0
+        # Check that the image data is not empty (either b64_json or url should have content)
+        image_item = response.images[0]
+        assert (image_item.b64_json and len(image_item.b64_json) > 0) or (image_item.url and len(image_item.url) > 0), "Image data should not be empty"
     except Exception as e:
         logger.error(f"Error in test_simple_generate_image_basic_sync: {e}", exc_info=True)
         raise
@@ -277,11 +271,13 @@ async def test_simple_generate_image_basic_async(async_venice_client):
             quality="standard",
         )
         logger.info(f"Async simple_generate_image_basic response: {str(response)[:200]}")
+        assert isinstance(response, SimpleImageResponse)
         validate_image_response(response)
-        assert "data" in response
-        assert isinstance(response["data"], list)
-        assert len(response["data"]) > 0
-        assert any(key in response["data"][0] for key in ["url", "b64_json"])
+        assert isinstance(response.images, list)
+        assert len(response.images) > 0
+        # Check that the image data is not empty (either b64_json or url should have content)
+        image_item = response.images[0]
+        assert (image_item.b64_json and len(image_item.b64_json) > 0) or (image_item.url and len(image_item.url) > 0), "Image data should not be empty"
     except Exception as e:
         logger.error(f"Error in test_simple_generate_image_basic_async: {e}", exc_info=True)
         raise
@@ -302,9 +298,9 @@ def test_simple_generate_image_with_all_params_sync(venice_client):
             n=1,
         )
         logger.info(f"Sync simple_generate_image_with_all_params response: {str(response)[:200]}")
+        assert isinstance(response, SimpleImageResponse)
         validate_image_response(response)
-        assert "data" in response
-        assert len(response["data"]) == 1
+        assert len(response.images) == 1
     except Exception as e:
         logger.error(f"Error in test_simple_generate_image_with_all_params_sync: {e}", exc_info=True)
         raise
@@ -325,15 +321,14 @@ async def test_simple_generate_image_with_all_params_async(async_venice_client):
             n=1,
         )
         logger.info(f"Async simple_generate_image_with_all_params response: {str(response)[:200]}")
+        assert isinstance(response, SimpleImageResponse)
         validate_image_response(response)
-        assert "data" in response
-        assert len(response["data"]) == 1
+        assert len(response.images) == 1
     except Exception as e:
         logger.error(f"Error in test_simple_generate_image_with_all_params_async: {e}", exc_info=True)
         raise
 
 # Refactored test_upscale_image_from_file
-@pytest.mark.xfail(reason="Image upscale/enhance endpoint is temporarily offline")
 def test_upscale_image_from_file_sync(venice_client):
     """Test image upscaling from a file path (Sync)"""
     if not os.path.exists(DUMMY_IMAGE_PATH):
@@ -342,15 +337,15 @@ def test_upscale_image_from_file_sync(venice_client):
     check_image_dimensions(DUMMY_IMAGE_PATH)
     logger.info("Attempting sync upscale image from file")
     try:
-        response = client.image.upscale(image=DUMMY_IMAGE_PATH, scale=2.0, timeout=180.0)
+        response = client.image.upscale(image=DUMMY_IMAGE_PATH, scale=2.0, timeout=300.0)
         logger.info(f"Sync upscale_from_file response: {str(response)[:200]}")
+        # Upscale might return ImageResponse or bytes, validate_image_response handles both
         validate_image_response(response)
     except Exception as e:
         logger.error(f"Error in test_upscale_image_from_file_sync: {e}", exc_info=True)
         raise
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Image upscale/enhance endpoint is temporarily offline")
 async def test_upscale_image_from_file_async(async_venice_client):
     """Test image upscaling from a file path (Async)"""
     if not os.path.exists(DUMMY_IMAGE_PATH):
@@ -359,15 +354,15 @@ async def test_upscale_image_from_file_async(async_venice_client):
     check_image_dimensions(DUMMY_IMAGE_PATH)
     logger.info("Attempting async upscale image from file")
     try:
-        response = await client.image.upscale(image=DUMMY_IMAGE_PATH, scale=2.0, timeout=180.0)
+        response = await client.image.upscale(image=DUMMY_IMAGE_PATH, scale=2.0, timeout=300.0)
         logger.info(f"Async upscale_from_file response: {str(response)[:200]}")
+        # Upscale might return ImageResponse or bytes, validate_image_response handles both
         validate_image_response(response)
     except Exception as e:
         logger.error(f"Error in test_upscale_image_from_file_async: {e}", exc_info=True)
         raise
 
 # Refactored test_upscale_image_from_bytes
-@pytest.mark.xfail(reason="Image upscale/enhance endpoint is temporarily offline")
 def test_upscale_image_from_bytes_sync(venice_client):
     """Test image upscaling from bytes (Sync)"""
     image_bytes = read_test_image()
@@ -376,15 +371,15 @@ def test_upscale_image_from_bytes_sync(venice_client):
     check_image_dimensions(image_bytes)
     logger.info("Attempting sync upscale image from bytes")
     try:
-        response = client.image.upscale(image=image_bytes, scale=2.0, timeout=180.0)
+        response = client.image.upscale(image=image_bytes, scale=2.0, timeout=300.0)
         logger.info(f"Sync upscale_from_bytes response: {str(response)[:200]}")
+        # Upscale might return ImageResponse or bytes, validate_image_response handles both
         validate_image_response(response)
     except Exception as e:
         logger.error(f"Error in test_upscale_image_from_bytes_sync: {e}", exc_info=True)
         raise
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Image upscale/enhance endpoint is temporarily offline")
 async def test_upscale_image_from_bytes_async(async_venice_client):
     """Test image upscaling from bytes (Async)"""
     image_bytes = read_test_image()
@@ -393,8 +388,9 @@ async def test_upscale_image_from_bytes_async(async_venice_client):
     check_image_dimensions(image_bytes)
     logger.info("Attempting async upscale image from bytes")
     try:
-        response = await client.image.upscale(image=image_bytes, scale=2.0, timeout=180.0)
+        response = await client.image.upscale(image=image_bytes, scale=2.0, timeout=300.0)
         logger.info(f"Async upscale_from_bytes response: {str(response)[:200]}")
+        # Upscale might return ImageResponse or bytes, validate_image_response handles both
         validate_image_response(response)
     except Exception as e:
         logger.error(f"Error in test_upscale_image_from_bytes_async: {e}", exc_info=True)

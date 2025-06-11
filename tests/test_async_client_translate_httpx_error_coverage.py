@@ -56,13 +56,16 @@ class TestAsyncTranslateHttpxErrorToApiErrorComprehensive:
         # Setup response mock with JSON error body
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = status_code
-        mock_response.json.return_value = {
+        mock_response.headers = {}
+        mock_response.json = AsyncMock(return_value={
             "error": {
                 "message": f"Specific error for status {status_code}",
                 "type": "invalid_request_error",
                 "code": "some_code"
             }
-        }
+        })
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         
         # Create HTTPStatusError
         http_error = httpx.HTTPStatusError(
@@ -110,9 +113,12 @@ class TestAsyncTranslateHttpxErrorToApiErrorComprehensive:
         # Setup response mock with non-standard JSON error body
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = status_code
-        mock_response.json.return_value = {
+        mock_response.headers = {}
+        mock_response.json = AsyncMock(return_value={
             "detail": f"Another error format for status {status_code}"
-        }
+        })
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         
         # Create HTTPStatusError
         http_error = httpx.HTTPStatusError(
@@ -156,7 +162,10 @@ class TestAsyncTranslateHttpxErrorToApiErrorComprehensive:
         # Setup response mock with plain text error body
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = status_code
-        mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
+        mock_response.headers = {}
+        mock_response.json = AsyncMock(side_effect=json.JSONDecodeError("Invalid JSON", "", 0))
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.text = f"A plain text error occurred for status {status_code}"
         
         # Create HTTPStatusError
@@ -199,7 +208,10 @@ class TestAsyncTranslateHttpxErrorToApiErrorComprehensive:
         # Setup response mock with unparseable JSON body
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = status_code
-        mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
+        mock_response.headers = {}
+        mock_response.json = AsyncMock(side_effect=json.JSONDecodeError("Invalid JSON", "", 0))
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.text = "not json{"
         
         # Create HTTPStatusError
@@ -241,7 +253,10 @@ class TestAsyncTranslateHttpxErrorToApiErrorComprehensive:
         # Setup response mock with empty body
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = status_code
-        mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
+        mock_response.headers = {}
+        mock_response.json = AsyncMock(side_effect=json.JSONDecodeError("Invalid JSON", "", 0))
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.text = ""
         
         # Create HTTPStatusError
@@ -259,7 +274,8 @@ class TestAsyncTranslateHttpxErrorToApiErrorComprehensive:
         assert api_error.request is mock_request
         assert api_error.response is mock_response
         assert cast(APIError, api_error).status_code == status_code
-        assert f"HTTP Status {status_code}" in str(api_error)
+        expected_message = f"API error {status_code} for {mock_request.method} {mock_request.url}"
+        assert str(api_error) == expected_message
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -284,6 +300,7 @@ class TestAsyncTranslateHttpxErrorToApiErrorComprehensive:
         # Setup response mock for streaming
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = status_code
+        mock_response.headers = {}
         
         # For streaming case, we need to make json() an AsyncMock
         mock_response.json = AsyncMock(return_value={
@@ -335,6 +352,7 @@ class TestAsyncTranslateHttpxErrorToApiErrorComprehensive:
         # Setup response mock for streaming
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = status_code
+        mock_response.headers = {}
         
         # For streaming case with JSON error
         mock_response.json = AsyncMock(side_effect=json.JSONDecodeError("Invalid JSON", "", 0))
@@ -379,6 +397,7 @@ class TestAsyncTranslateHttpxErrorToApiErrorComprehensive:
         # Setup response mock for streaming
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = status_code
+        mock_response.headers = {}
         
         # For streaming case with both JSON and text errors
         mock_response.json = AsyncMock(side_effect=json.JSONDecodeError("Invalid JSON", "", 0))

@@ -356,7 +356,9 @@ async def test_async_models_list_type_chat_maps_to_text():
     # Set up mock client
     mock_async_client = MagicMock(spec=AsyncVeniceClient)
     mock_response = MagicMock(spec=httpx.Response)
-    mock_response.json.return_value = {"object": "list", "data": [], "type": "text"}
+    mock_response.json = AsyncMock(return_value={"object": "list", "data": [], "type": "text"})
+    mock_response.aread = AsyncMock()
+    mock_response.aclose = AsyncMock()
     mock_async_client.get = AsyncMock(return_value=mock_response)
 
     # Create the resource with the mock client
@@ -382,7 +384,9 @@ async def test_async_models_list_type_audio_maps_to_tts():
     # Set up mock client
     mock_async_client = MagicMock(spec=AsyncVeniceClient)
     mock_response = MagicMock(spec=httpx.Response)
-    mock_response.json.return_value = {"object": "list", "data": [], "type": "tts"}
+    mock_response.json = AsyncMock(return_value={"object": "list", "data": [], "type": "tts"})
+    mock_response.aread = AsyncMock()
+    mock_response.aclose = AsyncMock()
     mock_async_client.get = AsyncMock(return_value=mock_response)
 
     # Create the resource with the mock client
@@ -408,7 +412,9 @@ async def test_async_models_list_other_types_pass_through():
     # Set up mock client
     mock_async_client = MagicMock(spec=AsyncVeniceClient)
     mock_response = MagicMock(spec=httpx.Response)
-    mock_response.json.return_value = {"object": "list", "data": [], "type": "text"}
+    mock_response.json = AsyncMock(return_value={"object": "list", "data": [], "type": "text"})
+    mock_response.aread = AsyncMock()
+    mock_response.aclose = AsyncMock()
     mock_async_client.get = AsyncMock(return_value=mock_response)
 
     # Create the resource with the mock client

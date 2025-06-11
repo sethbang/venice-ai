@@ -58,6 +58,10 @@ from .models import (
     ModelList,
     ModelType,
 )
+from .characters import (
+    Character,
+    CharacterList,
+)
 
 __all__ = [
     "ChatCompletion",
@@ -93,4 +97,6 @@ __all__ = [
     "ToolChoiceObject",
     "UsageData",
     "VeniceParameters",
+    "Character",
+    "CharacterList",
 ]

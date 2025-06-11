@@ -20,7 +20,7 @@ class MockImageResponse(TypedDict):
     id: str
     images: List[str]
     request: Dict
-    timing: TimingInfo
+    timing: Dict
 
 
 class MockSimpleImageDataItem(TypedDict, total=False):
@@ -68,12 +68,12 @@ def test_generate_success(httpx_mock):
         prompt="A beautiful sunset"
     )
 
-    assert isinstance(response, dict)
-    assert response["id"] == "img-12345"
-    assert len(response["images"]) == 1
-    assert response["request"] is not None
-    assert response["request"]["model"] == "test-model"
-    assert response["request"]["prompt"] == "A beautiful sunset"
+    assert isinstance(response, ImageResponse)
+    assert response.id == "img-12345"
+    assert len(response.images) == 1
+    assert response.request is not None
+    assert response.request["model"] == "test-model"
+    assert response.request["prompt"] == "A beautiful sunset"
 
 
 def test_generate_with_options(httpx_mock):
@@ -114,15 +114,15 @@ def test_generate_with_options(httpx_mock):
         steps=50
     )
 
-    assert isinstance(response, dict)
-    assert response["id"] == "img-67890"
-    assert response["request"] is not None
-    assert response["request"]["model"] == "test-model"
-    assert response["request"]["prompt"] == "A snowy mountain"
-    assert response["request"]["negative_prompt"] == "clouds, fog"
-    assert response["request"]["width"] == 1024
-    assert response["request"]["height"] == 1024
-    assert response["request"]["steps"] == 50
+    assert isinstance(response, ImageResponse)
+    assert response.id == "img-67890"
+    assert response.request is not None
+    assert response.request["model"] == "test-model"
+    assert response.request["prompt"] == "A snowy mountain"
+    assert response.request["negative_prompt"] == "clouds, fog"
+    assert response.request["width"] == 1024
+    assert response.request["height"] == 1024
+    assert response.request["steps"] == 50
 
 
 def test_generate_return_binary(httpx_mock):
@@ -171,10 +171,10 @@ def test_simple_generate_success(httpx_mock):
         prompt="A beautiful sunset"
     )
 
-    assert isinstance(response, dict)
-    assert response["created"] == 1683900000
-    assert len(response["data"]) == 1
-    assert "b64_json" in response["data"][0]
+    assert isinstance(response, SimpleImageResponse)
+    assert response.created == 1683900000
+    assert len(response.images) == 1
+    assert response.images[0].b64_json == "base64_encoded_image_data"
 
 
 def test_simple_generate_with_options(httpx_mock):
@@ -208,11 +208,11 @@ def test_simple_generate_with_options(httpx_mock):
         quality="high"
     )
 
-    assert isinstance(response, dict)
-    assert response["created"] == 1683900000
-    assert len(response["data"]) == 2
-    assert "url" in response["data"][0]
-    assert "url" in response["data"][1]
+    assert isinstance(response, SimpleImageResponse)
+    assert response.created == 1683900000
+    assert len(response.images) == 2
+    assert response.images[0].url == "https://api.venice.ai/images/generations/img-12345"
+    assert response.images[1].url == "https://api.venice.ai/images/generations/img-67890"
 
 
 def test_upscale_success(httpx_mock):
@@ -379,7 +379,8 @@ def test_list_styles_api_error(httpx_mock):
         json={"error": {"message": "Internal Server Error", "type": "api_error"}},
     )
 
-    client = VeniceClient(api_key="test-key")
+    from venice_ai._client_with_retries import VeniceClientWithRetries
+    client = VeniceClientWithRetries(api_key="test-key", max_retries=0)
 
     with pytest.raises(APIError) as excinfo:
         client.image.list_styles()

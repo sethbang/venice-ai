@@ -3,6 +3,8 @@ import time
 import asyncio
 from venice_ai import VeniceClient
 from venice_ai._async_client import AsyncVeniceClient
+from venice_ai.exceptions import APIError
+from venice_ai.types.image import ImageResponse
 
 # Clients are provided via fixtures
 
@@ -49,7 +51,8 @@ def test_image_gen_time_simple_prompt(venice_client):
     response, duration = make_request()
     print(f"Time for image generation (simple prompt): {duration:.3f} seconds")
     assert response is not None, "Response should not be None"
-    assert 'images' in response, "Response should have image data in 'images' key"
+    assert isinstance(response, ImageResponse), "Response should be an ImageResponse object"
+    assert response.images, "Response should have image data"
 
 def test_image_gen_time_complex_prompt(venice_client):
     """Test time taken for image generation with a complex prompt."""
@@ -65,7 +68,8 @@ def test_image_gen_time_complex_prompt(venice_client):
     response, duration = make_request()
     print(f"Time for image generation (complex prompt): {duration:.3f} seconds")
     assert response is not None, "Response should not be None"
-    assert 'images' in response, "Response should have image data in 'images' key"
+    assert isinstance(response, ImageResponse), "Response should be an ImageResponse object"
+    assert response.images, "Response should have image data"
 
 # Asynchronous Tests
 @pytest.mark.asyncio
@@ -83,7 +87,8 @@ async def test_image_gen_time_simple_prompt_async(async_venice_client):
     response, duration = await make_request()
     print(f"Time for image generation (simple prompt, async): {duration:.3f} seconds")
     assert response is not None, "Response should not be None"
-    assert 'images' in response, "Response should have image data in 'images' key"
+    assert isinstance(response, ImageResponse), "Response should be an ImageResponse object"
+    assert response.images, "Response should have image data"
 
 @pytest.mark.asyncio
 async def test_image_gen_time_complex_prompt_async(async_venice_client):
@@ -100,4 +105,5 @@ async def test_image_gen_time_complex_prompt_async(async_venice_client):
     response, duration = await make_request()
     print(f"Time for image generation (complex prompt, async): {duration:.3f} seconds")
     assert response is not None, "Response should not be None"
-    assert 'images' in response, "Response should have image data in 'images' key"
+    assert isinstance(response, ImageResponse), "Response should be an ImageResponse object"
+    assert response.images, "Response should have image data"

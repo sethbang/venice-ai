@@ -11,6 +11,25 @@ The Venice AI client library includes a set of utility functions that simplify c
 .. automodule:: venice_ai.utils
    :members:
 
+.. _utility-functions:
+
+Utility Functions
+-----------------
+
+Helper functions for common tasks.
+
+Token Estimation
+~~~~~~~~~~~~~~~~
+
+.. autofunction:: venice_ai.utils.estimate_token_count
+   :no-index:
+
+Chat Message Validation
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: venice_ai.utils.validate_chat_messages
+   :no-index:
+
 Usage Examples
 --------------
 

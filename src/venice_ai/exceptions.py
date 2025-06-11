@@ -1,5 +1,10 @@
 from typing import Optional, Any
 import httpx
+from email.utils import parsedate_to_datetime
+from datetime import datetime, timezone
+import logging
+
+logger = logging.getLogger(__name__)
 
 class VeniceError(Exception):
     """
@@ -219,9 +224,18 @@ class RateLimitError(APIError):
     :type response: httpx.Response
     :param body: Optional. The parsed response body, if available.
     :type body: Optional[Any]
+    :param retry_after_seconds: Optional. The number of seconds to wait before retrying,
+        parsed from the Retry-After header.
+    :type retry_after_seconds: Optional[int]
+    
+    :ivar retry_after_seconds: Number of seconds to wait before retrying, if available.
+    :vartype retry_after_seconds: Optional[int]
     """
-    def __init__(self, message: str, *, request: Optional[httpx.Request] = None, response: httpx.Response, body: Optional[Any] = None) -> None:
+    retry_after_seconds: Optional[int]
+
+    def __init__(self, message: str, *, request: Optional[httpx.Request] = None, response: httpx.Response, body: Optional[Any] = None, retry_after_seconds: Optional[int] = None) -> None:
         super().__init__(message, request=request, response=response, body=body)
+        self.retry_after_seconds = retry_after_seconds
 
 class InternalServerError(APIError):
     """
@@ -386,6 +400,50 @@ class StreamClosedError(APIConnectionError):
     """
     pass
 
+def _parse_retry_after_header(header_value: str, response_date_str: Optional[str] = None) -> Optional[int]:
+    """
+    Parse the Retry-After header value and return the delay in seconds.
+    
+    The Retry-After header can contain either:
+    1. An integer representing seconds to wait
+    2. An HTTP-date string representing when to retry
+    
+    :param header_value: The value of the Retry-After header
+    :type header_value: str
+    :param response_date_str: Optional Date header from the response to use as server time
+    :type response_date_str: Optional[str]
+    
+    :return: Number of seconds to wait, or None if parsing fails
+    :rtype: Optional[int]
+    """
+    try:
+        # Try to parse as integer (seconds)
+        return int(header_value)
+    except ValueError:
+        try:
+            # Try to parse as HTTP-date
+            retry_after_dt = parsedate_to_datetime(header_value)
+            if retry_after_dt.tzinfo is None:
+                # Ensure timezone aware for comparison
+                retry_after_dt = retry_after_dt.replace(tzinfo=timezone.utc)
+
+            # Determine the "now" time
+            now_dt: datetime
+            if response_date_str:
+                server_now_dt = parsedate_to_datetime(response_date_str)
+                if server_now_dt.tzinfo is None:
+                    server_now_dt = server_now_dt.replace(tzinfo=timezone.utc)
+                now_dt = server_now_dt
+            else:
+                now_dt = datetime.now(timezone.utc)
+            
+            # Calculate the difference in seconds
+            delta = (retry_after_dt - now_dt).total_seconds()
+            return max(0, int(delta))  # Return non-negative integer seconds
+        except (TypeError, ValueError):
+            # Handles errors from parsedate_to_datetime or if it's not a valid date
+            return None
+
 def _make_status_error(
     message: Optional[str], *, request: Optional[httpx.Request] = None, body: Optional[Any], response: httpx.Response
 ) -> APIError:
@@ -410,68 +468,96 @@ def _make_status_error(
     """
     status_code = response.status_code
     
-    # Ensure body is a dictionary for consistent error handling
-    # If body is not a dictionary (e.g., it's a string from a non-JSON response),
-    # wrap it in a structured dictionary format
-    if body is not None and not isinstance(body, dict):
-        raw_text_content = str(body)
-        body = {
-            "error": f"Non-JSON response from API (status {status_code}): {raw_text_content}"
-        }
-    
-    # Try to parse error details from response body if available
-    # Assuming error structure like {"error": {"code": "...", "message": "..."}} or similar
-    # Adjust parsing based on actual error response structure
-    http_status_prefix = f"HTTP Status {status_code}"
-    # Ensure the http_status_prefix is always present, then append the more specific message if provided.
-    err_msg = f"{http_status_prefix}: {message}" if message else http_status_prefix
-    err_code = None
-    if body and isinstance(body, dict):
+    # Initialize with the generic message passed from the client or a default HTTP status message
+    # This 'message' is typically "API error {status_code} for {method} {url}"
+    base_message = message if message else f"HTTP Status {status_code}"
+    err_msg = base_message # Start with the base message
+
+    detail_from_json: Optional[str] = None
+    code_from_json: Optional[str] = None
+    actual_raw_text_from_response: Optional[str] = None
+
+    # Attempt to get structured error details or raw text
+    # The 'body' argument here is what _translate_httpx_error_to_api_error determined:
+    # - a dict if JSON was successfully parsed by _translate
+    # - a string if _translate got raw text
+    # - None if _translate failed to get anything meaningful
+
+    if isinstance(body, dict): # Body is pre-parsed JSON from _translate
         error_data = body.get("error")
         if isinstance(error_data, dict):
-            detail_from_dict = error_data.get("message") or error_data.get("detail")
-            code_from_dict = error_data.get("code")
-            
-            if detail_from_dict:
-                err_msg = f"{err_msg}: {detail_from_dict}"
-            
-            if code_from_dict:
-                # Append code, ensuring it's added even if detail_from_dict was None but code exists
-                # Or if detail_from_dict was present, it appends after the detail.
-                err_msg = f"{err_msg} (Code: {code_from_dict})"
-                
-        elif isinstance(error_data, str):
-            # If error_data is a string, append it directly as the detail
-            err_msg = f"{err_msg}: {error_data}"
+            detail_from_json = error_data.get("message") or error_data.get("detail")
+            code_from_json = error_data.get("code")
+        elif isinstance(error_data, str): # e.g. body = {"error": "some string error"}
+            detail_from_json = error_data
+    elif isinstance(body, str): # Body is raw text passed in from _translate
+        actual_raw_text_from_response = body
+    # This block is intentionally left blank.
+    # The `body` parameter is now the single source of truth for the response body.
+    # The logic to parse the response has been centralized in `_translate_httpx_error_to_api_error`
+    # in the client classes, which correctly handles async operations.
+    # `_make_status_error` should not re-parse the response.
+    elif body is None:
+        pass
+    
+    logger.debug(f"[_make_status_error] Initial base_message: '{base_message}'")
+    logger.debug(f"[_make_status_error] Received body type: {type(body)}, value: {body}")
+    logger.debug(f"[_make_status_error] detail_from_json: '{detail_from_json}', code_from_json: '{code_from_json}'")
+    logger.debug(f"[_make_status_error] actual_raw_text_from_response: '{actual_raw_text_from_response}'")
+
+    # Construct the final error message based on what was found
+    # err_msg is already initialized to base_message. We append details to it.
+
+    # err_msg is already initialized to base_message.
+    if detail_from_json: # Most specific message from JSON error body
+        # Prepend the base_message (generic or custom passed message)
+        # Then append the specific detail from JSON.
+        err_msg = f"{base_message}: {detail_from_json}"
+        if code_from_json:
+            err_msg = f"{err_msg} (Code: {code_from_json})"
+    elif code_from_json: # JSON error body had a code but no message/detail
+        err_msg = f"{base_message} (Code: {code_from_json})"
+    elif actual_raw_text_from_response and isinstance(body, str): # Text came from body arg being a string
+        err_msg = f"{base_message}: {actual_raw_text_from_response}"
+    # Else (if body was None and actual_raw_text_from_response came from response.text,
+    # OR if nothing specific was found), err_msg remains the initial base_message.
+
+    logger.debug(f"[_make_status_error] Final err_msg: '{err_msg}' for status_code: {status_code}")
 
     if status_code == 400:
-        return InvalidRequestError(err_msg, request=request, response=response, body=body)
+        return InvalidRequestError(message=err_msg, request=request, response=response, body=body)
     if status_code == 401:
-        return AuthenticationError(err_msg, request=request, response=response, body=body)
+        return AuthenticationError(message=err_msg, request=request, response=response, body=body)
     if status_code == 403:
-        return PermissionDeniedError(err_msg, request=request, response=response, body=body)
+        return PermissionDeniedError(message=err_msg, request=request, response=response, body=body)
     if status_code == 404:
         # Always return NotFoundError for 404 status codes
         # This is needed to match the test expectation in test_make_status_error_status_codes
-        return NotFoundError(err_msg, request=request, response=response, body=body)
+        return NotFoundError(message=err_msg, request=request, response=response, body=body)
     if status_code == 409:
-         return ConflictError(err_msg, request=request, response=response, body=body)
+         return ConflictError(message=err_msg, request=request, response=response, body=body)
     if status_code == 413: # File size
-        return InvalidRequestError(err_msg, request=request, response=response, body=body) # Reusing InvalidRequest for now
+        return InvalidRequestError(message=err_msg, request=request, response=response, body=body) # Reusing InvalidRequest for now
     if status_code == 415: # Content type
-        return InvalidRequestError(err_msg, request=request, response=response, body=body) # Reusing InvalidRequest for now
+        return InvalidRequestError(message=err_msg, request=request, response=response, body=body) # Reusing InvalidRequest for now
     if status_code == 422:
-         return UnprocessableEntityError(err_msg, request=request, response=response, body=body)
+         return UnprocessableEntityError(message=err_msg, request=request, response=response, body=body)
     if status_code == 429:
-        return RateLimitError(err_msg, request=request, response=response, body=body)
+        # Parse Retry-After header for rate limit errors
+        retry_after_header = response.headers.get("Retry-After")
+        date_header = response.headers.get("Date")
+        parsed_retry_after_seconds: Optional[int] = None
+        if retry_after_header:
+            parsed_retry_after_seconds = _parse_retry_after_header(retry_after_header, date_header)
+        return RateLimitError(message=err_msg, request=request, response=response, body=body, retry_after_seconds=parsed_retry_after_seconds)
     # Only treat actual HTTP 5xx status codes as InternalServerError
     if 500 <= status_code < 600:
-        return InternalServerError(err_msg, request=request, response=response, body=body) # Includes 500-599 only
+        return InternalServerError(message=err_msg, request=request, response=response, body=body) # Includes 500-599 only
 
     # Fallback for other 4xx errors
     if 400 <= status_code < 500:
-         return APIError(f"Unhandled 4xx error: {err_msg}", request=request, response=response, body=body)
+         return APIError(message=f"Unhandled 4xx error: {err_msg}", request=request, response=response, body=body)
 
     # This is the catch-all fallback for non-standard status codes
     # Must return the base APIError class itself (not a subclass)
-    return APIError(err_msg, request=request, response=response, body=body)
+    return APIError(message=err_msg, request=request, response=response, body=body)

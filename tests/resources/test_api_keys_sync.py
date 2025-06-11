@@ -415,7 +415,7 @@ def test_delete_success(httpx_mock):
 
     httpx_mock.add_response(
         method="DELETE",
-        url=f"https://api.venice.ai/api/v1/api_keys/{api_key_id}", # Include ID in URL path
+        url=f"https://api.venice.ai/api/v1/api_keys?id={api_key_id}", # Use query parameter
         json=mock_response_data,
         status_code=200,
     )
@@ -766,7 +766,7 @@ class TestApiKeysMissedLines:
         response = api_keys_instance.retrieve(api_key_id="key_abc")
         
         # Verify get was called with correct parameters
-        mock_venice_client.get.assert_called_once_with("api_keys/key_abc")
+        mock_venice_client.get.assert_called_once_with("api_keys", params={"id": "key_abc"})
         
         # Assert response
         assert response == {"id": "key_abc", "name": "retrieved_key"}

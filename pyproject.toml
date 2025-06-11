@@ -4,30 +4,45 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "venice-ai"
-version = "1.0.3"
-description = "A community-driven Python client library for interacting with the Venice.ai API, offering comprehensive access to its features."
+version = "1.1.0"
+description = "Python client library for interacting with the Venice.ai API, offering comprehensive access to its features."
 readme = "README.md"
 license = "MIT"
-authors = [
-    "Community Contributors", # Update with actual team info
+authors = ["Seth Bang <seth@sbang.io>"]
+keywords = [
+    "ai",
+    "api-client",
+    "generative-ai",
+    "llm",
+    "machine-learning",
+    "ml",
+    "sdk",
+    "venice",
+    "venice-ai",
 ]
-keywords = ["ai", "api-client", "venice", "ml", "machine-learning"]
 classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Intended Audience :: Developers",
+    "Topic :: Communications :: Chat",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: General",
+    "Typing :: Typed",
 ]
 packages = [{ include = "venice_ai", from = "src" }]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
 httpx = "^0.28.0"            # Using httpx for sync/async requests
+httpx-retries = "^0.4.0"     # For automatic retries with httpx
 typing_extensions = "^4.7.0" # For Literal, TypedDict etc. on older pythons
 pydantic = "^2.7.0"          # For data validation and serialization
 numpy = "^2.2.0"             # For numerical operations, required by some tests
@@ -35,12 +50,13 @@ tiktoken = ">=0.9.0"         # For token estimation
 Pillow = "^11.2.1"           # For image processing (e.g., dimension checks)
 pypandoc = "^1.15"
 beautifulsoup4 = "^4.13.4"
-pytest-asyncio = "^1.0.0"
 
 [tool.poetry.urls]
 Homepage = "https://github.com/sethbang/venice-ai"
 Repository = "https://github.com/sethbang/venice-ai"
 Documentation = "https://venice-ai.readthedocs.io/"
+"Issue Tracker" = "https://github.com/sethbang/venice-ai/issues"
+"Changelog" = "https://github.com/sethbang/venice-ai/blob/main/CHANGELOG.md"
 
 [tool.poetry.group.dev.dependencies]
 pytest-httpx = "^0.35.0"
@@ -56,9 +72,9 @@ sphinx-rtd-theme = "^3.0.2"
 coverage = "^7.8.1"
 questionary = "^2.0.1"
 rich = "^14.0.0"
-pytest-xdist = "^3.5.0"
 typing_extensions = "^4.7.0"
 furo = "^2024.8.6"
+pytest-xdist = "^3.7.0"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -67,7 +83,7 @@ pythonpath = ["src"]
 addopts = ""
 
 [tool.coverage.run]
-source = ["venice_ai"]
+source = ["src"]
 branch = true
 parallel = false
 # omit = [ "*/__main__.py" ] # Optional: if you have main scripts you want to omit

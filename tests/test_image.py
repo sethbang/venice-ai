@@ -205,7 +205,7 @@ class TestImage:
             status_code=429,
             json_data={"error": {"message": "Rate limit exceeded"}}
         )
-        mock_post.side_effect = RateLimitError("Rate limit exceeded", response=mock_response, body=None)
+        mock_post.side_effect = RateLimitError("Rate limit exceeded", response=mock_response, body=None, retry_after_seconds=None)
         with pytest.raises(RateLimitError):
             patchable_image_resource.generate(model="stable-diffusion-v2", prompt="Test prompt") # Use new fixture
 
@@ -370,6 +370,6 @@ class TestAsyncImage:
             status_code=429,
             json_data={"error": {"message": "Rate limit exceeded"}}
         )
-        mock_post.side_effect = RateLimitError("Rate limit exceeded", response=mock_response, body=None)
+        mock_post.side_effect = RateLimitError("Rate limit exceeded", response=mock_response, body=None, retry_after_seconds=None)
         with pytest.raises(RateLimitError):
             await patchable_async_image_resource.generate(model="stable-diffusion-v2", prompt="Test prompt") # Use new fixture

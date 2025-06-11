@@ -99,7 +99,7 @@ class TestAsyncApiKeysCreateMissedLines:
         response = await async_api_keys_instance.retrieve(api_key_id="key_xyz")
         
         # Verify get was called with correct parameters
-        mock_async_venice_client.get.assert_called_once_with("api_keys/key_xyz")
+        mock_async_venice_client.get.assert_called_once_with("api_keys", params={"id": "key_xyz"})
         
         # Assert response
         assert response == {"id": "key_xyz", "name": "retrieved_key_async"}

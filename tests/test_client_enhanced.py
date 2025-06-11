@@ -35,27 +35,42 @@ class TestVeniceClientEnhanced:
     
     def test_client_with_http_transport_options(self):
         """Test client with custom HTTP transport options."""
-        with patch('httpx.HTTPTransport') as mock_transport, patch('httpx.Client') as mock_client:
+        # Test uses max_retries, so it should use the ...WithRetries client
+        # and patch the RetryTransport from the correct module.
+        from venice_ai._client_with_retries import VeniceClientWithRetries # Import correct client
+        with patch('httpx.HTTPTransport') as mock_transport, \
+             patch('httpx.Client') as mock_client, \
+             patch('venice_ai._client_with_retries.RetryTransport') as mock_retry_transport: # Updated path
+            
             # Configure the mock HTTP transport
             mock_transport_instance = MagicMock()
             mock_transport.return_value = mock_transport_instance
             
-            client = VeniceClient(
+            # Configure the mock retry transport
+            mock_retry_transport_instance = MagicMock()
+            mock_retry_transport.return_value = mock_retry_transport_instance
+            
+            client = VeniceClientWithRetries( # Use ...WithRetries client
                 api_key="test-api-key",
                 base_url="https://custom.api.com",
                 timeout=15.0,
-                max_retries=3
+                max_retries=3 # This will be used as fallback for http_transport_options' 'retries'
             )
             
-            # Validate HTTPTransport was created with expected retries
+            # Validate HTTPTransport was created with expected retries (from max_retries fallback)
             mock_transport.assert_called_once_with(retries=3)
+            
+            # Validate RetryTransport was created with the HTTPTransport
+            mock_retry_transport.assert_called_once()
+            retry_call_args = mock_retry_transport.call_args
+            assert retry_call_args[1]['transport'] == mock_transport_instance
             
             # Validate client was created with expected args
             mock_client.assert_called_once()
             _, kwargs = mock_client.call_args
             
             assert kwargs["timeout"].read == 15.0
-            assert kwargs["transport"] == mock_transport_instance
+            assert kwargs["transport"] == mock_retry_transport_instance
     
     def test_request_with_null_json(self):
         """Test _request with None json_data."""
@@ -318,20 +333,35 @@ class TestAsyncVeniceClientEnhanced:
     
     async def test_client_with_http_transport_options(self):
         """Test client with custom HTTP transport options."""
-        with patch('httpx.AsyncHTTPTransport') as mock_transport, patch('httpx.AsyncClient') as mock_client:
+        # Test uses max_retries, so it should use the ...WithRetries client
+        # and patch the RetryTransport from the correct module.
+        from venice_ai._client_with_retries import AsyncVeniceClientWithRetries # Import correct client
+        with patch('httpx.AsyncHTTPTransport') as mock_transport, \
+             patch('httpx.AsyncClient') as mock_client, \
+             patch('venice_ai._client_with_retries.RetryTransport') as mock_retry_transport: # Updated path
+            
             # Configure the mock HTTP transport
             mock_transport_instance = MagicMock()
             mock_transport.return_value = mock_transport_instance
             
-            client = AsyncVeniceClient(
+            # Configure the mock retry transport
+            mock_retry_transport_instance = MagicMock()
+            mock_retry_transport.return_value = mock_retry_transport_instance
+            
+            client = AsyncVeniceClientWithRetries( # Use ...WithRetries client
                 api_key="test-api-key",
                 base_url="https://custom.api.com",
                 timeout=15.0,
-                max_retries=3
+                max_retries=3 # This will be used as fallback for http_transport_options' 'retries'
             )
             
-            # Validate AsyncHTTPTransport was created with expected retries
+            # Validate AsyncHTTPTransport was created with expected retries (from max_retries fallback)
             mock_transport.assert_called_once_with(retries=3)
+            
+            # Validate RetryTransport was created with the AsyncHTTPTransport
+            mock_retry_transport.assert_called_once()
+            retry_call_args = mock_retry_transport.call_args
+            assert retry_call_args[1]['transport'] == mock_transport_instance
             
             # Validate client was created with expected args
             mock_client.assert_called_once()
@@ -340,8 +370,8 @@ class TestAsyncVeniceClientEnhanced:
             # Check the timeout was set correctly
             assert kwargs["timeout"].read == 15.0
             
-            # Check that our mocked transport instance was passed to the client
-            assert kwargs["transport"] == mock_transport_instance
+            # Check that our mocked retry transport instance was passed to the client
+            assert kwargs["transport"] == mock_retry_transport_instance
     
     async def test_request_with_null_json(self):
         """Test _request with None json_data."""
@@ -349,8 +379,9 @@ class TestAsyncVeniceClientEnhanced:
             # Create a proper mock setup for async response
             mock_response = MagicMock()
             # Configure json method to return a properly awaitable response
-            mock_response.json = AsyncMock()
-            mock_response.json.return_value = {"status": "success"}
+            mock_response.json = AsyncMock(return_value={"status": "success"})
+            mock_response.aread = AsyncMock()
+            mock_response.aclose = AsyncMock()
             
             # Configure the client's request method
             mock_client.return_value.request = AsyncMock()
@@ -370,8 +401,9 @@ class TestAsyncVeniceClientEnhanced:
         with patch('httpx.AsyncClient') as mock_client:
             # Configure mock response with proper async behavior
             mock_response = MagicMock()
-            mock_response.json = AsyncMock()
-            mock_response.json.return_value = {"status": "success"}
+            mock_response.json = AsyncMock(return_value={"status": "success"})
+            mock_response.aread = AsyncMock()
+            mock_response.aclose = AsyncMock()
             
             # Configure request mock properly
             mock_client.return_value.request = AsyncMock()
@@ -484,6 +516,7 @@ class TestAsyncVeniceClientEnhanced:
             mock_response = MagicMock()
             mock_response.json = AsyncMock()
             mock_response.json.return_value = {"status": "success"}
+            mock_response.aclose = AsyncMock()
             
             # Configure the client's request method directly
             mock_client.return_value.request = AsyncMock()

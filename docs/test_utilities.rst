@@ -19,7 +19,7 @@ get_test_model_id
 
 .. code-block:: python
 
-    def get_test_model_id(
+    async def get_test_model_id(
         client: Union[VeniceClient, AsyncVeniceClient], 
         model_type: ModelType, 
         required_capabilities: Optional[List[str]] = None, 
@@ -76,7 +76,7 @@ get_model_capabilities_for_test
     async def get_model_capabilities_for_test(
         client: Union[VeniceClient, AsyncVeniceClient], 
         model_id: str
-    ) -> Optional[Dict[str, Any]]
+    ) -> Optional[ModelCapabilities]
 
 Test-specific wrapper for retrieving model capabilities with test-appropriate error handling.
 
@@ -87,7 +87,7 @@ Test-specific wrapper for retrieving model capabilities with test-appropriate er
 
 **Returns:**
 
-- A dictionary of model capabilities if found, or ``None``.
+- A ``ModelCapabilities`` object if found, or ``None``.
 - May cause test failure via ``pytest.fail()`` if capabilities are unexpectedly None.
 
 **Example:**
@@ -101,6 +101,55 @@ Test-specific wrapper for retrieving model capabilities with test-appropriate er
     async def test_model_has_required_capability(venice_client):
         capabilities = await get_model_capabilities_for_test(venice_client, "llama-3.2-3b")
         assert capabilities.get("supportsFunctionCalling") is True
+
+get_filtered_models (Test Helper)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    async def get_filtered_models(
+        client: Union[VeniceClient, AsyncVeniceClient],
+        model_type: ModelType,
+        required_capabilities: Optional[List[str]] = None,
+        filter_func: Callable[[Model], Awaitable[bool]] | Callable[[Model], bool] | None = None,
+    ) -> List[Model]:
+
+Test-specific wrapper for retrieving a list of models, filtered by type, capabilities, and an optional custom filter function. This helper internally calls the main ``venice_ai.utils.get_filtered_models`` and provides additional handling for applying a custom ``filter_func``.
+
+**Parameters:**
+
+- ``client``: A ``~venice_ai.VeniceClient`` or ``~venice_ai.AsyncVeniceClient`` instance.
+- ``model_type``: The type of model to filter by (e.g., "text", "image").
+- ``required_capabilities``: Optional list of capabilities the model must have.
+- ``filter_func``: Optional custom filter function that can be synchronous or asynchronous. Takes a ``Model`` object and returns a boolean indicating whether the model should be included.
+
+**Returns:**
+
+- ``List[Model]``: A list of ``Model`` objects that match the specified filters.
+
+**Example:**
+
+.. code-block:: python
+
+    from e2e_tests.utils.helpers import get_filtered_models
+
+    @pytest.mark.asyncio
+    async def test_custom_model_filtering(venice_client):
+        # Define a custom filter function
+        def custom_filter(model):
+            return "gpt" in model.get("id", "").lower()
+        
+        # Get filtered models with custom logic
+        models = await get_filtered_models(
+            venice_client,
+            model_type="text",
+            required_capabilities=["supportsFunctionCalling"],
+            filter_func=custom_filter
+        )
+        
+        # All returned models should match our criteria
+        for model in models:
+            assert "gpt" in model.get("id", "").lower()
 
 Chat Message Generation
 ~~~~~~~~~~~~~~~~~~~~~~~

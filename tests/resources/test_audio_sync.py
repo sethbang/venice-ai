@@ -16,6 +16,7 @@ def test_create_speech_success(httpx_mock):
     """Tests successful speech generation (non-streaming)."""
     # Mock binary audio data
     mock_audio_data = b"mock audio binary data"
+    
 
     httpx_mock.add_response(
         method="POST",
@@ -115,7 +116,7 @@ def test_create_speech_error(httpx_mock):
 
     assert excinfo.value.response is not None
     assert excinfo.value.response.status_code == 401
-    assert "Invalid API key" in str(excinfo.value)
+    assert "Invalid API key" in excinfo.value.message
 
 
 def test_create_speech_streaming_with_options(httpx_mock):

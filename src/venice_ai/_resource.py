@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING, Generic, TypeVar, Dict, Any, BinaryIO, Optional, Union, Mapping
+import httpx
 
 if TYPE_CHECKING:
     from ._client import VeniceClient
     from ._async_client import AsyncVeniceClient
-    import httpx
 
 SyncClientT = TypeVar("SyncClientT", bound="VeniceClient")
 AsyncClientT = TypeVar("AsyncClientT", bound="AsyncVeniceClient")
@@ -66,6 +66,60 @@ class APIResource(Generic[SyncClientT]):
         response.raise_for_status()
         return response.json()
 
+    def _request_raw_response(
+        self,
+        method: str,
+        path: str,
+        *,
+        options: Dict[str, Any],
+        stream_mode: bool = False,
+    ) -> "httpx.Response":
+        """
+        Make an HTTP request and return the raw httpx.Response object.
+        
+        This method is used for endpoints that need access to the raw response,
+        such as for streaming audio data or getting raw binary content.
+        
+        Args:
+            method: HTTP method (e.g., 'POST') to use for the request.
+            path: API endpoint path relative to the base URL.
+            options: Request options including headers, body, timeout, etc.
+            stream_mode: Whether to enable streaming mode for the response.
+            
+        Returns:
+            The raw httpx.Response object.
+        """
+        url = self._client._base_url.join(path)
+        
+        # Extract options
+        headers = options.get("headers", {})
+        json_data = options.get("body")
+        timeout = options.get("timeout")
+        
+        # Prepare headers by merging default headers with any provided headers
+        request_headers = dict(self._client._client.headers)
+        if headers:
+            request_headers.update(headers)
+            
+        try:
+            response = self._client._client.request(
+                method=method,
+                url=url,
+                json=json_data if json_data else None,
+                headers=request_headers,
+                timeout=timeout if timeout is not None else self._client._timeout,
+            )
+            return response
+        except (httpx.HTTPStatusError, httpx.RequestError) as e:
+            # Let the client handle the error translation
+            from httpx import Request
+            default_request = Request(method=method, url=str(url))
+            if hasattr(self._client, '_translate_httpx_error_to_api_error'):
+                api_error = self._client._translate_httpx_error_to_api_error(e, default_request)
+                raise api_error from e
+            else:
+                raise
+
 class AsyncAPIResource(Generic[AsyncClientT]):
     _client: AsyncClientT
 
@@ -123,3 +177,56 @@ class AsyncAPIResource(Generic[AsyncClientT]):
         
         response.raise_for_status()
         return response.json()
+
+    async def _arequest_raw_response(
+        self,
+        method: str,
+        path: str,
+        *,
+        options: Dict[str, Any],
+        stream_mode: bool = False,
+    ) -> "httpx.Response":
+        """
+        Make an async HTTP request and return the raw httpx.Response object.
+        
+        This method is used for endpoints that need access to the raw response,
+        such as for streaming audio data or getting raw binary content.
+        
+        Args:
+            method: HTTP method (e.g., 'POST') to use for the request.
+            path: API endpoint path relative to the base URL.
+            options: Request options including headers, body, timeout, etc.
+            stream_mode: Whether to enable streaming mode for the response.
+            
+        Returns:
+            The raw httpx.Response object.
+        """
+        url = self._client._base_url.join(path)
+        
+        # Extract options
+        headers = options.get("headers", {})
+        json_data = options.get("body")
+        timeout = options.get("timeout")
+        
+        # Prepare headers by merging default headers with any provided headers
+        request_headers = dict(self._client._client.headers)
+        if headers:
+            request_headers.update(headers)
+            
+        try:
+            response = await self._client._client.request(
+                method=method,
+                url=url,
+                json=json_data if json_data else None,
+                headers=request_headers,
+                timeout=timeout if timeout is not None else self._client._timeout,
+            )
+            return response
+        except (httpx.HTTPStatusError, httpx.RequestError) as e:
+            # Let the client handle the error translation
+            default_request = httpx.Request(method=method, url=str(url))
+            if hasattr(self._client, '_translate_httpx_error_to_api_error'):
+                api_error = await self._client._translate_httpx_error_to_api_error(e, default_request)
+                raise api_error from e
+            else:
+                raise

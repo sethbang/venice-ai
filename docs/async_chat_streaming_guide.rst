@@ -121,3 +121,13 @@ Further Exploration
 - Explore other parameters of the `create` method to customize model behavior (e.g., `temperature`, `max_completion_tokens`).
 - Integrate this streaming logic into a web application or a command-line interface for a more interactive experience.
 - Refer to the :ref:`API Reference <api_reference>` for detailed information on all available methods and parameters.
+
+Synchronous Streaming
+~~~~~~~~~~~~~~~~~~~~~
+
+While this guide focuses on asynchronous streaming with `AsyncVeniceClient`,
+the library also supports synchronous streaming for chat completions using
+the `VeniceClient`.
+
+You can find an example of synchronous streaming in the main docstring for the
+:class:`~venice_ai._client.VeniceClient` class within the API Reference.

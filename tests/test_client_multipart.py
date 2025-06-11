@@ -268,7 +268,16 @@ class TestClientMultipart:
         assert mock_response.text in str(excinfo.value)
         
         # Verify non-JSON error was logged using the mock logger
-        assert any("Error response body (non-JSON):" in str(args[0]) for args, _ in setup_logger_mock.error.call_args_list)
+        # Verify non-JSON error was logged using the mock logger
+        # The log message now includes the structured body.
+        log_found = False
+        for args, _ in setup_logger_mock.error.call_args_list:
+            log_message = str(args[0])
+            if "Error response body (full details):" in log_message and \
+               f"'error': 'Non-JSON response from API (status {mock_response.status_code}): {mock_response.text[:500]}'" in log_message:
+                log_found = True
+                break
+        assert log_found, f"Expected log message with non-JSON details not found. Actual logs: {setup_logger_mock.error.call_args_list}"
 
     def test_request_multipart_timeout(self, mock_client):
         """Test _request_multipart with timeout exception."""

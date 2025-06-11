@@ -78,7 +78,9 @@ class TestAsyncClientCoverageAdditional:
             mock_response.raise_for_status = MagicMock(side_effect=httpx.HTTPStatusError(
                 "Error", request=MagicMock(method="GET", url=httpx.URL("https://api.venice.ai/api/v1/test/endpoint")), response=mock_response
             ))
-            mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
+            mock_response.json = AsyncMock(side_effect=json.JSONDecodeError("Invalid JSON", "", 0))
+            mock_response.aread = AsyncMock()
+            mock_response.aclose = AsyncMock()
             mock_response.text = "Not JSON"
             mock_client.request.return_value = mock_response
             
@@ -165,6 +167,8 @@ class TestAsyncClientCoverageAdditional:
             iterator_mock = create_async_iterator_mock(["data: {invalid json}"])
             # Use MagicMock with side_effect to directly return the iterator (not a coroutine)
             mock_response.aiter_lines = MagicMock(side_effect=lambda: iterator_mock)
+            mock_response.aread = AsyncMock()
+            mock_response.aclose = AsyncMock()
             mock_response.raise_for_status = MagicMock()
             
             client = AsyncVeniceClient(api_key="test-key")
@@ -194,6 +198,8 @@ class TestAsyncClientCoverageAdditional:
             # Add proper async iterator (empty because it will raise error before iteration)
             iterator_mock = create_async_iterator_mock([])
             mock_response.aiter_lines = MagicMock(side_effect=lambda: iterator_mock)
+            mock_response.aread = AsyncMock()
+            mock_response.aclose = AsyncMock()
             # Make sure status_code is an actual integer
             mock_response.status_code = 404
             
@@ -295,7 +301,9 @@ class TestAsyncClientCoverageAdditional:
             mock_response = MagicMock()  # Use MagicMock for sync methods
             # Add proper async iterator for bytes with empty iterator
             iterator_mock = create_async_iterator_mock([])
-            mock_response.aiter_bytes = MagicMock(side_effect=lambda: iterator_mock)
+            mock_response.aiter_bytes = AsyncMock(side_effect=lambda: iterator_mock)
+            mock_response.aread = AsyncMock()
+            mock_response.aclose = AsyncMock()
             # Make sure status_code is an actual integer
             mock_response.status_code = 404
             
@@ -367,7 +375,9 @@ class TestAsyncClientCoverageAdditional:
             
             # Setup mock response
             mock_response = MagicMock()  # Use MagicMock instead of AsyncMock for sync methods
-            mock_response.json.return_value = {"status": "success"}
+            mock_response.json = AsyncMock(return_value={"status": "success"})
+            mock_response.aread = AsyncMock()
+            mock_response.aclose = AsyncMock()
             mock_response.text = '{"status": "success"}'
             mock_response.status_code = 200
             mock_response.headers = {"Content-Type": "application/json"}
@@ -427,7 +437,9 @@ class TestAsyncClientCoverageAdditional:
                 "400 Bad Request", request=MagicMock(method="POST", url=httpx.URL("https://api.venice.ai/api/v1/test/upload")), response=mock_response
             )
             mock_response.raise_for_status.side_effect = mock_error
-            mock_response.json.return_value = {"error": "Invalid request"}
+            mock_response.json = AsyncMock(return_value={"error": "Invalid request"})
+            mock_response.aread = AsyncMock()
+            mock_response.aclose = AsyncMock()
             mock_response.text = '{"error": "Invalid request"}'
             mock_response.status_code = 400
             mock_client.request.return_value = mock_response
@@ -445,7 +457,9 @@ class TestAsyncClientCoverageAdditional:
             
             
             # Test HTTP Status Error with non-JSON response
-            mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
+            mock_response.json = AsyncMock(side_effect=json.JSONDecodeError("Invalid JSON", "", 0))
+            mock_response.aread = AsyncMock()
+            mock_response.aclose = AsyncMock()
             mock_response.text = "Not JSON"
             
             with pytest.raises(VeniceError):
@@ -550,7 +564,9 @@ class TestAsyncClientCoverageAdditional:
             
             # Setup mock response
             mock_response = MagicMock()  # Use MagicMock for sync methods
-            mock_response.json.return_value = {"result": "success"}
+            mock_response.json = AsyncMock(return_value={"result": "success"})
+            mock_response.aread = AsyncMock()
+            mock_response.aclose = AsyncMock()
             mock_client.request.return_value = mock_response
             
             client = AsyncVeniceClient(api_key="test-key")

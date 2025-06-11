@@ -52,6 +52,7 @@ class TestTranslateHttpxErrorToApiErrorComprehensive:
         # Setup response mock with JSON error body
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = status_code
+        mock_response.headers = {}
         mock_response.json.return_value = {
             "error": {
                 "message": f"Specific error for status {status_code}",
@@ -103,6 +104,7 @@ class TestTranslateHttpxErrorToApiErrorComprehensive:
         # Setup response mock with non-standard JSON error body
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = status_code
+        mock_response.headers = {}
         mock_response.json.return_value = {
             "detail": f"Another error format for status {status_code}"
         }
@@ -146,6 +148,7 @@ class TestTranslateHttpxErrorToApiErrorComprehensive:
         # Setup response mock with plain text error body
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = status_code
+        mock_response.headers = {}
         mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
         mock_response.text = f"A plain text error occurred for status {status_code}"
         
@@ -186,6 +189,7 @@ class TestTranslateHttpxErrorToApiErrorComprehensive:
         # Setup response mock with unparseable JSON body
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = status_code
+        mock_response.headers = {}
         mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
         mock_response.text = "not json{"
         
@@ -225,6 +229,7 @@ class TestTranslateHttpxErrorToApiErrorComprehensive:
         # Setup response mock with empty body
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = status_code
+        mock_response.headers = {}
         mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
         mock_response.text = ""
         
@@ -244,7 +249,10 @@ class TestTranslateHttpxErrorToApiErrorComprehensive:
         assert api_error.request is mock_request # Changed to check api_error.request
         assert api_error.response is mock_response
         assert cast(APIError, api_error).status_code == status_code
-        assert f"HTTP Status {status_code}" in str(api_error)
+        # Check that the error message contains the core information (status code and API error indication)
+        # The exact format can be "API error {status_code} for {METHOD} {URL}"
+        assert f"API error {status_code}" in str(api_error)
+        assert f"for {mock_request.method} {mock_request.url}" in str(api_error)
 
     def test_timeout_exception(self):
         """Test _translate_httpx_error_to_api_error with TimeoutException."""

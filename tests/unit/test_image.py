@@ -188,15 +188,14 @@ class TestImage:
         mock_b64encode.return_value = b"base64encodedimage"
         mock_client._request.return_value = b"upscaled image data"
 
-        # Create a dummy file
-        dummy_file_path = Path("dummy_image.png")
-        dummy_file_path.write_bytes(b"dummy image content")
+        # Use the dummy file from test data directory
+        dummy_file_path = Path("e2e_tests/data/dummy_image.png")
 
         result = image_resource.upscale(image=str(dummy_file_path))
 
         mock_client._request.assert_called_once_with(
-            "POST",
-            "image/upscale",
+            method="POST",
+            path="image/upscale",
             json_data={"image": "base64encodedimage", "scale": 2.0},
             headers={"Accept": "application/json"},
             raw_response=True,
@@ -204,7 +203,6 @@ class TestImage:
         )
         mock_client.post.assert_not_called()
         assert result == b"upscaled image data"
-        dummy_file_path.unlink() # Clean up the dummy file
 
     @patch("venice_ai.resources.image.base64.b64encode")
     def test_upscale_with_bytes(self, mock_b64encode, mock_client):
@@ -277,8 +275,6 @@ class TestImage:
             json_data={
                 "image": "base64encodedimage",
                 "enhance": True, # True is passed as a boolean
-                "enhance_creativity": enhance_creativity,
-                "enhance_prompt": enhance_prompt,
                 "replication": replication,
                 "scale": scale,
             },
@@ -486,15 +482,14 @@ class TestAsyncImage:
         mock_b64encode.return_value = b"base64encodedimageasync"
         mock_async_client._request.return_value = b"upscaled image data async"
 
-        # Create a dummy file
-        dummy_file_path = Path("dummy_image_async.png")
-        dummy_file_path.write_bytes(b"dummy image content async")
+        # Use the dummy file from test data directory
+        dummy_file_path = Path("e2e_tests/data/dummy_image_async.png")
 
         result = await image_resource.upscale(image=str(dummy_file_path))
 
         mock_async_client._request.assert_awaited_once_with(
-            "POST",
-            "image/upscale",
+            method="POST",
+            path="image/upscale",
             json_data={"image": "base64encodedimageasync", "scale": 2.0},
             headers={"Accept": "application/json"},
             raw_response=True,
@@ -502,7 +497,6 @@ class TestAsyncImage:
         )
         mock_async_client.post.assert_not_called()
         assert result == b"upscaled image data async"
-        dummy_file_path.unlink() # Clean up the dummy file
 
     @pytest.mark.asyncio
     @patch("venice_ai.resources.image.base64.b64encode")
@@ -578,8 +572,6 @@ class TestAsyncImage:
             json_data={
                 "image": "base64encodedimageasync",
                 "enhance": False, # False is passed as a boolean
-                "enhance_creativity": enhance_creativity,
-                "enhance_prompt": enhance_prompt,
                 "replication": replication,
                 "scale": scale,
             },

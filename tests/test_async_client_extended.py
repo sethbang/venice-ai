@@ -74,7 +74,10 @@ class TestAsyncClientExtended:
     async def test_request_get_removes_content_type_and_accept(self, client):
         """Test that GET requests remove Content-Type and Accept headers if not explicitly provided."""
         mock_response = AsyncMock(spec=httpx.Response)
-        mock_response.json.return_value = {"result": "success"}
+        mock_response.headers = {}
+        mock_response.json = AsyncMock(return_value={"result": "success"})
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.raise_for_status = MagicMock() # raise_for_status is sync
         mock_response.status_code = 200  # Explicitly set status_code
         client._client.request.return_value = mock_response
@@ -100,7 +103,10 @@ class TestAsyncClientExtended:
     async def test_request_get_keeps_headers_if_explicitly_provided(self, client):
         """Test that GET requests keep Content-Type and Accept if explicitly provided in headers."""
         mock_response = AsyncMock(spec=httpx.Response)
-        mock_response.json.return_value = {"result": "success"}
+        mock_response.headers = {}
+        mock_response.json = AsyncMock(return_value={"result": "success"})
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.raise_for_status = MagicMock() # raise_for_status is sync
         mock_response.status_code = 200  # Explicitly set status_code
         client._client.request.return_value = mock_response
@@ -131,6 +137,7 @@ class TestAsyncClientExtended:
     async def test_request_raw_response(self, client):
         """Test requesting raw binary response instead of parsed JSON."""
         mock_response = AsyncMock(spec=httpx.Response)
+        mock_response.headers = {}
         mock_response.content = b"binary content"
         mock_response.raise_for_status = MagicMock() # raise_for_status is sync
         mock_response.status_code = 200  # Explicitly set status_code
@@ -145,11 +152,14 @@ class TestAsyncClientExtended:
     async def test_request_json_decode_error(self, client):
         """Test HTTP error with invalid JSON response."""
         mock_response = AsyncMock(spec=httpx.Response)
+        mock_response.headers = {}
         http_error = httpx.HTTPStatusError(
             "Error", request=MagicMock(method="POST", url=httpx.URL("https://api.venice.ai/api/v1/test/endpoint")), response=mock_response
         )
         mock_response.raise_for_status.side_effect = http_error
-        mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
+        mock_response.json = AsyncMock(side_effect=json.JSONDecodeError("Invalid JSON", "", 0))
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.status_code = 400
         client._client.request.return_value = mock_response
         
@@ -194,7 +204,10 @@ class TestAsyncClientExtended:
     async def test_request_multipart(self, client):
         """Test making a multipart request for file uploads."""
         mock_response = AsyncMock(spec=httpx.Response)
-        mock_response.json.return_value = {"result": "success"}
+        mock_response.headers = {}
+        mock_response.json = AsyncMock(return_value={"result": "success"})
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         mock_response.raise_for_status = MagicMock() # raise_for_status is sync
         mock_response.status_code = 200  # Explicitly set status_code
         mock_response.headers = {"Content-Type": "application/json"}  # Explicitly set headers
@@ -238,11 +251,14 @@ class TestAsyncClientExtended:
         
         # Mock the response properly with status_code and other required attributes
         mock_response = AsyncMock(spec=httpx.Response)
+        mock_response.headers = {}
         mock_response.status_code = 200
         mock_response.raise_for_status = MagicMock()
         
         # Set up the async iterator for lines
         mock_response.aiter_lines = MagicMock(side_effect=lambda: create_async_iterator(lines))
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         
         # Set up the context manager correctly
         mock_ctx = AsyncMock()
@@ -272,11 +288,14 @@ class TestAsyncClientExtended:
         
         # Mock the response properly with status_code and other required attributes
         mock_response = AsyncMock(spec=httpx.Response)
+        mock_response.headers = {}
         mock_response.status_code = 200
         mock_response.raise_for_status = MagicMock()
         
         # Set up the async iterator for lines
         mock_response.aiter_lines = MagicMock(side_effect=lambda: create_async_iterator(lines))
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         
         # Set up the context manager correctly
         mock_ctx = AsyncMock()
@@ -328,11 +347,14 @@ class TestAsyncClientExtended:
         
         # Mock the response properly with status_code and other required attributes
         mock_response = AsyncMock(spec=httpx.Response)
+        mock_response.headers = {}
         mock_response.status_code = 200
         mock_response.raise_for_status = MagicMock()
         
         # Set up the async iterator for bytes
         mock_response.aiter_bytes = MagicMock(side_effect=lambda: create_async_iterator(chunks))
+        mock_response.aread = AsyncMock()
+        mock_response.aclose = AsyncMock()
         
         # Set up the context manager correctly
         mock_ctx = AsyncMock()

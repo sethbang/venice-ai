@@ -243,7 +243,10 @@ def test_get_usage_error_429(httpx_mock):
         json={"error": {"message": "Rate limit exceeded", "type": "rate_limit_error"}},
     )
 
-    with VeniceClient(api_key="test-key") as client:
+    # This test is specifically for retry logic (max_retries=0 means no retries)
+    # It should use VeniceClientWithRetries
+    from venice_ai._client_with_retries import VeniceClientWithRetries
+    with VeniceClientWithRetries(api_key="test-key", max_retries=0) as client:
         with pytest.raises(RateLimitError) as excinfo:
             client.billing.get_usage()
 

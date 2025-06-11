@@ -36,7 +36,7 @@ Developed to benchmark and explore the full capabilities of the Venice.ai API, t
   - [Billing Information](#billing-information)
 - [Error Handling](#error-handling)
 - [Advanced Usage](#advanced-usage)
-  - [Using a Custom `httpx` Client](#using-a-custom-httpx-client)
+  - [Advanced HTTP Client Configuration](#advanced-http-client-configuration)
   - [Understanding Streaming](#understanding-streaming)
   - [Token Estimation](#token-estimation)
 - [Showcase Application](#showcase-application)
@@ -55,8 +55,10 @@ Developed to benchmark and explore the full capabilities of the Venice.ai API, t
 - Robust error handling with a custom exception hierarchy.
 - Type-hinted for a better developer experience and static analysis.
 - Resource-oriented client design (e.g., `client.chat`, `client.image`).
+- Automatic request retries for transient errors and configurable HTTP status codes.
 - Comprehensive testing suite with `test_runner.py` for easy execution.
 - Detailed API documentation generated with Sphinx.
+- Support for `logprobs` and `top_logprobs` in chat completions to retrieve token likelihoods.
 
 ## Getting Started
 
@@ -106,7 +108,7 @@ from venice_ai import VeniceClient
 
 # Assumes VENICE_API_KEY is set in your environment
 # Recommended: use as a context manager
-with VeniceClient() as client:
+with VeniceClient(default_timeout=60.0) as client: # Added default_timeout
     try:
         response = client.chat.completions.create(
             model="llama-3.2-3b", # Or your preferred model
@@ -126,7 +128,7 @@ from venice_ai import AsyncVeniceClient
 async def main():
     # Assumes VENICE_API_KEY is set in your environment
     # Recommended: use as an async context manager
-    async with AsyncVeniceClient() as async_client:
+    async with AsyncVeniceClient(default_timeout=60.0) as async_client: # Added default_timeout
         try:
             response = await async_client.chat.completions.create(
                 model="llama-3.2-3b", # Or your preferred model
@@ -149,14 +151,14 @@ if __name__ == "__main__":
 ```python
 from venice_ai import VeniceClient
 
-# Option 1: API key from environment variable VENICE_API_KEY
-client = VeniceClient()
+# Option 1: API key from environment variable VENICE_API_KEY, with default timeout
+client = VeniceClient(default_timeout=30.0) # Added default_timeout
 
-# Option 2: Pass API key directly
-# client = VeniceClient(api_key="your_api_key_here")
+# Option 2: Pass API key directly and custom timeout
+# client = VeniceClient(api_key="your_api_key_here", default_timeout=45.0)
 
 # Using as a context manager (recommended for proper resource cleanup):
-with VeniceClient(api_key="your_api_key_here") as client:
+with VeniceClient(api_key="your_api_key_here", default_timeout=30.0) as client: # Added default_timeout
     # Use the client for API calls
     models_list = client.models.list()
     print(f"Found {len(models_list.data)} models.")
@@ -172,14 +174,14 @@ import asyncio
 from venice_ai import AsyncVeniceClient
 
 async def main():
-    # Option 1: API key from environment variable VENICE_API_KEY
-    async_client = AsyncVeniceClient()
+    # Option 1: API key from environment variable VENICE_API_KEY, with default timeout
+    async_client = AsyncVeniceClient(default_timeout=30.0) # Added default_timeout
 
-    # Option 2: Pass API key directly
-    # async_client = AsyncVeniceClient(api_key="your_api_key_here")
+    # Option 2: Pass API key directly and custom timeout
+    # async_client = AsyncVeniceClient(api_key="your_api_key_here", default_timeout=45.0)
 
     # Using as an async context manager (recommended):
-    async with AsyncVeniceClient(api_key="your_api_key_here") as async_client:
+    async with AsyncVeniceClient(api_key="your_api_key_here", default_timeout=30.0) as async_client: # Added default_timeout
         # Use the client for API calls
         models_list = await async_client.models.list()
         print(f"Found {len(models_list.data)} models.")
@@ -197,6 +199,14 @@ It's important to `close()` (for `VeniceClient`) or `await async_client.close()`
 
 The response objects (`response`, `chunk`) are `TypedDict`s. You can explore their structure for more details (see `src/venice_ai/types/chat.py` or the Sphinx-generated API documentation).
 
+**Parameters:**
+
+:param logprobs: Whether to return log probabilities of the output tokens. If `True`, the `logprobs` field will be populated in the `choices` of the response. Defaults to `False`.
+:type logprobs: Optional[bool]
+
+:param top_logprobs: An integer between 0 and 5 specifying the number of most likely tokens to return at each token position, each with an associated log probability. Requires `logprobs` to be `True`.
+:type top_logprobs: Optional[int]
+
 **Non-streaming example:**
 
 ```python
@@ -210,6 +220,38 @@ with VeniceClient() as client:
         ]
     )
     print(response.choices[0].message.content)
+```
+
+**Example with `logprobs` and `top_logprobs`:**
+
+```python
+from venice_ai import VeniceClient
+
+with VeniceClient() as client:
+    response = client.chat.completions.create(
+        model="llama-3.2-3b", # Or your preferred model
+        messages=[
+            {"role": "user", "content": "What is the color of the sky?"}
+        ],
+        logprobs=True,
+        top_logprobs=2 # Request the top 2 most likely tokens at each position
+    )
+
+    # Example of accessing logprobs data
+    if response.choices and response.choices[0].logprobs:
+        print("Logprobs received.")
+        first_choice_logprobs = response.choices[0].logprobs
+        if first_choice_logprobs.content:
+            for i, token_logprob in enumerate(first_choice_logprobs.content[:2]): # Display for first 2 generated tokens
+                print(f"Token {i+1}: '{token_logprob.token}' (logprob: {token_logprob.logprob:.4f})")
+                if token_logprob.top_logprobs:
+                    print(f"  Top {len(token_logprob.top_logprobs)} alternative tokens:")
+                    for alt_token_logprob in token_logprob.top_logprobs:
+                        print(f"    - '{alt_token_logprob.token}' (logprob: {alt_token_logprob.logprob:.4f})")
+    else:
+        print("No logprobs data in response or choices.")
+
+    print(f"\nMain response content: {response.choices[0].message.content}")
 ```
 
 **Streaming example:**
@@ -467,42 +509,87 @@ Always check the specific exception type and its attributes (like `e.status_code
 
 ## Advanced Usage
 
-### Using a Custom `httpx` Client
+### Advanced HTTP Client Configuration
 
-You can provide your own `httpx.Client` or `httpx.AsyncClient` instance during initialization if you need custom configurations (e.g., proxies, custom SSL settings, transport options):
+The SDK allows for advanced configuration of the underlying `httpx` client, enabling scenarios like custom mTLS, specific proxy setups, or detailed transport logging. There are now three main ways to achieve this:
 
-```python
-import httpx
-from venice_ai import VeniceClient, AsyncVeniceClient
+1.  **Passing a Pre-configured `httpx.Client` / `httpx.AsyncClient`**:
+    You can provide your own `httpx.Client` or `httpx.AsyncClient` instance. The SDK will use it directly but will still manage `base_url`, `timeout` (if not more specific on your client), and authentication. **You are responsible for closing your client instance.**
 
-# Synchronous
-custom_sync_transport = httpx.HTTPTransport(retries=1)
-# Note: The custom httpx.Client should ideally be managed as a context manager itself.
-# If passing an externally managed httpx.Client, ensure its lifecycle is handled.
-# For simplicity, this example shows direct instantiation.
-http_client_instance = httpx.Client(transport=custom_sync_transport, timeout=30.0)
-try:
-    client = VeniceClient(api_key="YOUR_API_KEY", http_client=http_client_instance)
-    # Use client...
-    models = client.models.list()
-    print(f"Sync models: {len(models.data)}")
-finally:
-    http_client_instance.close() # Close the httpx client if managed externally
+    ```python
+    import httpx
+    from venice_ai import VeniceClient # or AsyncVeniceClient
 
-# Asynchronous
-async def use_custom_async_client():
-    custom_async_transport = httpx.AsyncHTTPTransport(retries=1)
-    async_http_client_instance = httpx.AsyncClient(transport=custom_async_transport, timeout=30.0)
+    # Synchronous example
+    my_custom_httpx_client = httpx.Client(proxies={"all://": "http://localhost:8080"}, timeout=60.0)
     try:
-        async_client = AsyncVeniceClient(api_key="YOUR_API_KEY", http_client=async_http_client_instance)
-        # Use async_client...
-        models = await async_client.models.list()
-        print(f"Async models: {len(models.data)}")
+        client = VeniceClient(api_key="YOUR_API_KEY", http_client=my_custom_httpx_client)
+        # Use the client...
+        models = client.models.list()
+        print(f"Found {len(models.data)} models.")
     finally:
-        await async_http_client_instance.aclose() # Close the httpx client if managed externally
+        # Important: Close your custom client if it's not managed elsewhere (e.g., as a context manager)
+        if not my_custom_httpx_client.is_closed:
+            my_custom_httpx_client.close()
 
-# asyncio.run(use_custom_async_client())
-```
+    # For AsyncVeniceClient, use httpx.AsyncClient and await its aclose() method.
+    ```
+
+2.  **Passing Common `httpx` Settings Directly**:
+    If you don't provide an `http_client` instance, you can pass `httpx.Client` / `httpx.AsyncClient` constructor arguments (e.g., `proxy`, `transport`, `limits`, `verify`) directly to the SDK client. The SDK will create and manage its internal `httpx` client with these settings.
+
+    ```python
+    from venice_ai import VeniceClient # or AsyncVeniceClient
+    import httpx # For httpx.Limits, httpx.HTTPTransport
+
+    # Synchronous example
+    client = VeniceClient(
+        api_key="YOUR_API_KEY",
+        proxies={"all://": "http://localhost:8080"}, # Example proxy
+        transport=httpx.HTTPTransport(retries=3),    # Example custom transport
+        limits=httpx.Limits(max_connections=50),     # Example connection limits
+        verify=False,                                # Example: disable SSL verification (use with caution)
+        default_timeout=30.0                         # Global default timeout for requests
+    )
+    with client: # SDK manages the internal httpx client's lifecycle
+        models = client.models.list()
+        print(f"Found {len(models.data)} models.")
+
+    # AsyncVeniceClient works similarly with corresponding async httpx types.
+    ```
+
+3.  **Configuring Automatic Retries**:
+    The SDK automatically retries requests on transient network errors and specific HTTP status codes (e.g., 429, 500, 502, 503, 504) by leveraging `httpx-retries`. This behavior is configurable through the following parameters in the `VeniceClient` and `AsyncVeniceClient` constructors:
+
+    - `max_retries` (int, default: 2): Maximum number of retries.
+    - `retry_backoff_factor` (float, default: 0.1): Backoff factor for calculating delay between retries.
+    - `retry_status_forcelist` (list[int], default: `[429, 500, 502, 503, 504]`): HTTP status codes to retry on.
+    - `retry_respect_retry_after_header` (bool, default: True): Whether to respect `Retry-After` headers.
+
+    ```python
+    from venice_ai import VeniceClient # or AsyncVeniceClient
+
+    # Example: Customize retry behavior
+    client = VeniceClient(
+        api_key="YOUR_API_KEY",
+        max_retries=5,
+        retry_backoff_factor=0.5,
+        retry_status_forcelist=[429, 500, 502, 503, 504, 520], # Adding 520 to the list
+        retry_respect_retry_after_header=True, # Explicitly setting
+        default_timeout=30.0 # Global default timeout for requests
+    )
+    with client:
+        # Use the client...
+        try:
+            models = client.models.list()
+            print(f"Found {len(models.data)} models with custom retry settings.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+    # AsyncVeniceClient works similarly.
+    ```
+
+For a detailed explanation of all supported parameters and more advanced use cases, please refer to the "Advanced HTTP Client Configuration" section in our [API Reference documentation](docs/api.rst).
 
 ### Understanding Streaming
 
@@ -548,15 +635,9 @@ print(f"Estimated tokens: {count}")
 
 ## Showcase Application
 
-This project includes a Streamlit application ([`app.py`](app.py)) that demonstrates various features of the `venice-ai` library, providing an interactive UI for chat, image generation, audio synthesis, model listing, and more.
+This project focuses on the core Venice AI Python SDK. For an interactive demonstration of the library's capabilities, check out our separate [Venice AI Streamlit Demo](https://github.com/venice-ai/streamlit-demo) repository, which provides a comprehensive UI for chat, image generation, audio synthesis, model listing, and more.
 
-To run the showcase application:
-
-```bash
-# Ensure you have installed dev dependencies (including Streamlit):
-poetry install --with dev
-poetry run streamlit run app.py
-```
+The demo is now available as a separate repository for easier deployment and to keep this package's dependencies minimal.
 
 ## Testing
 

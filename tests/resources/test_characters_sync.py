@@ -73,7 +73,7 @@ def test_list_success(httpx_mock):
 
     httpx_mock.add_response(
         method="GET",
-        url="https://api.venice.ai/characters", # Corrected URL to match client request
+        url="https://api.venice.ai/api/v1/characters", # Corrected URL to match client request
         json=mock_response_data,
         status_code=200,
     )
@@ -95,7 +95,7 @@ def test_list_api_error(httpx_mock):
     """Tests API error handling for characters list retrieval."""
     httpx_mock.add_response(
         method="GET",
-        url="https://api.venice.ai/characters", # Corrected URL to match client request
+        url="https://api.venice.ai/api/v1/characters", # Corrected URL to match client request
         status_code=401,
         json={"error": {"message": "Unauthorized", "type": "authentication_error"}},
     )

@@ -374,12 +374,13 @@ class TestAsyncTranslateHttpxErrorToApiError:
             
             # Setup response mock for streaming
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.headers = {}
             mock_response.status_code = 400
             
             # Configure synchronous methods with Mock (not AsyncMock)
             mock_response.raise_for_status = Mock()
             mock_response.json = Mock(side_effect=json.JSONDecodeError("Invalid JSON", "", 0))
-            mock_response.text = AsyncMock(return_value="Plain text error message")
+            type(mock_response).text = PropertyMock(return_value="Plain text error message")
             
             # Setup request mock
             mock_request = MagicMock(spec=httpx.Request)
@@ -417,6 +418,7 @@ class TestAsyncTranslateHttpxErrorToApiError:
             
             # Setup response mock for streaming
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.headers = {}
             mock_response.status_code = 400
             
             # Configure synchronous methods with Mock (not AsyncMock)
@@ -653,6 +655,7 @@ class TestAsyncClientStreamRequestHeaderHandling:
             
             # Setup stream context manager
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.headers = {}
             mock_response.raise_for_status = Mock()
             
             # Configure async iterator for aiter_lines
@@ -701,6 +704,7 @@ class TestAsyncClientStreamRequestHeaderHandling:
             
             # Setup stream context manager
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.headers = {}
             mock_response.raise_for_status = Mock()
             
             # Configure async iterator for aiter_lines
@@ -753,6 +757,7 @@ class TestAsyncClientStreamRequestExceptionHandling:
             
             # Setup stream context manager with failing aiter_lines
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.headers = {}
             mock_response.raise_for_status = Mock()
             
             # Configure aiter_lines to raise RuntimeError
@@ -792,6 +797,7 @@ class TestAsyncClientRequestMultipartRawResponse:
             
             # Setup mock response with raw content
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.headers = {}
             mock_response.status_code = 200
             mock_response.content = b"raw_binary_data"
             mock_response.raise_for_status = Mock()
@@ -835,6 +841,7 @@ class TestAsyncClientStreamRequestRawHeaderHandling:
             
             # Setup stream context manager
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.headers = {}
             mock_response.raise_for_status = Mock()
             
             # Configure async iterator for aiter_bytes
@@ -883,6 +890,7 @@ class TestAsyncClientStreamRequestRawHeaderHandling:
             
             # Setup stream context manager
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.headers = {}
             mock_response.raise_for_status = Mock()
             
             # Configure async iterator for aiter_bytes
@@ -934,6 +942,7 @@ class TestAsyncClientStreamRequestRawExceptionHandling:
             
             # Setup stream context manager with failing aiter_bytes
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.headers = {}
             mock_response.raise_for_status = Mock()
             
             # Configure aiter_bytes to raise RuntimeError
@@ -1043,8 +1052,29 @@ class TestAsyncChatCompletionsCreateCoverage:
             mock_httpx_instance.base_url = httpx.URL("https://api.venice.ai/api/v1/") # Configure base_url
             MockAsyncHTTPXClientClass.return_value = mock_httpx_instance
 
-            mock_response_data = {"choices": [{"message": {"content": "Hello"}}]}
+            mock_response_data = {
+                "id": "chatcmpl-test12345",
+                "object": "chat.completion",
+                "created": 1677652288,
+                "model": "test-model-001",
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": "This is a test response."
+                        },
+                        "finish_reason": "stop"
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": 10,
+                    "completion_tokens": 20,
+                    "total_tokens": 30
+                }
+            }
             mock_response_obj = AsyncMock(spec=httpx.Response)
+            mock_response_obj.headers = {}
             mock_response_obj.status_code = 200
             mock_response_obj.headers = httpx.Headers({"content-type": "application/json"})
             mock_response_obj.raise_for_status = Mock()
@@ -1118,7 +1148,7 @@ class TestAsyncChatCompletionsCreateCoverage:
         global GLOBAL_STREAM_CALL_CAPTURE_LIST
         GLOBAL_STREAM_CALL_CAPTURE_LIST.clear() # Clear for this test run
 
-        def replacement_stream_request(method: str, path: str, *, json_data, headers=None, params=None):
+        def replacement_stream_request(method: str, path: str, *, json_data, headers=None, params=None, cast_to=None, **kwargs):
             global GLOBAL_STREAM_CALL_CAPTURE_LIST
             print(f"[TEST_LOG] replacement_stream_request (default_cls): ENTER")
             passed_args = (method, path)
@@ -1170,7 +1200,7 @@ class TestAsyncChatCompletionsCreateCoverage:
         global GLOBAL_STREAM_CALL_CAPTURE_LIST
         GLOBAL_STREAM_CALL_CAPTURE_LIST.clear() # Clear for this test run
 
-        def replacement_stream_request_custom(method: str, path: str, *, json_data, headers=None, params=None):
+        def replacement_stream_request_custom(method: str, path: str, *, json_data, headers=None, params=None, cast_to=None, **kwargs):
             global GLOBAL_STREAM_CALL_CAPTURE_LIST
             print(f"[TEST_LOG] replacement_stream_request_custom: ENTER")
             passed_args = (method, path)

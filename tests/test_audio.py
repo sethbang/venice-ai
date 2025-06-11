@@ -111,7 +111,7 @@ def test_create_speech_invalid_speed(httpx_mock):
 
     assert excinfo.value.response is not None
     assert excinfo.value.response.status_code == 400
-    assert "Speed must be between 0.25 and 4.0" in str(excinfo.value)
+    assert "Speed must be between 0.25 and 4.0" in excinfo.value.message
 
 
 def test_create_speech_errors(httpx_mock):
@@ -245,7 +245,7 @@ async def test_create_speech_invalid_speed_async(httpx_mock):
 
     assert excinfo.value.response is not None
     assert excinfo.value.response.status_code == 400
-    assert "Speed must be between 0.25 and 4.0" in str(excinfo.value)
+    assert "Speed must be between 0.25 and 4.0" in excinfo.value.message
 
 
 @pytest.mark.asyncio

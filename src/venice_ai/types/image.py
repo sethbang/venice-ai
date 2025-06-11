@@ -5,6 +5,8 @@ Type definitions for Venice AI image-related API endpoints.
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 
+from pydantic import BaseModel, Field
+
 
 
 class GenerateImageRequest(TypedDict, total=False):
@@ -140,7 +142,7 @@ class UpscaleImageRequest(TypedDict, total=False):
     scale: float
 
 
-class TimingInfo(TypedDict):
+class TimingInfo(BaseModel):
     """Represents timing metrics for image generation and processing operations.
     
     This model provides detailed performance information about various stages
@@ -164,7 +166,7 @@ class TimingInfo(TypedDict):
     total: float
 
 
-class ImageResponse(TypedDict):
+class ImageResponse(BaseModel):
     """Represents the response structure from the `/image/generate` endpoint.
     
     This model defines the complete response format for Venice AI's native image
@@ -179,18 +181,18 @@ class ImageResponse(TypedDict):
     :type request: Optional[Dict[str, Any]]
     :param timing: Detailed timing information and performance metrics for the request.
     :type timing: TimingInfo
-    :param created: ISO 8601 timestamp indicating when the image generation was completed.
-    :type created: str
+    :param created: Optional. ISO 8601 timestamp indicating when the image generation was completed.
+    :type created: Optional[str]
     """
     
     id: str
     images: List[str]
     request: Optional[Dict[str, Any]]
     timing: TimingInfo
-    created: str
+    created: Optional[str] = None
 
 
-class ImageDataItem(TypedDict, total=False):
+class ImageDataItem(BaseModel):
     """Represents an individual image data item within a :class:`SimpleImageResponse`.
     
     This model defines the structure for a single generated image in OpenAI-compatible
@@ -200,16 +202,16 @@ class ImageDataItem(TypedDict, total=False):
     Contains either base64 encoded image data or a URL to the image, but not both.
     
     :param b64_json: Base64-encoded image data as a JSON string (when ``response_format`` is ``"b64_json"``).
-    :type b64_json: str
+    :type b64_json: Optional[str]
     :param url: URL pointing to the generated image (when ``response_format`` is ``"url"``).
-    :type url: str
+    :type url: Optional[str]
     """
     
-    b64_json: str
-    url: str
+    b64_json: Optional[str] = None
+    url: Optional[str] = None
 
 
-class SimpleImageResponse(TypedDict):
+class SimpleImageResponse(BaseModel):
     """Represents the response structure from the `/images/generations` (OpenAI-compatible) endpoint.
     
     This model provides an OpenAI-compatible response format for image generation
@@ -218,12 +220,12 @@ class SimpleImageResponse(TypedDict):
     
     :param created: Unix timestamp (seconds since epoch) indicating when the image generation was initiated.
     :type created: int
-    :param data: List of generated image data items, each containing either base64 data or URL.
-    :type data: List[ImageDataItem]
+    :param images: List of image data items. The API provides this under the 'data' key.
+    :type images: List[ImageDataItem]
     """
     
     created: int
-    data: List[ImageDataItem]
+    images: List[ImageDataItem] = Field(..., alias='data')
 
 
 class ImageStyleList(TypedDict):

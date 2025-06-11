@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Synchronous client for the Venice AI API.
 
@@ -9,14 +10,26 @@ and managing resources like chat completions.
 import httpx
 import json
 import os
-from typing import Optional, Union, Any, Dict, Mapping, cast, Iterator
+import time
+from typing import Optional, Union, Any, Dict, Mapping, cast, Iterator, Callable, List, Type, TypeVar, TYPE_CHECKING
 from typing_extensions import override
 import logging
+from pydantic import BaseModel
 from httpx import Request, HTTPStatusError, TimeoutException, ConnectError, RequestError, Timeout, StreamConsumed, StreamClosed
+from httpx._types import ProxyTypes, CertTypes
+# httpx is imported below for TYPE_CHECKING, and also generally on line 10
+import ssl
+
+if TYPE_CHECKING:
+    from httpx import URL, Proxy
+
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T", bound=BaseModel)
 
 from . import _constants
 from .exceptions import VeniceError, APIError, APITimeoutError, APIConnectionError, APIResponseProcessingError, StreamConsumedError, StreamClosedError, _make_status_error
+from .utils import NotGiven, NOT_GIVEN, truncate_string
 from .resources.api_keys import ApiKeys # Import the API Keys resource
 from .resources.audio import Audio # Import the Audio resource
 from .resources.billing import Billing # Import the Billing resource
@@ -29,7 +42,248 @@ from .resources import Models # Import the new Models resource
 from .types.chat import ChatCompletionChunk
 from .streaming import Stream # For default stream class
 
-class VeniceClient:
+class BaseClient:
+    """
+    Base client class providing common functionality for both sync and async Venice AI clients.
+    
+    This class contains shared initialization logic, retry configuration, and transport setup
+    that is used by both VeniceClient and AsyncVeniceClient.
+    """
+    
+    def __init__(
+        self,
+        *,
+        api_key: Optional[str] = None,
+        base_url: Optional[Union[str, httpx.URL]] = None,
+        timeout: Union[float, httpx.Timeout, None] = _constants.DEFAULT_TIMEOUT,
+        default_timeout: Optional[httpx.Timeout] = None,
+        http_client: Optional[Union[httpx.Client, httpx.AsyncClient]] = None,
+        # HTTP transport options
+        http_transport_options: Optional[Dict[str, Any]] = None,
+        # Additional httpx client settings
+        proxy: Union[ProxyTypes, NotGiven] = NOT_GIVEN,
+        transport: Union[httpx.BaseTransport, NotGiven] = NOT_GIVEN,
+        async_transport: Union[httpx.AsyncBaseTransport, NotGiven] = NOT_GIVEN,
+        limits: Union[httpx.Limits, NotGiven] = NOT_GIVEN,
+        cert: Union[CertTypes, NotGiven] = NOT_GIVEN,
+        verify: Union[bool, str, ssl.SSLContext, NotGiven] = NOT_GIVEN,
+        trust_env: Union[bool, NotGiven] = NOT_GIVEN,
+        http1: Union[bool, NotGiven] = NOT_GIVEN,
+        http2: Union[bool, NotGiven] = NOT_GIVEN,
+        follow_redirects: Union[bool, NotGiven] = NOT_GIVEN,
+        max_redirects: Union[int, NotGiven] = NOT_GIVEN,
+        default_encoding: Union[str, Callable[[bytes], str], NotGiven] = NOT_GIVEN,
+        event_hooks: Union[Mapping[str, List[Callable[..., Any]]], NotGiven] = NOT_GIVEN,
+    ) -> None:
+        """
+        Initialize the BaseClient with common configuration.
+        
+        This constructor sets up the foundational configuration shared by both
+        VeniceClient and AsyncVeniceClient, including authentication, base URL,
+        timeout settings, and HTTP client configuration options.
+        
+        Args:
+            api_key (Optional[str]): The API key for authenticating requests.
+                If not provided, it attempts to read from the `VENICE_API_KEY`
+                environment variable.
+            base_url (Optional[Union[str, httpx.URL]]): The base URL for the API.
+                Defaults to `_constants.DEFAULT_BASE_URL` if not provided.
+            timeout (Union[float, httpx.Timeout, None]): The default timeout for
+                requests. Can be a float (seconds) or an `httpx.Timeout` object.
+                This is superseded by `default_timeout` if that is provided.
+            default_timeout (Optional[httpx.Timeout]): A more specific global default
+                timeout. If provided, this takes precedence over the `timeout` parameter.
+            http_client (Optional[Union[httpx.Client, httpx.AsyncClient]]): An optional,
+                pre-configured `httpx.Client` or `httpx.AsyncClient` instance. If provided,
+                the SDK will attempt to use it. Note: Lifecycle management of a
+                user-provided client is typically handled by the derived SDK clients
+                (`VeniceClient`, `AsyncVeniceClient`).
+            http_transport_options (Optional[Dict[str, Any]]): Dictionary of options
+                to pass to the underlying `httpx.HTTPTransport` or `httpx.AsyncHTTPTransport`
+                if a custom `transport` or `async_transport` is not provided.
+                These options are used when the SDK creates its internal transport.
+                Example: `{"retries": 3}`.
+            proxy (Union[httpx._types.ProxyTypes, venice_ai.utils.NotGiven]): Proxy configuration for
+                HTTP requests. Can be a URL string, a dictionary mapping schemes to proxy URLs,
+                or an `httpx.Proxy` instance. Used if `http_client` is not provided.
+            transport (Union[httpx.BaseTransport, venice_ai.utils.NotGiven]): A custom synchronous
+                HTTPX transport instance (e.g., `httpx.HTTPTransport`). Used if `http_client`
+                is not provided.
+            async_transport (Union[httpx.AsyncBaseTransport, venice_ai.utils.NotGiven]): A custom
+                asynchronous HTTPX transport instance (e.g., `httpx.AsyncHTTPTransport`).
+                Used if `http_client` is not provided.
+            limits (Union[httpx.Limits, venice_ai.utils.NotGiven]): Configuration for connection
+                limits (e.g., `httpx.Limits(max_connections=100)`). Used if `http_client`
+                is not provided.
+            cert (Union[httpx._types.CertTypes, venice_ai.utils.NotGiven]): SSL certificate configuration.
+                Can be a path to a PEM file or a 2-tuple of (cert, key) paths. Used if
+                `http_client` is not provided.
+            verify (Union[bool, str, ssl.SSLContext, venice_ai.utils.NotGiven]): SSL verification
+                setting. Can be a boolean, a path to a CA bundle, or an `ssl.SSLContext`.
+                Defaults to `True`. Used if `http_client` is not provided.
+            trust_env (Union[bool, venice_ai.utils.NotGiven]): If `True`, trusts environment
+                variables for proxy configuration, SSL certificates, etc. Defaults to `True`.
+                Used if `http_client` is not provided.
+            http1 (Union[bool, venice_ai.utils.NotGiven]): If `True`, enables HTTP/1.1 support.
+                Defaults to `True`. Used if `http_client` is not provided.
+            http2 (Union[bool, venice_ai.utils.NotGiven]): If `True`, enables HTTP/2 support.
+                Defaults to `False` (httpx default). Used if `http_client` is not provided.
+            follow_redirects (Union[bool, venice_ai.utils.NotGiven]): If `True`, automatically
+                follows redirects. Defaults to `False` for the SDK client. Used if `http_client`
+                is not provided.
+            max_redirects (Union[int, venice_ai.utils.NotGiven]): Maximum number of redirects to
+                follow if `follow_redirects` is `True`. Used if `http_client` is not provided.
+            default_encoding (Union[str, Callable[[bytes], str], venice_ai.utils.NotGiven]):
+                Default encoding for response text. Can be a string or a callable. Used if
+                `http_client` is not provided.
+            event_hooks (Union[Mapping[str, List[Callable[..., Any]]], venice_ai.utils.NotGiven]):
+                Event hooks for the request/response lifecycle (e.g., `{"request": [log_request]}`).
+                Used if `http_client` is not provided.
+        """
+        # Try to get API key from parameter or environment variable
+        effective_api_key = api_key
+        if effective_api_key is None:
+            effective_api_key = os.environ.get("VENICE_API_KEY")
+
+        if not effective_api_key:
+            raise ValueError("The api_key client option must be set.")
+        # Strip whitespace from API key to avoid authentication issues
+        self._api_key = effective_api_key.strip()
+
+        if base_url is None:
+            base_url = _constants.DEFAULT_BASE_URL
+        self._base_url = httpx.URL(str(base_url).rstrip("/") + "/")  # Ensure trailing slash
+
+        # Handle timeout conversion for MyPy compatibility
+        # If default_timeout is provided, it takes precedence over timeout parameter
+        effective_timeout = default_timeout if default_timeout is not None else timeout
+        
+        if isinstance(effective_timeout, float):
+            self._timeout = Timeout(effective_timeout)
+        elif isinstance(effective_timeout, Timeout):
+            self._timeout = effective_timeout
+        else:
+            # effective_timeout is None, use default
+            self._timeout = _constants.DEFAULT_TIMEOUT
+        
+        # Store HTTP transport options
+        self._http_transport_options = http_transport_options
+        
+        # Store additional httpx client settings
+        self._proxy = proxy
+        self._transport = transport
+        self._async_transport = async_transport
+        self._limits = limits
+        self._cert = cert
+        self._verify = verify
+        self._trust_env = trust_env
+        self._http1 = http1
+        self._http2 = http2
+        self._follow_redirects = follow_redirects
+        self._max_redirects = max_redirects
+        self._default_encoding = default_encoding
+        self._event_hooks = event_hooks
+
+    def _build_raw_client(self) -> httpx.Client:
+        """Build and configure the synchronous httpx client without retry transport."""
+        # Determine the base transport
+        if isinstance(self._transport, type(NOT_GIVEN)) or self._transport is None:
+            # Prepare transport options
+            transport_options = dict(self._http_transport_options or {})
+            base_sync_transport: httpx.BaseTransport = httpx.HTTPTransport(**transport_options)
+        else:
+            # Type cast since we know it's not NOT_GIVEN at this point
+            base_sync_transport = cast(httpx.BaseTransport, self._transport)
+        
+        # Build kwargs for httpx.Client, only including non-NOT_GIVEN values
+        client_kwargs: Dict[str, Any] = {
+            "base_url": self._base_url,
+            "timeout": self._timeout,
+            "headers": {
+                "Accept": "application/json",
+                "Authorization": f"Bearer {self._api_key}",
+                # Note: Content-Type is set per-request based on content type
+            },
+            "transport": base_sync_transport,
+        }
+        
+        # Add other httpx parameters if they are not NOT_GIVEN
+        if not isinstance(self._proxy, type(NOT_GIVEN)):
+            client_kwargs["proxy"] = self._proxy
+        if not isinstance(self._limits, type(NOT_GIVEN)):
+            client_kwargs["limits"] = self._limits
+        if not isinstance(self._cert, type(NOT_GIVEN)):
+            client_kwargs["cert"] = self._cert
+        if not isinstance(self._verify, type(NOT_GIVEN)):
+            client_kwargs["verify"] = self._verify
+        if not isinstance(self._trust_env, type(NOT_GIVEN)):
+            client_kwargs["trust_env"] = self._trust_env
+        if not isinstance(self._http1, type(NOT_GIVEN)):
+            client_kwargs["http1"] = self._http1
+        if not isinstance(self._http2, type(NOT_GIVEN)):
+            client_kwargs["http2"] = self._http2
+        if not isinstance(self._follow_redirects, type(NOT_GIVEN)):
+            client_kwargs["follow_redirects"] = self._follow_redirects
+        if not isinstance(self._max_redirects, type(NOT_GIVEN)):
+            client_kwargs["max_redirects"] = self._max_redirects
+        if not isinstance(self._default_encoding, type(NOT_GIVEN)):
+            client_kwargs["default_encoding"] = self._default_encoding
+        if not isinstance(self._event_hooks, type(NOT_GIVEN)):
+            client_kwargs["event_hooks"] = self._event_hooks
+        
+        return httpx.Client(**client_kwargs)
+
+    def _build_async_raw_client(self) -> httpx.AsyncClient:
+        """Build and configure the asynchronous httpx client without retry transport."""
+        # Determine the base async transport
+        if isinstance(self._async_transport, type(NOT_GIVEN)) or self._async_transport is None:
+            # Prepare transport options
+            transport_options = dict(self._http_transport_options or {})
+            base_async_transport: httpx.AsyncBaseTransport = httpx.AsyncHTTPTransport(**transport_options)
+        else:
+            # Type cast since we know it's not NOT_GIVEN at this point
+            base_async_transport = cast(httpx.AsyncBaseTransport, self._async_transport)
+        
+        # Build kwargs for httpx.AsyncClient, only including non-NOT_GIVEN values
+        client_kwargs: Dict[str, Any] = {
+            "base_url": self._base_url,
+            "timeout": self._timeout,
+            "headers": {
+                "Accept": "application/json",
+                "Authorization": f"Bearer {self._api_key}",
+                # Note: Content-Type is set per-request based on content type
+            },
+            "transport": base_async_transport,
+        }
+        
+        # Add other httpx parameters if they are not NOT_GIVEN
+        if not isinstance(self._proxy, type(NOT_GIVEN)):
+            client_kwargs["proxy"] = self._proxy
+        if not isinstance(self._limits, type(NOT_GIVEN)):
+            client_kwargs["limits"] = self._limits
+        if not isinstance(self._cert, type(NOT_GIVEN)):
+            client_kwargs["cert"] = self._cert
+        if not isinstance(self._verify, type(NOT_GIVEN)):
+            client_kwargs["verify"] = self._verify
+        if not isinstance(self._trust_env, type(NOT_GIVEN)):
+            client_kwargs["trust_env"] = self._trust_env
+        if not isinstance(self._http1, type(NOT_GIVEN)):
+            client_kwargs["http1"] = self._http1
+        if not isinstance(self._http2, type(NOT_GIVEN)):
+            client_kwargs["http2"] = self._http2
+        if not isinstance(self._follow_redirects, type(NOT_GIVEN)):
+            client_kwargs["follow_redirects"] = self._follow_redirects
+        if not isinstance(self._max_redirects, type(NOT_GIVEN)):
+            client_kwargs["max_redirects"] = self._max_redirects
+        if not isinstance(self._default_encoding, type(NOT_GIVEN)):
+            client_kwargs["default_encoding"] = self._default_encoding
+        if not isinstance(self._event_hooks, type(NOT_GIVEN)):
+            client_kwargs["event_hooks"] = self._event_hooks
+        
+        return httpx.AsyncClient(**client_kwargs)
+
+
+class VeniceClient(BaseClient):
     """
     Provides a synchronous client for interacting with the Venice.ai API.
     
@@ -50,13 +304,57 @@ class VeniceClient:
     :param timeout: Request timeout in seconds or as a detailed ``httpx.Timeout``
         object for more granular control. Defaults to 60.0 seconds.
     :type timeout: Optional[Union[float, httpx.Timeout]]
+    :param default_timeout: Global default timeout for all API calls made by this client instance.
+        If provided, this will be used as the default timeout for all requests unless overridden
+        on a per-request basis. Takes precedence over the ``timeout`` parameter.
+    :type default_timeout: Optional[httpx.Timeout]
     :param max_retries: Maximum number of retries for connection errors or transient failures.
+        This parameter controls the total number of retries for the httpx-retries mechanism.
         Defaults to 2.
     :type max_retries: int
-    :param http_client: An optional external ``httpx.Client`` to use. If provided, other client
-        configuration options will be ignored in favor of those from the provided client,
-        though essential headers will still be set.
+    :param retry_backoff_factor: Backoff factor for retry delays.
+        Defaults to 0.5.
+    :type retry_backoff_factor: float
+    :param retry_status_forcelist: List of HTTP status codes to retry on.
+        Defaults to [429, 500, 502, 503, 504].
+    :type retry_status_forcelist: Optional[List[int]]
+    :param retry_respect_retry_after_header: Whether to respect Retry-After headers.
+        Defaults to True.
+    :type retry_respect_retry_after_header: bool
+    :param http_client: An optional pre-configured ``httpx.Client`` instance to use for HTTP requests.
+        If provided:
+
+        - The SDK will use this custom client directly.
+        - The SDK will still configure `base_url` (from the `base_url` parameter or default),
+          `timeout` (from `default_timeout` or `timeout` parameter), and `Authorization` headers
+          on this provided client instance.
+        - All other HTTP-related parameters passed to this constructor (e.g., `max_retries`,
+          `retry_backoff_factor`, `proxy`, `transport`, `limits`, `verify`, etc.) will be **ignored**.
+          It is assumed that the provided `http_client` is already configured with these aspects.
+        - You are responsible for managing the lifecycle of the provided `http_client` (e.g., closing it).
+
+        If not provided, the SDK will create and manage its own internal `httpx.Client`.
     :type http_client: Optional[httpx.Client]
+    :param proxy: Proxy configuration for HTTP requests. Only used when ``http_client`` is not provided.
+    :type proxy: Optional[Union[str, httpx.URL, httpx.Proxy]]
+    :param transport: Custom transport for HTTP requests. Only used when ``http_client`` is not provided.
+    :type transport: Optional[httpx.BaseTransport]
+    :param limits: Connection limits configuration. Only used when ``http_client`` is not provided.
+    :type limits: Optional[httpx.Limits]
+    :param cert: Client certificate configuration. Only used when ``http_client`` is not provided.
+    :type cert: Optional[Union[str, Tuple[str, str]]]
+    :param verify: SSL certificate verification. Only used when ``http_client`` is not provided.
+    :type verify: Optional[Union[bool, str, ssl.SSLContext]]
+    :param trust_env: Whether to trust environment variables for proxy configuration. Only used when ``http_client`` is not provided.
+    :type trust_env: Optional[bool]
+    :param http1: Whether to enable HTTP/1.1. Only used when ``http_client`` is not provided.
+    :type http1: Optional[bool]
+    :param http2: Whether to enable HTTP/2. Only used when ``http_client`` is not provided.
+    :type http2: Optional[bool]
+    :param default_encoding: Default encoding for response content. Only used when ``http_client`` is not provided.
+    :type default_encoding: Optional[Union[str, Callable[[bytes], str]]]
+    :param event_hooks: Event hooks for request/response lifecycle. Only used when ``http_client`` is not provided.
+    :type event_hooks: Optional[Mapping[str, List[Callable[..., Any]]]]
             
     Attributes:
         chat (``ChatResource``): Access to chat-related endpoints.
@@ -125,6 +423,21 @@ class VeniceClient:
     _timeout: httpx.Timeout
     _max_retries: int
     _client: httpx.Client # The underlying httpx client
+    _should_close_session: bool # Flag to track if we should close the client
+    
+    # Additional httpx client settings
+    _proxy: Union[ProxyTypes, NotGiven]
+    _transport: Union[httpx.BaseTransport, NotGiven]
+    _limits: Union[httpx.Limits, NotGiven]
+    _cert: Union[CertTypes, NotGiven]
+    _verify: Union[bool, str, ssl.SSLContext, NotGiven]
+    _trust_env: Union[bool, NotGiven]
+    _http1: Union[bool, NotGiven]
+    _http2: Union[bool, NotGiven]
+    _follow_redirects: Union[bool, NotGiven]
+    _max_redirects: Union[int, NotGiven]
+    _default_encoding: Union[str, Callable[[bytes], str], NotGiven]
+    _event_hooks: Union[Mapping[str, List[Callable[..., Any]]], NotGiven]
 
     # Resource namespaces
     chat: "ChatResource" # Forward reference
@@ -142,8 +455,23 @@ class VeniceClient:
         api_key: Optional[str] = None,
         base_url: Optional[Union[str, httpx.URL]] = None,
         timeout: Union[float, httpx.Timeout, None] = _constants.DEFAULT_TIMEOUT,
-        max_retries: int = _constants.DEFAULT_MAX_RETRIES,
+        default_timeout: Optional[httpx.Timeout] = None,
         http_client: Optional[httpx.Client] = None,
+        # HTTP transport options
+        http_transport_options: Optional[Dict[str, Any]] = None,
+        # Additional httpx.Client constructor arguments
+        proxy: Union[ProxyTypes, NotGiven] = NOT_GIVEN,
+        transport: Union[httpx.BaseTransport, NotGiven] = NOT_GIVEN,
+        limits: Union[httpx.Limits, NotGiven] = NOT_GIVEN,
+        cert: Union[CertTypes, NotGiven] = NOT_GIVEN,
+        verify: Union[bool, str, ssl.SSLContext, NotGiven] = NOT_GIVEN,
+        trust_env: Union[bool, NotGiven] = NOT_GIVEN,
+        http1: Union[bool, NotGiven] = NOT_GIVEN,
+        http2: Union[bool, NotGiven] = NOT_GIVEN,
+        follow_redirects: Union[bool, NotGiven] = NOT_GIVEN,
+        max_redirects: Union[int, NotGiven] = NOT_GIVEN,
+        default_encoding: Union[str, Callable[[bytes], str], NotGiven] = NOT_GIVEN,
+        event_hooks: Union[Mapping[str, List[Callable[..., Any]]], NotGiven] = NOT_GIVEN,
     ) -> None:
         """
         Initialize the VeniceClient.
@@ -160,58 +488,89 @@ class VeniceClient:
         :param timeout: Request timeout in seconds or as an ``httpx.Timeout`` object
             for more granular control. Defaults to 60.0 seconds.
         :type timeout: Optional[Union[float, httpx.Timeout]]
+        :param default_timeout: Global default timeout for all API calls made by this client instance.
+            If provided, this will be used as the default timeout for all requests unless overridden
+            on a per-request basis. Takes precedence over the ``timeout`` parameter.
+        :type default_timeout: Optional[httpx.Timeout]
         :param max_retries: Maximum number of retries for connection errors or
-            transient failures. Defaults to 2.
+            transient failures. This parameter controls the total number of retries
+            for the httpx-retries mechanism. Defaults to 2.
         :type max_retries: int
-        :param http_client: Optional external ``httpx.Client`` to use. If provided,
-            other client configuration options will be ignored in favor of those
-            from the provided client, though essential headers will still be set.
+        :param retry_backoff_factor: Backoff factor for retry delays.
+            Defaults to 0.5.
+        :type retry_backoff_factor: float
+        :param retry_status_forcelist: List of HTTP status codes to retry on.
+            Defaults to [429, 500, 502, 503, 504].
+        :type retry_status_forcelist: Optional[List[int]]
+        :param retry_respect_retry_after_header: Whether to respect Retry-After headers.
+            Defaults to True.
+        :type retry_respect_retry_after_header: bool
+        :param http_client: An optional pre-configured ``httpx.Client`` instance to use for HTTP requests.
+            If provided:
+
+            - The SDK will use this custom client directly.
+            - The SDK will still configure `base_url` (from the `base_url` parameter or default),
+              `timeout` (from `default_timeout` or `timeout` parameter), and `Authorization` headers
+              on this provided client instance.
+            - All other HTTP-related parameters passed to this constructor (e.g., `max_retries`,
+              `retry_backoff_factor`, `proxy`, `transport`, `limits`, `verify`, etc.) will be **ignored**.
+              It is assumed that the provided `http_client` is already configured with these aspects.
+            - You are responsible for managing the lifecycle of the provided `http_client` (e.g., closing it).
+
+            If not provided, the SDK will create and manage its own internal `httpx.Client`.
         :type http_client: Optional[httpx.Client]
         
         :raises ValueError: If ``api_key`` is empty or ``None`` and ``VENICE_API_KEY`` environment variable is not set.
         """
-        # Try to get API key from parameter or environment variable
-        effective_api_key = api_key
-        if effective_api_key is None:
-            effective_api_key = os.environ.get("VENICE_API_KEY")
-
-        if not effective_api_key:
-            raise ValueError("The api_key client option must be set.")
-        # Strip whitespace from API key to avoid authentication issues
-        self._api_key = effective_api_key.strip()
-
-        if base_url is None:
-            base_url = _constants.DEFAULT_BASE_URL
-        self._base_url = httpx.URL(str(base_url).rstrip("/") + "/") # Ensure trailing slash
-
-        # Handle timeout conversion for MyPy compatibility
-        if isinstance(timeout, float):
-            self._timeout = Timeout(timeout)
-        elif isinstance(timeout, Timeout):
-            self._timeout = timeout
-        else:
-            # timeout is None, use default
-            self._timeout = _constants.DEFAULT_TIMEOUT
-        self._max_retries = max_retries
+        # Call parent constructor
+        super().__init__(
+            api_key=api_key,
+            base_url=base_url,
+            timeout=timeout,
+            default_timeout=default_timeout,
+            http_client=http_client,
+            # Pass HTTP transport options
+            http_transport_options=http_transport_options,
+            # Pass httpx client settings
+            proxy=proxy,
+            transport=transport,
+            limits=limits,
+            cert=cert,
+            verify=verify,
+            trust_env=trust_env,
+            http1=http1,
+            http2=http2,
+            follow_redirects=follow_redirects,
+            max_redirects=max_redirects,
+            default_encoding=default_encoding,
+            event_hooks=event_hooks,
+        )
+        self._is_closed = False # Initialize for idempotency
 
         # Initialize the httpx client
         if http_client is not None:
             self._client = http_client
+            self._should_close_session = False  # Don't close user-provided client
+            
+            # Apply SDK-level settings to the user-provided client
+            # Update base_url to ensure SDK's base URL is used
+            self._client.base_url = self._base_url
+            
+            # Update timeout to ensure SDK's timeout is used
+            self._client.timeout = self._timeout
+            
             # Ensure the Authorization header is set on external clients
             self._client.headers["Authorization"] = f"Bearer {self._api_key}"
         else:
-            # Ensure timeout is a Timeout object for httpx.Client
-            client_timeout = self._timeout if isinstance(self._timeout, Timeout) else Timeout(self._timeout)
-            self._client = httpx.Client(
-                base_url=self._base_url,
-                timeout=client_timeout,
-                transport=httpx.HTTPTransport(retries=self._max_retries),
-                headers={
-                    "Accept": "application/json",
-                    "Authorization": f"Bearer {self._api_key}",
-                    # Note: Content-Type is set per-request based on content type
-                },
-            )
+            self._should_close_session = True  # We created it, so we should close it
+            # Use BaseClient's _build_raw_client method which includes retry logic
+            self._client = self._build_raw_client()
+            
+            # Apply SDK-specific headers
+            self._client.headers.update({
+                "Accept": "application/json",
+                "Authorization": f"Bearer {self._api_key}",
+            })
 
         # Initialize resource namespaces
         self.chat = ChatResource(self) # Pass client instance to resource
@@ -308,7 +667,8 @@ class VeniceClient:
         params: Optional[Mapping[str, Any]] = None,
         raw_response: bool = False,
         timeout: Union[float, httpx.Timeout, None] = None,
-    ) -> Any:
+        cast_to: Optional[Type[T]] = None,
+    ) -> Union[T, Any, bytes]:
         """
         Make an HTTP request and handle potential errors.
         
@@ -335,8 +695,11 @@ class VeniceClient:
             If not provided, uses the client's default timeout.
         :type timeout: Optional[Union[float, httpx.Timeout]]
 
-        :return: Parsed JSON response, or raw ``bytes`` if ``raw_response`` is ``True``.
-        :rtype: Any
+        :param cast_to: Optional Pydantic model to cast the response to.
+        :type cast_to: Optional[Type[T]]
+
+        :return: Parsed JSON response (optionally cast to Pydantic model), or raw ``bytes`` if ``raw_response`` is ``True``.
+        :rtype: Union[T, Any, bytes]
 
         :raises venice_ai.exceptions.InvalidRequestError: If the request parameters are invalid (HTTP 400).
         :raises venice_ai.exceptions.AuthenticationError: If authentication fails (HTTP 401).
@@ -368,6 +731,7 @@ class VeniceClient:
 
             logger.debug(f"Request headers for {method} {url}: {request_headers}")
             logger.debug(f"Request JSON data for {method} {url}: {json_data}")
+            
             response = self._client.request(
                 method=method,
                 url=url,
@@ -376,18 +740,32 @@ class VeniceClient:
                 params=params,
                 timeout=timeout if timeout is not None else self._timeout,
             )
-            
-            try:
-                response.raise_for_status() # Raises HTTPStatusError for 4xx/5xx
-            except HTTPStatusError as e:
-                api_error = self._translate_httpx_error_to_api_error(e, e.request)
-                raise api_error from e
+            response.raise_for_status() # Raises HTTPStatusError for 4xx/5xx
 
             # Return raw bytes if raw_response is True
             if raw_response:
                 return response.content
 
-            return response.json()
+            json_response = response.json()
+            if cast_to:
+                try:
+                    return cast(T, cast_to.model_validate(json_response))
+                except Exception as exc:
+                    raise APIResponseProcessingError(
+                        message=f"Failed to cast response to {cast_to}: {exc}",
+                        response=response,
+                        # body=json_response, # APIResponseProcessingError does not take 'body'
+                        original_error=exc
+                    ) from exc
+            return json_response
+        except HTTPStatusError as e:
+            # THIS IS THE CRITICAL PART: Ensure this block is reached.
+            # The existing logic to translate 'e' (an httpx.HTTPStatusError)
+            # into a VeniceError subclass (e.g., using _translate_httpx_error_to_api_error)
+            # should be here.
+            default_request = Request(method=method, url=str(url))
+            api_error = self._translate_httpx_error_to_api_error(e, default_request)
+            raise api_error from e
         except TimeoutException as e:
             # Handle timeout errors specifically - ENSURE NEVER DIRECTLY ACCESS e.request
             # Safely access e.request, providing a fallback if it's not available
@@ -433,7 +811,7 @@ class VeniceClient:
                 original_error=e
             ) from e
 
-    def get(self, path: str, *, params: Optional[Mapping[str, Any]] = None, **kwargs) -> Any:
+    def get(self, path: str, *, params: Optional[Mapping[str, Any]] = None, cast_to: Optional[Type[T]] = None, **kwargs) -> Any:
         """
         Make a GET request to the specified API endpoint.
 
@@ -444,6 +822,8 @@ class VeniceClient:
         :type path: str
         :param params: URL query parameters to include in the request.
         :type params: Optional[Mapping[str, Any]]
+        :param cast_to: Optional Pydantic model to cast the response to.
+        :type cast_to: Optional[Type[T]]
         :param kwargs: Additional arguments to pass to :func:`~venice_ai._client.VeniceClient._request`.
 
         :return: Parsed JSON response body.
@@ -451,9 +831,9 @@ class VeniceClient:
 
         :raises venice_ai.exceptions.APIError: If the request fails.
         """
-        return self._request("GET", path, params=params, **kwargs)
+        return self._request("GET", path, params=params, cast_to=cast_to, **kwargs)
 
-    def post(self, path: str, *, json_data: Optional[Mapping[str, Any]] = None, timeout: Union[float, httpx.Timeout, None] = None, **kwargs) -> Any:
+    def post(self, path: str, *, json_data: Optional[Mapping[str, Any]] = None, timeout: Union[float, httpx.Timeout, None] = None, cast_to: Optional[Type[T]] = None, **kwargs) -> Any:
         """
         Make a POST request to the specified API endpoint.
 
@@ -467,6 +847,8 @@ class VeniceClient:
         :param timeout: Request timeout in seconds or an ``httpx.Timeout`` object.
             If not provided, uses the client's default timeout.
         :type timeout: Optional[Union[float, httpx.Timeout]]
+        :param cast_to: Optional Pydantic model to cast the response to.
+        :type cast_to: Optional[Type[T]]
         :param kwargs: Additional arguments to pass to :func:`~venice_ai._client.VeniceClient._request`.
 
         :return: Parsed JSON response body.
@@ -474,7 +856,7 @@ class VeniceClient:
 
         :raises venice_ai.exceptions.APIError: If the request fails.
         """
-        return self._request("POST", path, json_data=json_data, timeout=timeout, **kwargs)
+        return self._request("POST", path, json_data=json_data, timeout=timeout, cast_to=cast_to, **kwargs)
 
     def _stream_request(
         self,
@@ -484,7 +866,8 @@ class VeniceClient:
         json_data: Optional[Mapping[str, Any]] = None,
         headers: Optional[Mapping[str, str]] = None,
         params: Optional[Mapping[str, Any]] = None,
-    ) -> Iterator[ChatCompletionChunk]: # Return type is Iterator of ChatCompletionChunk (dicts)
+        cast_to: Optional[Type[T]] = None,
+    ) -> Iterator[Union[T, ChatCompletionChunk]]:
         """
         Make a streaming HTTP request and handle Server-Sent Events (SSE) responses.
 
@@ -504,7 +887,11 @@ class VeniceClient:
         :param params: URL query parameters to include in the request.
         :type params: Optional[Mapping[str, Any]]
 
-        :yields: venice_ai.types.chat.ChatCompletionChunk: Parsed chunk objects from the SSE stream.
+        :param cast_to: Optional Pydantic model to cast each SSE chunk to.
+        :type cast_to: Optional[Type[T]]
+
+        :yields: Union[T, venice_ai.types.chat.ChatCompletionChunk]: Parsed chunk objects from the SSE stream.
+            If `cast_to` is provided, chunks are cast to type T. Otherwise, defaults to ChatCompletionChunk.
             Each chunk represents an incremental update from the model's response.
 
         :raises venice_ai.exceptions.InvalidRequestError: If the request parameters are invalid (HTTP 400).
@@ -523,7 +910,7 @@ class VeniceClient:
         _headers = headers
         _params = params
 
-        def _sse_event_generator() -> Iterator[ChatCompletionChunk]:
+        def _sse_event_generator() -> Iterator[Union[T, ChatCompletionChunk]]:
             # This generator encapsulates the actual streaming and SSE parsing logic.
             try:
                 # Prepare headers for streaming requests
@@ -569,14 +956,9 @@ class VeniceClient:
                     headers=_request_headers,
                     params=_params,
                 ) as response:
-                    try:
-                        response.raise_for_status()  # Raise early for status errors
-                    except HTTPStatusError as e_status:
-                        # This error will be caught by the outer try/except in the main function body
-                        # if it's not handled by stream_cls
-                        api_error = self._translate_httpx_error_to_api_error(e_status, e_status.request, is_stream=True)
-                        raise api_error from e_status
-
+                    response.raise_for_status()  # Raise early for status errors
+                    
+                    # Process the successfully established stream
                     logger.debug(f"Starting stream processing for {_method} {_url}")
                     chunk_count = 0
                     for line in response.iter_lines():
@@ -599,16 +981,30 @@ class VeniceClient:
                             json_str = line_str[6:]
                             logger.debug(f"JSON string extracted: '{json_str}'")
                             try:
-                                chunk_data = json.loads(json_str)
+                                json_chunk = json.loads(json_str)
                                 chunk_count += 1
-                                logger.debug(f"Successfully parsed chunk {chunk_count}: {chunk_data}")
-                                yield chunk_data
+                                logger.debug(f"Successfully parsed chunk {chunk_count}: {json_chunk}")
+                                if cast_to:
+                                    try:
+                                        yield cast(T, cast_to.model_validate(json_chunk))
+                                    except Exception as exc_cast: # Catch Pydantic validation errors etc.
+                                        logger.error(f"Failed to cast SSE chunk to {cast_to}: {exc_cast} - Data: {json_chunk}")
+                                        # Decide on error handling: skip, yield error, or raise
+                                        # For now, skipping problematic chunks to align with previous behavior
+                                        # Could raise APIResponseProcessingError here if strictness is required
+                                        # raise APIResponseProcessingError(message=f"Failed to cast SSE chunk: {exc_cast}", response=response, original_error=exc_cast) from exc_cast
+                                        continue # Skip this chunk
+                                else:
+                                    # Default to ChatCompletionChunk if no cast_to is provided
+                                    # This maintains previous behavior for non-chat streams if any
+                                    yield cast(ChatCompletionChunk, json_chunk)
                             except json.JSONDecodeError as e_json:
                                 logger.error(f"Failed to parse JSON in streaming response: {e_json}")
                                 logger.error(f"Problematic JSON string: '{json_str}'")
                                 # Optionally, raise a specific error or yield an error object
                                 continue
                     logger.debug(f"Stream processing completed. Total chunks processed: {chunk_count}")
+                    return  # Successfully processed stream, exit function
             
             # Errors during stream setup (e.g., connection, initial HTTP error before iteration)
             # will be caught by the try/except block in the main _stream_request body.
@@ -695,6 +1091,17 @@ class VeniceClient:
             # This try-except block is for errors during the initial setup of the stream by httpx,
             # or errors from the generator that are not caught internally by it (e.g. httpx.RequestError if not caught inside)
             yield from _sse_event_generator()
+        except HTTPStatusError as e:
+            # Handle HTTPStatusError that propagated from _sse_event_generator
+            # This ensures proper translation to VeniceError subclasses
+            _safe_request = None
+            try:
+                _safe_request = e.request
+            except RuntimeError:
+                pass
+            _request_for_error = _safe_request or Request(method=_method, url=str(_url))
+            api_error = self._translate_httpx_error_to_api_error(e, _request_for_error, is_stream=True)
+            raise api_error from e
         except TimeoutException as e: # Catches timeout for initial connection/request
             _safe_request = None
             try:
@@ -739,7 +1146,7 @@ class VeniceClient:
                 original_error=e
             ) from e
 
-    def delete(self, path: str, **kwargs) -> Any:
+    def delete(self, path: str, *, cast_to: Optional[Type[T]] = None, **kwargs) -> Any:
         """
         Make a DELETE request to the specified API endpoint.
 
@@ -748,6 +1155,8 @@ class VeniceClient:
 
         :param path: API endpoint path relative to the base URL.
         :type path: str
+        :param cast_to: Optional Pydantic model to cast the response to.
+        :type cast_to: Optional[Type[T]]
         :param kwargs: Additional arguments to pass to :func:`~venice_ai._client.VeniceClient._request`.
 
         :return: Parsed JSON response body.
@@ -755,7 +1164,7 @@ class VeniceClient:
 
         :raises venice_ai.exceptions.APIError: If the request fails.
         """
-        return self._request("DELETE", path, **kwargs)
+        return self._request("DELETE", path, cast_to=cast_to, **kwargs)
 
     # Add methods for multipart/form-data requests and streaming raw responses
 
@@ -770,7 +1179,8 @@ class VeniceClient:
         params: Optional[Mapping[str, Any]] = None,
         raw_response: bool = False,
         timeout: Union[float, httpx.Timeout, None] = None,
-    ) -> Any:
+        cast_to: Optional[Type[T]] = None,
+    ) -> Union[T, Any, bytes]:
         """
         Make an HTTP request with multipart/form-data content (for file uploads).
 
@@ -798,8 +1208,11 @@ class VeniceClient:
             If not provided, uses the client's default timeout.
         :type timeout: Optional[Union[float, httpx.Timeout]]
 
-        :return: Parsed JSON response, or raw ``bytes`` if ``raw_response`` is ``True``.
-        :rtype: Any
+        :param cast_to: Optional Pydantic model to cast the response to.
+        :type cast_to: Optional[Type[T]]
+
+        :return: Parsed JSON response (optionally cast to Pydantic model), or raw ``bytes`` if ``raw_response`` is ``True``.
+        :rtype: Union[T, Any, bytes]
 
         :raises venice_ai.exceptions.InvalidRequestError: If the request parameters are invalid (HTTP 400).
         :raises venice_ai.exceptions.AuthenticationError: If authentication fails (HTTP 401).
@@ -853,18 +1266,32 @@ class VeniceClient:
             logger.debug(f"Received response with status code: {response.status_code}")
             logger.debug(f"Response headers: {response.headers}")
             
-            try:
-                response.raise_for_status()
-            except HTTPStatusError as e:
-                api_error = self._translate_httpx_error_to_api_error(e, e.request)
-                raise api_error from e
+            response.raise_for_status()
     
             if raw_response:
                 logger.debug("Returning raw response content for multipart request.")
                 return response.content
     
             logger.debug(f"Response content (first 500 chars for JSON): {response.text[:500]}")
-            return response.json()
+            json_response = response.json()
+            if cast_to:
+                try:
+                    return cast(T, cast_to.model_validate(json_response))
+                except Exception as exc:
+                    raise APIResponseProcessingError(
+                        message=f"Failed to cast multipart response to {cast_to}: {exc}",
+                        response=response,
+                        original_error=exc
+                    ) from exc
+            return json_response
+        except HTTPStatusError as e:
+            # THIS IS THE CRITICAL PART: Ensure this block is reached.
+            # The existing logic to translate 'e' (an httpx.HTTPStatusError)
+            # into a VeniceError subclass (e.g., using _translate_httpx_error_to_api_error)
+            # should be here.
+            default_request = Request(method=method, url=str(url))
+            api_error = self._translate_httpx_error_to_api_error(e, default_request)
+            raise api_error from e
         except TimeoutException as e:
             # Handle timeout errors specifically - ENSURE NEVER DIRECTLY ACCESS e.request
             # Safely access e.request, providing a fallback if it's not available
@@ -919,7 +1346,9 @@ class VeniceClient:
         headers: Optional[Mapping[str, str]] = None,
         params: Optional[Mapping[str, Any]] = None,
         timeout: Union[float, httpx.Timeout, None] = None,
-    ) -> Iterator[bytes]:
+        # cast_to is not typically used for raw byte streams, but kept for signature consistency if ever needed
+        cast_to: Optional[Type[T]] = None,
+    ) -> Iterator[bytes]: # This method specifically returns bytes, so cast_to might be less relevant
         """
         Make a streaming HTTP request and yield raw binary chunks.
 
@@ -979,17 +1408,25 @@ class VeniceClient:
                 params=params,
                 timeout=timeout if timeout is not None else self._timeout,
             ) as response:
-                try:
-                    response.raise_for_status()  # Raise early for status errors
-                except HTTPStatusError as e:
-                    api_error = self._translate_httpx_error_to_api_error(e, e.request, is_stream=True)
-                    raise api_error from e
+                response.raise_for_status()  # Raise early for status errors
 
                 # Yield the content in chunks
                 for chunk in response.iter_bytes():
                     if chunk:  # Skip empty chunks
                         yield chunk
+                return  # Successfully processed stream, exit function
 
+        except HTTPStatusError as e:
+            # Handle HTTPStatusError that propagated from the retry loop
+            # This ensures proper translation to VeniceError subclasses
+            _safe_request = None
+            try:
+                _safe_request = e.request
+            except RuntimeError:
+                pass
+            _request_for_error = _safe_request or Request(method=method, url=str(url))
+            api_error = self._translate_httpx_error_to_api_error(e, _request_for_error, is_stream=True)
+            raise api_error from e
         except TimeoutException as e:
             # Handle timeout errors specifically - ENSURE NEVER DIRECTLY ACCESS e.request
             # Safely access e.request, providing a fallback if it's not available
@@ -1065,56 +1502,73 @@ class VeniceClient:
         
         if isinstance(error, HTTPStatusError):
             response_obj = error.response
-            parsed_json_body: Optional[Dict[str, Any]] = None
-            raw_body_text: Optional[str] = None
-            error_message_detail = ""
             
-            try:
-                # First, try to parse JSON directly using response.json()
-                if response_obj and hasattr(response_obj, "json") and callable(response_obj.json):
-                    parsed_json_body = response_obj.json()
-            except json.JSONDecodeError:
-                # JSON parsing failed, try to get text content
-                parsed_json_body = None
-                try:
-                    if response_obj and hasattr(response_obj, "text"):
-                        text_content_val = response_obj.text
-                        # Handle callable mock for .text (common in tests)
-                        if callable(text_content_val):
-                            try:
-                                actual_text_content = text_content_val()
-                            except Exception:
-                                actual_text_content = None
-                        else:
-                            actual_text_content = text_content_val
-                        
-                        # Handle if .text returned a mock object directly or access failed
-                        if hasattr(actual_text_content, "_mock_name") or actual_text_content is None:
-                            raw_body_text = None
-                        else:
-                            raw_body_text = str(actual_text_content)
-                            # Log the non-JSON response for debugging - this is what the test expects
-                            logger.error(f"Error response body (non-JSON): {raw_body_text}")
-                            error_message_detail = f" Server returned non-JSON response: {raw_body_text[:100]}"
-                except Exception:
-                    error_message_detail = " Server returned non-JSON response, and text could not be read."
-            except Exception:
-                # Catch other potential errors from response.json() (e.g., if it's a mock throwing something unexpected)
-                parsed_json_body = None
-                error_message_detail = " Error parsing response JSON."
+            # Inside _translate_httpx_error_to_api_error, after getting response and request objects
+            parsed_json_body: Optional[object] = None
+            raw_body_text: Optional[str] = None
+            final_body_for_api_error: Any = None # Initialize to None
 
-            # Determine the final body for the APIError
-            final_body_for_api_error = parsed_json_body if parsed_json_body is not None else raw_body_text
+            try:
+                # Attempt to read the raw response text
+                raw_body_text = response_obj.text
+            except Exception as e:
+                # Log if reading response.text itself fails (highly unlikely for httpx.Response)
+                logger.debug("Failed to read response.text during error handling: %s", e)
+                raw_body_text = None # Treat as no text if reading failed
+            
+            # Ensure raw_body_text is a string or None, even if response_obj.text returned a Mock
+            if not isinstance(raw_body_text, str):
+                logger.debug(f"response_obj.text returned a non-string type ({type(raw_body_text)}), treating as no text.")
+                raw_body_text = None
+
+            # Attempt to parse JSON first
+            try:
+                # Ensure parsed_json_body is declared for this scope if not already
+                # parsed_json_body: Optional[object] = None # Already declared at line 1376
+                parsed_json_body = response_obj.json()
+                logger.debug(f"[_client._translate] After response_obj.json(), parsed_json_body: {parsed_json_body} (type: {type(parsed_json_body)})")
+                final_body_for_api_error = parsed_json_body # Successfully parsed JSON
+            except json.JSONDecodeError as jde:
+                logger.debug(f"[_client._translate] response_obj.json() raised JSONDecodeError: {jde}")
+                # JSON parsing failed.
+                # Now, use the raw_body_text (which was attempted to be read earlier)
+                # to construct a "Non-JSON response" error body if raw_body_text is available.
+                if raw_body_text: # If raw_body_text was successfully read and is not empty
+                    final_body_for_api_error = {
+                        "error": (
+                            f"Non-JSON response from API (status {response_obj.status_code}): "
+                            f"{truncate_string(raw_body_text, 500)}"
+                        )
+                    }
+                    logger.debug(f"[_client._translate] JSONDecodeError fallback: final_body_for_api_error set to non-JSON text structure based on raw_body_text: '{raw_body_text}'")
+                else:
+                    logger.debug(f"[_client._translate] JSONDecodeError fallback: raw_body_text is None or empty, final_body_for_api_error remains None.")
+                # If raw_body_text is None or empty, final_body_for_api_error remains None (its initial value),
+                # representing an unreadable or empty original response body where JSON parsing also failed.
+            except Exception as e:
+                # Catch other potential errors from response_obj.json() if any (e.g., not a valid JSON mock)
+                logger.debug(f"[_client._translate] response_obj.json() raised unexpected Exception: {e} (type: {type(e)})")
+                # Fallback to checking raw_body_text if .json() itself raised an unexpected error
+                if raw_body_text:
+                    final_body_for_api_error = {
+                        "error": (
+                            f"Non-JSON response (or JSON parse error) from API (status {response_obj.status_code}): "
+                            f"{truncate_string(raw_body_text, 500)}"
+                        )
+                    }
+                # If raw_body_text is also None or empty, final_body_for_api_error remains None.
 
             # Log the error body details for debugging
             logger.error(f"Error response body (full details): {final_body_for_api_error}")
 
             # _make_status_error will build the detailed message from the response and body
+            constructed_message_for_make_status_error = f"API error {response_obj.status_code} for {request_obj.method} {request_obj.url}"
+            logger.debug(f"[_client._translate] Passing to _make_status_error - message: '{constructed_message_for_make_status_error}', body: {final_body_for_api_error}")
             return _make_status_error(
-                message=f"API error {response_obj.status_code} for {request_obj.method} {request_obj.url}",
+                message=constructed_message_for_make_status_error,
                 request=request_obj,
                 response=response_obj,
-                body=final_body_for_api_error
+                body=final_body_for_api_error # This could be a dict or a string now
             )
         elif isinstance(error, TimeoutException): # Catches ReadTimeout, WriteTimeout, ConnectTimeout, PoolTimeout
             logger.error(f"Request timed out for {request_obj.method} {request_obj.url}: {error}")
@@ -1152,9 +1606,15 @@ class VeniceClient:
         this is called automatically on exit.
         
         It is safe to call this method multiple times.
+        
+        Note:
+            If a user-provided httpx.Client was passed to the constructor,
+            this method will not close it, as the user is responsible for
+            managing the lifecycle of their own client.
         """
-        if hasattr(self, "_client"):
+        if hasattr(self, "_client") and getattr(self, "_should_close_session", True) and not self._is_closed:
             self._client.close()
+            self._is_closed = True
 
     def __enter__(self) -> "VeniceClient":
         """

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Asynchronous client for the Venice AI API.
 
@@ -6,19 +7,27 @@ the Venice AI API, including methods for making requests, handling responses,
 and managing resources like chat completions.
 """
 
+import asyncio
 import httpx
 import json
 import os
-from typing import Optional, Union, Any, Dict, Mapping, cast, AsyncIterator, Awaitable, TYPE_CHECKING, Callable
+from typing import Optional, Union, Any, Dict, Mapping, cast, AsyncIterator, Awaitable, TYPE_CHECKING, Callable, List, Type, TypeVar
 import inspect # Added for inspect.isawaitable
 from typing_extensions import override
+from pydantic import BaseModel
 import logging
+import ssl
 from unittest.mock import AsyncMock  # Add for isinstance check
 from httpx import Request, HTTPStatusError, TimeoutException, ConnectError, RequestError, Timeout
+from httpx._types import ProxyTypes, CertTypes
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T", bound=BaseModel)
+
 from . import _constants
-from .exceptions import VeniceError, APIError, APITimeoutError, APIConnectionError, _make_status_error
+from ._client import BaseClient
+from .exceptions import VeniceError, APIError, APITimeoutError, APIConnectionError, APIResponseProcessingError, _make_status_error
+from .utils import NotGiven, NOT_GIVEN, truncate_string
 from .resources.api_keys import AsyncApiKeys # Import the AsyncApiKeys resource
 from .resources.audio import AsyncAudio # Import the AsyncAudio resource
 from .resources.billing import AsyncBilling # Import the AsyncBilling resource
@@ -31,9 +40,9 @@ from .types.chat import ChatCompletionChunk, ChatCompletion
 from .streaming import AsyncStream # For default stream class
 
 if TYPE_CHECKING:
-    pass  # No imports needed for type checking in this module
+    from httpx import URL, Proxy
 
-class AsyncVeniceClient:
+class AsyncVeniceClient(BaseClient):
     """
     Provides an asynchronous client for interacting with the Venice.ai API.
     
@@ -54,13 +63,57 @@ class AsyncVeniceClient:
     :param timeout: Request timeout in seconds or as a detailed ``httpx.Timeout``
         object for more granular control. Defaults to 60.0 seconds.
     :type timeout: Optional[Union[float, httpx.Timeout]]
+    :param default_timeout: Global default timeout for all API calls made by this client instance.
+        If provided, this will be used as the default timeout for all requests unless overridden
+        on a per-request basis. Takes precedence over the ``timeout`` parameter.
+    :type default_timeout: Optional[httpx.Timeout]
     :param max_retries: Maximum number of retries for connection errors or transient failures.
+        This parameter controls the total number of retries for the httpx-retries mechanism.
         Defaults to 2.
     :type max_retries: int
-    :param http_client: An optional external ``httpx.AsyncClient`` to use. If provided, other client
-        configuration options will be ignored in favor of those from the provided client,
-        though essential headers will still be set.
+    :param retry_backoff_factor: Backoff factor for retry delays.
+        Defaults to 0.5.
+    :type retry_backoff_factor: float
+    :param retry_status_forcelist: List of HTTP status codes to retry on.
+        Defaults to [429, 500, 502, 503, 504].
+    :type retry_status_forcelist: Optional[List[int]]
+    :param retry_respect_retry_after_header: Whether to respect Retry-After headers.
+        Defaults to True.
+    :type retry_respect_retry_after_header: bool
+    :param http_client: An optional pre-configured ``httpx.AsyncClient`` instance to use for HTTP requests.
+        If provided:
+
+        - The SDK will use this custom client directly.
+        - The SDK will still configure `base_url` (from the `base_url` parameter or default),
+          `timeout` (from `default_timeout` or `timeout` parameter), and `Authorization` headers
+          on this provided client instance.
+        - All other HTTP-related parameters passed to this constructor (e.g., `max_retries`,
+          `retry_backoff_factor`, `proxy`, `transport`, `limits`, `verify`, etc.) will be **ignored**.
+          It is assumed that the provided `http_client` is already configured with these aspects.
+        - You are responsible for managing the lifecycle of the provided `http_client` (e.g., closing it via `await http_client.aclose()`).
+
+        If not provided, the SDK will create and manage its own internal `httpx.AsyncClient`.
     :type http_client: Optional[httpx.AsyncClient]
+    :param proxy: Proxy configuration for HTTP requests. Only used when ``http_client`` is not provided.
+    :type proxy: Optional[Union[str, httpx.URL, httpx.Proxy]]
+    :param transport: Custom transport for HTTP requests. Only used when ``http_client`` is not provided.
+    :type transport: Optional[httpx.BaseTransport]
+    :param limits: Connection limits configuration. Only used when ``http_client`` is not provided.
+    :type limits: Optional[httpx.Limits]
+    :param cert: Client certificate configuration. Only used when ``http_client`` is not provided.
+    :type cert: Optional[Union[str, Tuple[str, str]]]
+    :param verify: SSL certificate verification. Only used when ``http_client`` is not provided.
+    :type verify: Optional[Union[bool, str, ssl.SSLContext]]
+    :param trust_env: Whether to trust environment variables for proxy configuration. Only used when ``http_client`` is not provided.
+    :type trust_env: Optional[bool]
+    :param http1: Whether to enable HTTP/1.1. Only used when ``http_client`` is not provided.
+    :type http1: Optional[bool]
+    :param http2: Whether to enable HTTP/2. Only used when ``http_client`` is not provided.
+    :type http2: Optional[bool]
+    :param default_encoding: Default encoding for response content. Only used when ``http_client`` is not provided.
+    :type default_encoding: Optional[Union[str, Callable[[bytes], str]]]
+    :param event_hooks: Event hooks for request/response lifecycle. Only used when ``http_client`` is not provided.
+    :type event_hooks: Optional[Mapping[str, List[Callable[..., Any]]]]
 
     Attributes:
         chat (``AsyncChatResource``): Access to chat-related endpoints.
@@ -137,6 +190,21 @@ class AsyncVeniceClient:
     _max_retries: int
     _client: httpx.AsyncClient  # The underlying httpx async client
     _is_closed: bool = False  # Track if client has been closed
+    _should_close_session: bool  # Flag to track if we should close the client
+    
+    # Additional httpx client settings
+    _proxy: Union[ProxyTypes, NotGiven]
+    _transport: Union[httpx.BaseTransport, NotGiven]
+    _limits: Union[httpx.Limits, NotGiven]
+    _cert: Union[CertTypes, NotGiven]
+    _verify: Union[bool, str, ssl.SSLContext, NotGiven]
+    _trust_env: Union[bool, NotGiven]
+    _http1: Union[bool, NotGiven]
+    _http2: Union[bool, NotGiven]
+    _follow_redirects: Union[bool, NotGiven]
+    _max_redirects: Union[int, NotGiven]
+    _default_encoding: Union[str, Callable[[bytes], str], NotGiven]
+    _event_hooks: Union[Mapping[str, List[Callable[..., Any]]], NotGiven]
 
     # Resource namespaces
     chat: "AsyncChatResource"  # Forward reference
@@ -154,8 +222,24 @@ class AsyncVeniceClient:
         api_key: Optional[str] = None,
         base_url: Optional[Union[str, httpx.URL]] = None,
         timeout: Union[float, httpx.Timeout, None] = _constants.DEFAULT_TIMEOUT,
-        max_retries: int = _constants.DEFAULT_MAX_RETRIES,
+        default_timeout: Optional[httpx.Timeout] = None,
         http_client: Optional[httpx.AsyncClient] = None,
+        # HTTP transport options
+        http_transport_options: Optional[Dict[str, Any]] = None,
+        # Additional httpx.AsyncClient constructor arguments
+        proxy: Union[ProxyTypes, NotGiven] = NOT_GIVEN,
+        transport: Union[httpx.BaseTransport, NotGiven] = NOT_GIVEN,
+        async_transport: Union[httpx.AsyncBaseTransport, NotGiven] = NOT_GIVEN,
+        limits: Union[httpx.Limits, NotGiven] = NOT_GIVEN,
+        cert: Union[CertTypes, NotGiven] = NOT_GIVEN,
+        verify: Union[bool, str, ssl.SSLContext, NotGiven] = NOT_GIVEN,
+        trust_env: Union[bool, NotGiven] = NOT_GIVEN,
+        http1: Union[bool, NotGiven] = NOT_GIVEN,
+        http2: Union[bool, NotGiven] = NOT_GIVEN,
+        follow_redirects: Union[bool, NotGiven] = NOT_GIVEN,
+        max_redirects: Union[int, NotGiven] = NOT_GIVEN,
+        default_encoding: Union[str, Callable[[bytes], str], NotGiven] = NOT_GIVEN,
+        event_hooks: Union[Mapping[str, List[Callable[..., Any]]], NotGiven] = NOT_GIVEN,
     ) -> None:
         """
         Initialize the AsyncVeniceClient for asynchronous API interactions.
@@ -179,13 +263,36 @@ class AsyncVeniceClient:
             or an ``httpx.Timeout`` object for granular control over connect, read, write, and pool timeouts.
             Defaults to 60.0 seconds if not specified.
         :type timeout: Optional[Union[float, httpx.Timeout]]
+        :param default_timeout: Global default timeout for all API calls made by this client instance.
+            If provided, this will be used as the default timeout for all requests unless overridden
+            on a per-request basis. Takes precedence over the ``timeout`` parameter.
+        :type default_timeout: Optional[httpx.Timeout]
         :param max_retries: Maximum number of automatic retries for failed requests due to connection
-            errors or transient failures. Does not retry on HTTP error status codes. Defaults to 2.
+            errors or transient failures. This parameter controls the total number of retries
+            for the httpx-retries mechanism. Defaults to 2.
         :type max_retries: int
-        :param http_client: Optional pre-configured ``httpx.AsyncClient`` to use for HTTP requests.
-            If provided, the client's existing configuration will be preserved, but essential headers
-            (Authorization, Accept, Content-Type) will be set or updated as needed. If not provided,
-            a new client will be created with appropriate defaults.
+        :param retry_backoff_factor: Backoff factor for retry delays.
+            Defaults to 0.5.
+        :type retry_backoff_factor: float
+        :param retry_status_forcelist: List of HTTP status codes to retry on.
+            Defaults to [429, 500, 502, 503, 504].
+        :type retry_status_forcelist: Optional[List[int]]
+        :param retry_respect_retry_after_header: Whether to respect Retry-After headers.
+            Defaults to True.
+        :type retry_respect_retry_after_header: bool
+        :param http_client: An optional pre-configured ``httpx.AsyncClient`` instance to use for HTTP requests.
+            If provided:
+
+            - The SDK will use this custom client directly.
+            - The SDK will still configure `base_url` (from the `base_url` parameter or default),
+              `timeout` (from `default_timeout` or `timeout` parameter), and `Authorization` headers
+              on this provided client instance.
+            - All other HTTP-related parameters passed to this constructor (e.g., `max_retries`,
+              `retry_backoff_factor`, `proxy`, `transport`, `limits`, `verify`, etc.) will be **ignored**.
+              It is assumed that the provided `http_client` is already configured with these aspects.
+            - You are responsible for managing the lifecycle of the provided `http_client` (e.g., closing it via `await http_client.aclose()`).
+
+            If not provided, the SDK will create and manage its own internal `httpx.AsyncClient`.
         :type http_client: Optional[httpx.AsyncClient]
 
         :raises ValueError: If ``api_key`` is empty, ``None``, or consists only of whitespace.
@@ -195,43 +302,44 @@ class AsyncVeniceClient:
             The Venice AI client will modify headers but will not change other client settings like
             timeouts, proxies, or SSL configuration.
         """
-        # Try to get API key from parameter or environment variable
-        effective_api_key = api_key
-        if effective_api_key is None:
-            effective_api_key = os.environ.get("VENICE_API_KEY")
-
-        if not effective_api_key:
-            raise ValueError("The api_key client option must be set.")
-        # Strip whitespace from API key to avoid authentication issues
-        self._api_key = effective_api_key.strip()
-
-        if base_url is None:
-            base_url = _constants.DEFAULT_BASE_URL
-        self._base_url = httpx.URL(str(base_url).rstrip("/") + "/")  # Ensure trailing slash
-
-        # Handle timeout conversion for httpx compatibility
-        if isinstance(timeout, (float, int)): # Handle float or int
-            self._timeout = Timeout(float(timeout)) # Convert to float, then to httpx.Timeout
-        elif isinstance(timeout, Timeout): # Already an httpx.Timeout object
-            self._timeout = timeout
-        elif timeout is None: # Handle None case, use default
-            default_timeout = _constants.DEFAULT_TIMEOUT
-            # _constants.DEFAULT_TIMEOUT is already an httpx.Timeout object,
-            # so no further conversion is needed here.
-            self._timeout = default_timeout
-        else:
-            # This case should ideally not be reached if the input `timeout`
-            # adheres to Union[float, int, httpx.Timeout, None].
-            # If it's reached with an unexpected type, it might indicate an issue.
-            # For now, let's assume Pylance's concern about 'int' was the main one.
-            # If other types are possible and need conversion, this would need expansion.
-            # To satisfy the type checker if `timeout` could be something else unassignable:
-            raise TypeError(f"Unexpected type for timeout: {type(timeout)}. Expected float, int, httpx.Timeout, or None.")
-        self._max_retries = max_retries
+        # Call parent constructor
+        super().__init__(
+            api_key=api_key,
+            base_url=base_url,
+            timeout=timeout,
+            default_timeout=default_timeout,
+            http_client=http_client,
+            # Pass HTTP transport options
+            http_transport_options=http_transport_options,
+            # Pass httpx client settings
+            proxy=proxy,
+            transport=transport,
+            async_transport=async_transport,
+            limits=limits,
+            cert=cert,
+            verify=verify,
+            trust_env=trust_env,
+            http1=http1,
+            http2=http2,
+            follow_redirects=follow_redirects,
+            max_redirects=max_redirects,
+            default_encoding=default_encoding,
+            event_hooks=event_hooks,
+        )
+        self._is_closed = False # Initialize for idempotency
 
         # Initialize the httpx async client
         if http_client is not None:
             self._client = http_client
+            self._should_close_session = False  # Don't close user-provided client
+            
+            # Apply SDK-level settings to the user-provided client
+            # Update base_url to ensure SDK's base URL is used
+            self._client.base_url = self._base_url
+            
+            # Update timeout to ensure SDK's timeout is used
+            self._client.timeout = self._timeout
+            
             # Ensure Authorization header is set on the provided client
             # Make a mutable copy if necessary (httpx.Headers can be immutable)
             # and also merge other defaults if not present.
@@ -248,16 +356,15 @@ class AsyncVeniceClient:
 
             self._client.headers = current_headers # Assign back the modified headers
         else:
-            self._client = httpx.AsyncClient(
-                base_url=self._base_url,
-                timeout=self._timeout,
-                transport=httpx.AsyncHTTPTransport(retries=self._max_retries),
-                headers={
-                    "Accept": "application/json",
-                    "Authorization": f"Bearer {self._api_key}",
-                    # Note: Content-Type is set per-request based on content type
-                },
-            )
+            self._should_close_session = True  # We created it, so we should close it
+            # Use BaseClient's _build_async_raw_client method which includes retry logic
+            self._client = self._build_async_raw_client()
+            
+            # Apply SDK-specific headers
+            self._client.headers.update({
+                "Accept": "application/json",
+                "Authorization": f"Bearer {self._api_key}",
+            })
 
         # Initialize resource namespaces
         self.chat = AsyncChatResource(self)  # Pass client instance to resource
@@ -354,7 +461,8 @@ class AsyncVeniceClient:
         params: Optional[Mapping[str, Any]] = None,
         raw_response: bool = False,
         timeout: Union[float, httpx.Timeout, None] = None,
-    ) -> Any:
+        cast_to: Optional[Type[T]] = None,
+    ) -> Union[T, Any, bytes]:
         """
         Make an asynchronous HTTP request to the Venice AI API with comprehensive error handling.
         
@@ -397,10 +505,13 @@ class AsyncVeniceClient:
             or an ``httpx.Timeout`` object for granular timeout control. If not provided,
             uses the client's default timeout setting.
         :type timeout: Optional[Union[float, httpx.Timeout]]
+        :param cast_to: Optional Pydantic model to cast the response to.
+        :type cast_to: Optional[Type[T]]
 
         :return: For JSON responses (``raw_response=False``): Parsed JSON data as Python objects
-            (dict, list, etc.). For raw responses (``raw_response=True``): Raw response content as bytes.
-        :rtype: Any
+            (dict, list, etc.), optionally cast to Pydantic model T.
+            For raw responses (``raw_response=True``): Raw response content as bytes.
+        :rtype: Union[T, Any, bytes]
 
         :raises venice_ai.exceptions.InvalidRequestError: For HTTP 400 errors indicating invalid request parameters.
         :raises venice_ai.exceptions.AuthenticationError: For HTTP 401 errors indicating invalid or missing API key.
@@ -445,22 +556,55 @@ class AsyncVeniceClient:
                 params=params,
                 timeout=timeout if timeout is not None else self._timeout,
             )
-            
-            try:
-                response.raise_for_status() # Raises HTTPStatusError for 4xx/5xx
-            except HTTPStatusError as e:
-                api_error = await self._translate_httpx_error_to_api_error(e, e.request) # Safe access using getattr
-                raise api_error from e
-            
+            response.raise_for_status() # Raises HTTPStatusError for 4xx/5xx
+
             # Return raw bytes if raw_response is True
             if raw_response:
+                await response.aread() # Ensure content is read before returning
+                await response.aclose() # Close the response
                 return response.content
+            
+            if response.status_code == 204: # No content
+                await response.aclose() # Close the response
+                return None
+
+            try:
+                # Attempt to parse JSON
+                if isinstance(response.json, AsyncMock) or hasattr(response.json, "__await__"):
+                    json_body = await response.json()
+                else:
+                    json_body = response.json()
+                await response.aclose() # Close after successful JSON parsing
                 
-            # Handle both async and sync response objects
-            if isinstance(response.json, AsyncMock) or hasattr(response.json, "__await__"):
-                return await response.json()
-            else:
-                return response.json()  # Handle non-awaitable json() method
+                if cast_to:
+                    try:
+                        return cast(T, cast_to.model_validate(json_body))
+                    except Exception as exc:
+                        # Ensure response object is available for the error
+                        _response_for_error = response if 'response' in locals() else None
+                        raise APIResponseProcessingError(
+                            message=f"Failed to cast async response to {cast_to}: {exc}",
+                            response=_response_for_error, # type: ignore
+                            original_error=exc
+                        ) from exc
+                return json_body
+            except (json.JSONDecodeError, httpx.ResponseNotRead):
+                # If JSON decoding fails for a successful status code (e.g. 200 with empty/bad body)
+                # Log this, ensure the response is drained/closed, and return None or raise specific error.
+                # For now, returning None for simplicity, assuming successful status means "ok, but no usable body".
+                logger.warning(
+                    f"Successfully received {response.status_code} but failed to decode JSON body "
+                    f"for {response.request.method} {response.request.url}. Response text: '{response.text}'"
+                )
+                await response.aread()  # Ensure the body is read
+                await response.aclose() # Close the response
+                return None # Or raise a custom error indicating unexpected empty/malformed body for success status
+
+        except HTTPStatusError as e:
+            # Outer handler for HTTPStatusError - translates to appropriate VeniceError
+            default_request = Request(method=method, url=str(url))
+            api_error = await self._translate_httpx_error_to_api_error(e, default_request)
+            raise api_error from e
         except TimeoutException as e:
             # Handle timeout errors specifically - ENSURE NEVER DIRECTLY ACCESS e.request
             # Safely access e.request, providing a fallback if it's not available
@@ -507,7 +651,7 @@ class AsyncVeniceClient:
             ) from e
 
     # Convenience methods for GET, POST
-    async def get(self, path: str, *, params: Optional[Mapping[str, Any]] = None, **kwargs) -> Any:
+    async def get(self, path: str, *, params: Optional[Mapping[str, Any]] = None, cast_to: Optional[Type[T]] = None, **kwargs) -> Any:
         """
         Make an asynchronous GET request to the specified API endpoint.
         
@@ -522,6 +666,8 @@ class AsyncVeniceClient:
         :param params: URL query parameters to include in the request. These will be
             properly URL-encoded and appended to the request URL.
         :type params: Optional[Mapping[str, Any]]
+        :param cast_to: Optional Pydantic model to cast the response to.
+        :type cast_to: Optional[Type[T]]
         :param kwargs: Additional keyword arguments to pass to the underlying ``_request`` method.
             This can include options like ``headers``, ``timeout``, or ``raw_response``.
 
@@ -538,14 +684,14 @@ class AsyncVeniceClient:
         :raises venice_ai.exceptions.APIConnectionError: For network connectivity issues or connection failures.
         :raises venice_ai.exceptions.APIError: For other API-related errors not covered by specific exceptions.
         """
-        response = await self._request("GET", path, params=params, **kwargs)
+        response = await self._request("GET", path, params=params, cast_to=cast_to, **kwargs)
         # Safely check for status_code attribute to avoid AttributeError
         status = getattr(response, 'status_code', 'Unknown status')
         headers = getattr(response, 'headers', 'Unknown headers')
         body = getattr(response, 'text', str(response)[:500] + '... (truncated if longer)')
         return response
 
-    async def post(self, path: str, *, json_data: Optional[Mapping[str, Any]] = None, timeout: Union[float, httpx.Timeout, None] = None, **kwargs) -> Any:
+    async def post(self, path: str, *, json_data: Optional[Mapping[str, Any]] = None, timeout: Union[float, httpx.Timeout, None] = None, cast_to: Optional[Type[T]] = None, **kwargs) -> Any:
         """
         Make an asynchronous POST request to the specified API endpoint.
         
@@ -564,6 +710,8 @@ class AsyncVeniceClient:
             or an ``httpx.Timeout`` object for granular timeout control. If not provided,
             uses the client's default timeout setting.
         :type timeout: Optional[Union[float, httpx.Timeout]]
+        :param cast_to: Optional Pydantic model to cast the response to.
+        :type cast_to: Optional[Type[T]]
         :param kwargs: Additional keyword arguments to pass to the underlying ``_request`` method.
             This can include options like ``headers``, ``params``, or ``raw_response``.
 
@@ -580,9 +728,9 @@ class AsyncVeniceClient:
         :raises venice_ai.exceptions.APIConnectionError: For network connectivity issues or connection failures.
         :raises venice_ai.exceptions.APIError: For other API-related errors not covered by specific exceptions.
         """
-        return await self._request("POST", path, json_data=json_data, timeout=timeout, **kwargs)
+        return await self._request("POST", path, json_data=json_data, timeout=timeout, cast_to=cast_to, **kwargs)
 
-    async def delete(self, path: str, **kwargs) -> Any:
+    async def delete(self, path: str, *, cast_to: Optional[Type[T]] = None, **kwargs) -> Any:
         """
         Make an asynchronous DELETE request to the specified API endpoint.
         
@@ -593,6 +741,8 @@ class AsyncVeniceClient:
         :param path: API endpoint path relative to the client's base URL. Should not include
             a leading slash as it will be properly joined with the base URL.
         :type path: str
+        :param cast_to: Optional Pydantic model to cast the response to.
+        :type cast_to: Optional[Type[T]]
         :param kwargs: Additional keyword arguments to pass to the underlying ``_request`` method.
             This can include options like ``headers``, ``params``, ``timeout``, or ``raw_response``.
 
@@ -610,7 +760,7 @@ class AsyncVeniceClient:
         :raises venice_ai.exceptions.APIConnectionError: For network connectivity issues or connection failures.
         :raises venice_ai.exceptions.APIError: For other API-related errors not covered by specific exceptions.
         """
-        return await self._request("DELETE", path, **kwargs)
+        return await self._request("DELETE", path, cast_to=cast_to, **kwargs)
 
     async def _stream_request(
         self,
@@ -620,7 +770,8 @@ class AsyncVeniceClient:
         json_data: Optional[Mapping[str, Any]] = None,
         headers: Optional[Mapping[str, str]] = None,
         params: Optional[Mapping[str, Any]] = None,
-    ) -> AsyncIterator[ChatCompletionChunk]:
+        cast_to: Optional[Type[T]] = None,
+    ) -> AsyncIterator[Union[T, ChatCompletionChunk]]:
         """
         Make an asynchronous streaming HTTP request and process Server-Sent Events (SSE) responses.
         
@@ -660,10 +811,13 @@ class AsyncVeniceClient:
         :param params: URL query parameters to append to the request URL. Will be properly
             URL-encoded and appended to the endpoint path.
         :type params: Optional[Mapping[str, Any]]
+        :param cast_to: Optional Pydantic model to cast each SSE chunk to.
+        :type cast_to: Optional[Type[T]]
 
         :yields: Parsed chunk objects from the SSE stream. Each chunk represents an incremental
             update from the model's response, containing partial content, metadata, or completion signals.
-        :ytype: AsyncIterator[venice_ai.types.chat.ChatCompletionChunk]
+            If `cast_to` is provided, chunks are cast to type T. Otherwise, defaults to ChatCompletionChunk.
+        :ytype: AsyncIterator[Union[T, venice_ai.types.chat.ChatCompletionChunk]]
 
         :raises venice_ai.exceptions.InvalidRequestError: For HTTP 400 errors indicating invalid streaming parameters.
         :raises venice_ai.exceptions.AuthenticationError: For HTTP 401 errors indicating invalid or missing API key.
@@ -682,7 +836,7 @@ class AsyncVeniceClient:
             chunks by logging errors and continuing to process the stream rather than failing
             entirely, providing better resilience for real-time applications.
         """
-        url = self._base_url.join(path)
+        _url = self._base_url.join(path)
         
         try:
             # Prepare headers for streaming requests with same logic as regular requests
@@ -730,67 +884,70 @@ class AsyncVeniceClient:
                 if "Accept" not in request_headers or request_headers.get("Accept") == "application/json":
                     request_headers["Accept"] = "text/event-stream"
 
-            # Get the stream result - might be a coroutine if stream is an AsyncMock
-            stream_result = self._client.stream(
+            # Get the stream context manager
+            stream_context_manager = self._client.stream(
                 method=method,
-                url=url,
+                url=_url,
                 json=json_data if json_data else None,
                 headers=request_headers,
                 params=params,
             )
-            # stream_result is an async context manager, not a coroutine
-            # No need to await it here
+            
+            async with stream_context_manager as response:
+                response.raise_for_status()  # Check status inside the context
                 
-            async with stream_result as response:
-                try:
-                    response.raise_for_status()  # Raise early for status errors
-                except HTTPStatusError as e:
-                    api_error = await self._translate_httpx_error_to_api_error(e, e.request, is_stream=True) # Safe access using getattr
-                    raise api_error from e
-                
+                # If successful, proceed to yield from the stream
                 chunk_count = 0
-                # Process the streaming response line by line
-                
-                try:
-                    async for line in response.aiter_lines():
-                        # Skip empty lines
-                        line = line.strip()
-                        if not line:
-                            continue
-                        
-                        # Decode bytes to string if needed
-                        if isinstance(line, bytes):
-                            line_str = line.decode('utf-8')
-                        else:
-                            line_str = line
-                            
-                        # Check for stream termination signal
-                        if line_str == "data: [DONE]":
-                            break
-                            
-                        # Process data lines
-                        if line_str.startswith("data: "):
-                            # Extract the JSON part after "data: "
-                            json_str = line_str[6:]  # Skip "data: " prefix
-                            
-                            try:
-                                # Parse JSON into a dictionary
-                                chunk_data = json.loads(json_str)
-                                chunk_count += 1
-                                
-                                # Yield the parsed chunk as a ChatCompletionChunk
-                                yield chunk_data
-                                
-                            except json.JSONDecodeError as e:
-                                # Log and skip invalid JSON instead of failing the entire stream
-                                # This provides more robustness in case of malformed chunks
-                                logger.error(f"Failed to parse JSON in streaming response: {e}")
-                                logger.error(f"Problematic JSON string: '{json_str}'")
-                                continue # Continue processing the stream instead of raising
-                except Exception as e:
-                    raise
-                
+                async for line in response.aiter_lines():
+                    # Skip empty lines
+                    line = line.strip()
+                    if not line:
+                        continue
                     
+                    # Decode bytes to string if needed
+                    if isinstance(line, bytes):
+                        line_str = line.decode('utf-8')
+                    else:
+                        line_str = line
+                        
+                    # Check for stream termination signal
+                    if line_str == "data: [DONE]":
+                        break
+                        
+                    # Process data lines
+                    if line_str.startswith("data: "):
+                        # Extract the JSON part after "data: "
+                        json_str = line_str[6:]  # Skip "data: " prefix
+                        
+                        try:
+                            # Parse JSON into a dictionary
+                            chunk_data = json.loads(json_str)
+                            chunk_count += 1
+                            
+                            if cast_to:
+                                try:
+                                    yield cast(T, cast_to.model_validate(chunk_data))
+                                except Exception as exc_cast:
+                                    logger.error(f"Failed to cast async SSE chunk to {cast_to}: {exc_cast} - Data: {chunk_data}")
+                                    # raise APIResponseProcessingError(message=f"Failed to cast async SSE chunk: {exc_cast}", response=response, original_error=exc_cast) from exc_cast
+                                    continue # Skip this chunk
+                            else:
+                                yield cast(ChatCompletionChunk, chunk_data)
+                            
+                        except json.JSONDecodeError as e:
+                            # Log and skip invalid JSON instead of failing the entire stream
+                            # This provides more robustness in case of malformed chunks
+                            logger.error(f"Failed to parse JSON in streaming response: {e}")
+                            logger.error(f"Problematic JSON string: '{json_str}'")
+                            continue # Continue processing the stream instead of raising
+                
+                # Successfully streamed all content, exit generator
+                return
+                    
+        except HTTPStatusError as e:
+            _safe_request = getattr(e, 'request', None) or Request(method=method, url=str(_url))
+            api_error = await self._translate_httpx_error_to_api_error(e, _safe_request, is_stream=True)
+            raise api_error from e
         except TimeoutException as e:
             # Handle timeout errors specifically - ENSURE NEVER DIRECTLY ACCESS e.request
             # Safely access e.request, providing a fallback if it's not available
@@ -802,17 +959,13 @@ class AsyncVeniceClient:
                 pass  # _request_for_error remains None
 
             if not _request_for_error:  # if e.request is None or not present
-                _request_for_error = Request(method=method, url=str(url))
+                _request_for_error = Request(method=method, url=str(_url))
             
             # Get response if present in the exception using getattr for safety
             _response_for_error = getattr(e, 'response', None)
             original_exception_message = str(e.args[0]) if e.args else "Timeout occurred"
-            raise APITimeoutError(
-                message=f"Stream request timed out: {original_exception_message}",
-                request=_request_for_error,
-                response=_response_for_error,
-                original_error=e
-            ) from e
+            api_error = await self._translate_httpx_error_to_api_error(e, _request_for_error, is_stream=True)
+            raise api_error from e
         except RequestError as e:
             # Handle other request errors (like connection errors) - ENSURE NEVER DIRECTLY ACCESS e.request
             # Safely access e.request, providing a fallback if it's not available
@@ -824,17 +977,13 @@ class AsyncVeniceClient:
                 pass  # _request_for_error remains None
 
             if not _request_for_error:  # if e.request is None or not present
-                _request_for_error = Request(method=method, url=str(url))
+                _request_for_error = Request(method=method, url=str(_url))
             
             # Get response if present in the exception using getattr for safety
             _response_for_error = getattr(e, 'response', None)
             original_exception_message = str(e.args[0]) if e.args else "A network request error occurred"
-            raise APIConnectionError(
-                message=f"Stream request failed: {original_exception_message}",
-                request=_request_for_error,
-                response=_response_for_error,
-                original_error=e
-            ) from e
+            api_error = await self._translate_httpx_error_to_api_error(e, _request_for_error, is_stream=True)
+            raise api_error from e
 
     async def _request_multipart(
         self,
@@ -847,7 +996,8 @@ class AsyncVeniceClient:
         params: Optional[Mapping[str, Any]] = None,
         raw_response: bool = False,
         timeout: Union[float, httpx.Timeout, None] = None,
-    ) -> Any:
+        cast_to: Optional[Type[T]] = None,
+    ) -> Union[T, Any, bytes]:
         """
         Make an asynchronous HTTP request with multipart/form-data content for file uploads.
         
@@ -898,10 +1048,12 @@ class AsyncVeniceClient:
             or an ``httpx.Timeout`` object for granular timeout control. If not provided,
             uses the client's default timeout setting.
         :type timeout: Optional[Union[float, httpx.Timeout]]
+        :param cast_to: Optional Pydantic model to cast the response to.
+        :type cast_to: Optional[Type[T]]
 
-        :return: For JSON responses (``raw_response=False``): Parsed JSON data as Python objects.
+        :return: For JSON responses (``raw_response=False``): Parsed JSON data as Python objects, optionally cast to Pydantic model T.
             For raw responses (``raw_response=True``): Raw response content as bytes.
-        :rtype: Any
+        :rtype: Union[T, Any, bytes]
 
         :raises venice_ai.exceptions.InvalidRequestError: For HTTP 400 errors indicating invalid multipart parameters.
         :raises venice_ai.exceptions.AuthenticationError: For HTTP 401 errors indicating invalid or missing API key.
@@ -955,11 +1107,7 @@ class AsyncVeniceClient:
             logger.debug(f"Received async response with status code: {response.status_code}")
             logger.debug(f"Response headers: {response.headers}")
             
-            try:
-                response.raise_for_status()
-            except HTTPStatusError as e:
-                api_error = await self._translate_httpx_error_to_api_error(e, e.request) # Safe access using getattr
-                raise api_error from e
+            response.raise_for_status()
     
             if raw_response:
                 logger.debug("Returning raw response content for async multipart request.")
@@ -968,9 +1116,30 @@ class AsyncVeniceClient:
             logger.debug(f"Response content (first 500 chars for JSON): {response.text[:500]}")
             # Handle both async and sync response objects for .json()
             if isinstance(response.json, AsyncMock) or hasattr(response.json, "__await__"):
-                return await response.json()
+                json_body = await response.json()
             else:
-                return response.json()  # Handle non-awaitable json() method
+                json_body = response.json()  # Handle non-awaitable json() method
+            
+            await response.aclose() # Ensure response is closed after getting json_body
+
+            if cast_to:
+                try:
+                    return cast(T, cast_to.model_validate(json_body))
+                except Exception as exc:
+                    # Ensure response object is available for the error
+                    _response_for_error = response if 'response' in locals() else None
+                    raise APIResponseProcessingError(
+                        message=f"Failed to cast async multipart response to {cast_to}: {exc}",
+                        response=_response_for_error, # type: ignore
+                        original_error=exc
+                    ) from exc
+            return json_body
+
+        except HTTPStatusError as e:
+            # Outer handler for HTTPStatusError - translates to appropriate VeniceError
+            default_request = Request(method=method, url=str(url))
+            api_error = await self._translate_httpx_error_to_api_error(e, default_request)
+            raise api_error from e
         except TimeoutException as e:
             # Handle timeout errors specifically - ENSURE NEVER DIRECTLY ACCESS e.request
             # Safely access e.request, providing a fallback if it's not available
@@ -1082,10 +1251,9 @@ class AsyncVeniceClient:
         :raises venice_ai.exceptions.APIConnectionError: For network connectivity issues or connection failures.
         :raises venice_ai.exceptions.APIError: For other HTTP error status codes not covered by specific exceptions.
         """
-        url = self._base_url.join(path)
+        _url = self._base_url.join(path)
         
         try:
-            # Prepare headers for streaming requests with same logic as regular requests
             # Prepare headers for raw streaming. Start fresh to avoid default Content-Type: application/json.
             request_headers = {}
             # Copy essential headers from client defaults
@@ -1098,35 +1266,31 @@ class AsyncVeniceClient:
             if headers:
                 request_headers.update(headers)
 
-            # Get the stream result - might be a coroutine if stream is an AsyncMock
-            stream_result = self._client.stream(
+            # Get the stream context manager
+            stream_context_manager = self._client.stream(
                 method=method,
-                url=url,
+                url=_url,
                 json=json_data if json_data else None,
                 headers=request_headers,
                 params=params,
                 timeout=timeout if timeout is not None else self._timeout,
             )
             
-            # stream_result is an async context manager, not a coroutine
-            # No need to await it here
+            async with stream_context_manager as response:
+                response.raise_for_status()  # Check status inside the context
                 
-            async with stream_result as response:
-                try:
-                    response.raise_for_status()  # Raise early for status errors
-                except HTTPStatusError as e:
-                    api_error = await self._translate_httpx_error_to_api_error(e, e.request, is_stream=True) # Safe access using getattr
-                    raise api_error from e
+                # If successful, proceed to yield from the stream
+                async for chunk in response.aiter_bytes():
+                    if chunk:  # Skip empty chunks
+                        yield chunk
                 
-                # Yield the content in chunks asynchronously
-                
-                try:
-                    async for chunk in response.aiter_bytes():
-                        if chunk:  # Skip empty chunks
-                            yield chunk
-                except Exception as e:
-                    raise
+                # Successfully streamed all content, exit generator
+                return
                         
+        except HTTPStatusError as e:
+            _safe_request = getattr(e, 'request', None) or Request(method=method, url=str(_url))
+            api_error = await self._translate_httpx_error_to_api_error(e, _safe_request, is_stream=True)
+            raise api_error from e
         except TimeoutException as e:
             # Handle timeout errors specifically - ENSURE NEVER DIRECTLY ACCESS e.request
             # Safely access e.request, providing a fallback if it's not available
@@ -1138,17 +1302,13 @@ class AsyncVeniceClient:
                 pass  # _request_for_error remains None
 
             if not _request_for_error:  # if e.request is None or not present
-                _request_for_error = Request(method=method, url=str(url))
+                _request_for_error = Request(method=method, url=str(_url))
             
             # Get response if present in the exception using getattr for safety
             _response_for_error = getattr(e, 'response', None)
             original_exception_message = str(e.args[0]) if e.args else "Timeout occurred"
-            raise APITimeoutError(
-                message=f"Stream request timed out: {original_exception_message}",
-                request=_request_for_error,
-                response=_response_for_error,
-                original_error=e
-            ) from e
+            api_error = await self._translate_httpx_error_to_api_error(e, _request_for_error, is_stream=True)
+            raise api_error from e
         except RequestError as e:
             # Handle other request errors (like connection errors) - ENSURE NEVER DIRECTLY ACCESS e.request
             # Safely access e.request, providing a fallback if it's not available
@@ -1160,17 +1320,13 @@ class AsyncVeniceClient:
                 pass  # _request_for_error remains None
 
             if not _request_for_error:  # if e.request is None or not present
-                _request_for_error = Request(method=method, url=str(url))
+                _request_for_error = Request(method=method, url=str(_url))
             
             # Get response if present in the exception using getattr for safety
             _response_for_error = getattr(e, 'response', None)
             original_exception_message = str(e.args[0]) if e.args else "A network request error occurred"
-            raise APIConnectionError(
-                message=f"Stream request failed: {original_exception_message}",
-                request=_request_for_error,
-                response=_response_for_error,
-                original_error=e
-            ) from e
+            api_error = await self._translate_httpx_error_to_api_error(e, _request_for_error, is_stream=True)
+            raise api_error from e
 
     async def _translate_httpx_error_to_api_error(self, error: Union[RequestError, HTTPStatusError], default_request: Request, is_stream: bool = False) -> VeniceError:
         """
@@ -1231,102 +1387,90 @@ class AsyncVeniceClient:
         
         if isinstance(error, HTTPStatusError):
             response_obj = error.response
-            parsed_body: Optional[Any] = None
             
-            try:
-                if is_stream:
-                    # For streaming responses, response methods might need to be awaited
-                    # Attempt to parse as JSON first
-                    try:
-                        # Handle response.json() which might be an AsyncMock or awaitable
-                        if hasattr(response_obj, "json") and callable(response_obj.json):
-                            potential_coro_json = response_obj.json()
-                            if inspect.isawaitable(potential_coro_json):
-                                parsed_body = await potential_coro_json
-                            else:
-                                parsed_body = potential_coro_json
-                        else:
-                            parsed_body = None
-                    except json.JSONDecodeError:
-                        # If JSON parsing fails, try to get text content, awaiting if it's an awaitable
-                        try:
-                            # Handle response.text which can be a direct string, a coroutine, or a callable that returns a coroutine
-                            if hasattr(response_obj, "text"):
-                                text_val = response_obj.text
-                                if callable(text_val) and not isinstance(text_val, str):
-                                    # e.g., PropertyMock(return_value=AsyncMock())
-                                    potential_coro_text = text_val()
-                                    if potential_coro_text is not None and inspect.isawaitable(potential_coro_text):
-                                        parsed_body = await potential_coro_text  # type: ignore[misc]
-                                    else:
-                                        parsed_body = str(potential_coro_text)
-                                elif text_val is not None and inspect.isawaitable(text_val):
-                                    # e.g., PropertyMock(return_value=some_coroutine)
-                                    parsed_body = await text_val  # type: ignore[misc]
-                                else:
-                                    # Regular string attribute
-                                    parsed_body = str(text_val)
-                            else:
-                                parsed_body = "<unable to retrieve text content>"
-                        except Exception:
-                            parsed_body = "<unable to retrieve text content>"
-                else:
-                    # For non-streaming responses, synchronous parsing is fine
-                    try:
-                        # Handle response.json() which might be an AsyncMock or awaitable even in non-streaming case
-                        if hasattr(response_obj, "json") and callable(response_obj.json):
-                            potential_coro_json = response_obj.json()
-                            if inspect.isawaitable(potential_coro_json):
-                                parsed_body = await potential_coro_json
-                            else:
-                                parsed_body = potential_coro_json
-                        else:
-                            parsed_body = None
-                    except json.JSONDecodeError:
-                        try:
-                            # Handle response.text which can be a direct string, a coroutine, or a callable that returns a coroutine
-                            if hasattr(response_obj, "text"):
-                                try:
-                                    text_val = response_obj.text
-                                    if callable(text_val) and not isinstance(text_val, str):
-                                        # e.g., PropertyMock(return_value=AsyncMock())
-                                        try:
-                                            potential_coro_text = text_val()
-                                            # Check if the result is a mock object that represents a failed text access
-                                            if hasattr(potential_coro_text, '_mock_name') and 'text()' in str(potential_coro_text):
-                                                # This is likely a mock representing a failed text() call
-                                                parsed_body = None
-                                            elif potential_coro_text is not None and inspect.isawaitable(potential_coro_text):
-                                                parsed_body = await potential_coro_text  # type: ignore[misc]
-                                            else:
-                                                parsed_body = str(potential_coro_text)
-                                        except Exception:
-                                            parsed_body = None
-                                    elif text_val is not None and inspect.isawaitable(text_val):
-                                        # e.g., PropertyMock(return_value=some_coroutine)
-                                        parsed_body = await text_val  # type: ignore[misc]
-                                    else:
-                                        # Regular string attribute
-                                        parsed_body = str(text_val)
-                                except AttributeError:
-                                    # If accessing response.text raises AttributeError, set body to None
-                                    parsed_body = None
-                            else:
-                                parsed_body = None
-                        except Exception:
-                            parsed_body = None
-                
-                # Log the error body details for debugging
-                logger.error(f"Error response body (full details): {parsed_body}")
-            except Exception:
-                # If any exception occurs during body parsing, ensure parsed_body is None
-                parsed_body = None
+            # (Identical logic as in the synchronous client for determining final_body_for_api_error)
+            parsed_json_body: Optional[Union[Dict[str, Any], str]] = None
+            raw_body_text: Optional[str] = None
+            final_body_for_api_error: Optional[Union[Dict[str, Any], str]] = None # Initialize to None
 
+            try:
+                await response_obj.aread()
+                # Get the text attribute, which might be a string or an awaitable (e.g., AsyncMock)
+                text_attr = response_obj.text
+                # If text_attr is an AsyncMock instance, awaiting its call should yield its return_value.
+                if isinstance(text_attr, AsyncMock):
+                    # Ensure it's treated as an async function call
+                    raw_body_text = await text_attr()
+                elif inspect.isawaitable(text_attr): # For other awaitables like futures
+                    raw_body_text = await text_attr
+                else: # For plain string attributes
+                    raw_body_text = text_attr
+            except Exception as e:
+                logger.debug("Failed to read response.text or response.aread() during error handling: %s", e)
+                raw_body_text = None
+            
+            # Ensure raw_body_text is a string or None after potential await
+            if not isinstance(raw_body_text, str):
+                logger.debug(
+                    f"response_obj.text (potentially awaited) resulted in a non-string type ({type(raw_body_text)}), treating as no text."
+                )
+                raw_body_text = None
+            
+            # Attempt to parse JSON first
+            try:
+                # parsed_json_body is already declared at line 1333
+                json_method_or_coro = response_obj.json()
+                if inspect.isawaitable(json_method_or_coro):
+                    parsed_json_body = await json_method_or_coro
+                else:
+                    parsed_json_body = json_method_or_coro
+                
+                logger.debug(f"[_async_client._translate] After response_obj.json(), parsed_json_body: {parsed_json_body} (type: {type(parsed_json_body)})")
+                # If json() returns None (e.g. mock returning None), treat as no valid JSON body
+                if parsed_json_body is not None:
+                    final_body_for_api_error = parsed_json_body # Successfully parsed JSON
+                # If parsed_json_body is None, final_body_for_api_error remains None (initial value)
+                # This handles cases where .json() might return None instead of raising error for empty/invalid
+                
+            except json.JSONDecodeError as jde:
+                logger.debug(f"[_async_client._translate] response_obj.json() raised JSONDecodeError: {jde}")
+                # JSON parsing failed.
+                # Now, use the raw_body_text (which was attempted to be read earlier)
+                # to construct a "Non-JSON response" error body if raw_body_text is available.
+                if raw_body_text: # If raw_body_text was successfully read and is not empty
+                    final_body_for_api_error = {
+                        "error": (
+                            f"Non-JSON response from API (status {response_obj.status_code}): "
+                            f"{truncate_string(raw_body_text, 500)}"
+                        )
+                    }
+                    logger.debug(f"[_async_client._translate] JSONDecodeError fallback: final_body_for_api_error set to non-JSON text structure based on raw_body_text: '{raw_body_text}'")
+                else:
+                    logger.debug(f"[_async_client._translate] JSONDecodeError fallback: raw_body_text is None or empty, final_body_for_api_error remains None.")
+                # If raw_body_text is None or empty, final_body_for_api_error remains None (its initial value),
+                # representing an unreadable or empty original response body where JSON parsing also failed.
+            except Exception as e:
+                # Catch other potential errors from response_obj.json() if any (e.g., not a valid JSON mock)
+                logger.debug(f"[_async_client._translate] response_obj.json() raised unexpected Exception: {e} (type: {type(e)})")
+                # Fallback to checking raw_body_text if .json() itself raised an unexpected error
+                if raw_body_text:
+                    final_body_for_api_error = {
+                        "error": (
+                            f"Non-JSON response (or JSON parse error) from API (status {response_obj.status_code}): "
+                            f"{truncate_string(raw_body_text, 500)}"
+                        )
+                    }
+                # If raw_body_text is also None or empty, final_body_for_api_error remains None.
+
+            logger.error(f"Error response body (full details): {final_body_for_api_error}")
+            
+            constructed_message_for_make_status_error = f"API error {response_obj.status_code} for {request_obj.method} {request_obj.url}"
+            logger.debug(f"[_async_client._translate] Passing to _make_status_error - message: '{constructed_message_for_make_status_error}', body: {final_body_for_api_error}")
             return _make_status_error(
-                message=f"API error {response_obj.status_code} for {request_obj.method} {request_obj.url}",
+                message=constructed_message_for_make_status_error,
                 request=request_obj,
                 response=response_obj,
-                body=parsed_body
+                body=final_body_for_api_error
             )
         elif isinstance(error, TimeoutException):
             logger.error(f"Request timed out for {request_obj.method} {request_obj.url}: {error}")
@@ -1371,14 +1515,17 @@ class AsyncVeniceClient:
         no-ops. This prevents errors if cleanup is attempted multiple times.
 
         Note:
+            If a user-provided httpx.AsyncClient was passed to the constructor,
+            this method will not close it, as the user is responsible for
+            managing the lifecycle of their own client.
+            
             After calling this method, the client should not be used for making further
             API requests. Attempting to use a closed client may result in errors or
             undefined behavior.
         """
-        if hasattr(self, "_client") and not self._is_closed:
+        if hasattr(self, "_client") and getattr(self, "_should_close_session", True) and not self._is_closed:
             await self._client.aclose()
             self._is_closed = True
-        # If client is already closed, do nothing
     async def aclose(self) -> None:
         """
         Close the underlying asynchronous HTTP client and free all associated resources.

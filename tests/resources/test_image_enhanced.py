@@ -17,6 +17,7 @@ from unittest.mock import patch, MagicMock
 from venice_ai import VeniceClient, AsyncVeniceClient
 from venice_ai.resources.image import Image, AsyncImage, _guess_image_type
 from venice_ai.exceptions import APIError, AuthenticationError, InvalidRequestError, VeniceError
+from venice_ai.types.image import ImageResponse, SimpleImageResponse
 
 
 # Test _guess_image_type with additional file extensions
@@ -79,13 +80,13 @@ def test_generate_with_min_max_values(httpx_mock):
         height=64        # Minimum dimension typically allowed
     )
 
-    assert isinstance(response, dict)
-    assert response["id"] == "img-edge-case"
-    assert response["request"] is not None
-    assert response["request"]["cfg_scale"] == 30.0
-    assert response["request"]["steps"] == 150
-    assert response["request"]["width"] == 64
-    assert response["request"]["height"] == 64
+    assert isinstance(response, ImageResponse)
+    assert response.id == "img-edge-case"
+    assert response.request is not None
+    assert response.request["cfg_scale"] == 30.0
+    assert response.request["steps"] == 150
+    assert response.request["width"] == 64
+    assert response.request["height"] == 64
 
 
 def test_generate_with_all_optional_params(httpx_mock):
@@ -140,21 +141,21 @@ def test_generate_with_all_optional_params(httpx_mock):
         width=512
     )
 
-    assert isinstance(response, dict)
-    assert response["id"] == "img-all-params"
+    assert isinstance(response, ImageResponse)
+    assert response.id == "img-all-params"
     # Check all parameters were passed correctly
-    assert response["request"] is not None
-    assert response["request"]["cfg_scale"] == 7.5
-    assert response["request"]["embed_exif_metadata"] is True
-    assert response["request"]["format"] == "png"
-    assert response["request"]["height"] == 512
-    assert response["request"]["hide_watermark"] is True
-    assert response["request"]["negative_prompt"] == "bad quality, blurry"
-    assert response["request"]["safe_mode"] is True
-    assert response["request"]["seed"] == 12345
-    assert response["request"]["steps"] == 30
-    assert response["request"]["style_preset"] == "anime"
-    assert response["request"]["width"] == 512
+    assert response.request is not None
+    assert response.request["cfg_scale"] == 7.5
+    assert response.request["embed_exif_metadata"] is True
+    assert response.request["format"] == "png"
+    assert response.request["height"] == 512
+    assert response.request["hide_watermark"] is True
+    assert response.request["negative_prompt"] == "bad quality, blurry"
+    assert response.request["safe_mode"] is True
+    assert response.request["seed"] == 12345
+    assert response.request["steps"] == 30
+    assert response.request["style_preset"] == "anime"
+    assert response.request["width"] == 512
 
 
 def test_generate_with_inpaint_parameter(httpx_mock):
@@ -196,11 +197,11 @@ def test_generate_with_inpaint_parameter(httpx_mock):
         # inpaint argument removed
     )
 
-    assert isinstance(response, dict)
-    assert response["id"] == "img-inpaint"
-    assert response["request"] is not None
-    assert "inpaint" in response["request"]
-    assert response["request"]["inpaint"]["prompt_strength"] == 0.8
+    assert isinstance(response, ImageResponse)
+    assert response.id == "img-inpaint"
+    assert response.request is not None
+    assert "inpaint" in response.request
+    assert response.request["inpaint"]["prompt_strength"] == 0.8
 
 
 def test_upscale_with_invalid_file_format():
@@ -369,13 +370,13 @@ async def test_generate_with_min_max_values_async(httpx_mock):
             height=64
         )
 
-    assert isinstance(response, dict)
-    assert response["id"] == "img-edge-case-async"
-    assert response["request"] is not None
-    assert response["request"]["cfg_scale"] == 30.0
-    assert response["request"]["steps"] == 150
-    assert response["request"]["width"] == 64
-    assert response["request"]["height"] == 64
+    assert isinstance(response, ImageResponse)
+    assert response.id == "img-edge-case-async"
+    assert response.request is not None
+    assert response.request["cfg_scale"] == 30.0
+    assert response.request["steps"] == 150
+    assert response.request["width"] == 64
+    assert response.request["height"] == 64
 
 
 @pytest.mark.asyncio
@@ -417,11 +418,11 @@ async def test_generate_with_inpaint_parameter_async(httpx_mock):
             # inpaint argument removed
         )
 
-    assert isinstance(response, dict)
-    assert response["id"] == "img-inpaint-async"
-    assert response["request"] is not None
-    assert "inpaint" in response["request"]
-    assert response["request"]["inpaint"]["prompt_strength"] == 0.8
+    assert isinstance(response, ImageResponse)
+    assert response.id == "img-inpaint-async"
+    assert response.request is not None
+    assert "inpaint" in response.request
+    assert response.request["inpaint"]["prompt_strength"] == 0.8
 
 
 @pytest.mark.asyncio

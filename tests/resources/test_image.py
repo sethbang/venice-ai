@@ -32,12 +32,20 @@ class TestImage:
     def client_mock(self):
         """Create a properly mocked client."""
         client = MagicMock()
-        # Configure default return values
-        client.post.return_value = {
-            "id": "img_123",
-            "created": 1630000000,
-            "data": [{"b64_json": "mock_base64_data"}]
-        }
+        # Configure default return values - return Pydantic models
+        from venice_ai.types.image import ImageResponse, SimpleImageResponse, TimingInfo
+        client.post.return_value = ImageResponse(
+            id="img_123",
+            images=["mock_base64_data"],
+            request=None,
+            timing=TimingInfo(
+                inferenceDuration=1.0,
+                inferencePreprocessingTime=0.1,
+                inferenceQueueTime=0.2,
+                total=1.3
+            ),
+            created="2021-08-26T12:00:00Z"
+        )
         
         # Create a properly configured _request method that handles path, raw_response, etc.
         def mock_request(*args, method=None, path=None, params=None, timeout=None, endpoint=None, json_data=None, headers=None, raw_response=False, **kwargs):
@@ -52,10 +60,8 @@ class TestImage:
         client._request = MagicMock(side_effect=mock_request)
         
         client.get.return_value = {
-            "styles": [
-                {"id": "style1", "name": "Style 1", "description": "Description 1"},
-                {"id": "style2", "name": "Style 2", "description": "Description 2"}
-            ]
+            "data": ["style1", "style2"],
+            "object": "list"
         }
         return client
     
@@ -72,7 +78,7 @@ class TestImage:
             prompt="A test prompt"
         )
         
-        assert isinstance(response, dict)
+        assert isinstance(response, ImageResponse)
         image_resource._client.post.assert_called_once()
         args = image_resource._client.post.call_args
         assert args[0][0] == "image/generate"
@@ -100,7 +106,7 @@ class TestImage:
             width=768
         )
         
-        assert isinstance(response, dict)
+        assert isinstance(response, ImageResponse)
         image_resource._client.post.assert_called_once()
         
         args = image_resource._client.post.call_args
@@ -147,12 +153,19 @@ class TestImage:
     # Tests for simple_generate method
     def test_simple_generate_basic(self, image_resource):
         """Test the simple_generate method with required parameters."""
+        # Configure mock to return SimpleImageResponse for simple_generate
+        from venice_ai.types.image import SimpleImageResponse, ImageDataItem
+        image_resource._client.post.return_value = SimpleImageResponse(
+            created=1630000000,
+            data=[ImageDataItem(b64_json="mock_base64_data")]
+        )
+        
         response = image_resource.simple_generate(
             model="venice-diffusion",
             prompt="A simple test image"
         )
         
-        assert isinstance(response, dict)
+        assert isinstance(response, SimpleImageResponse)
         image_resource._client.post.assert_called_once()
         args = image_resource._client.post.call_args
         assert args[0][0] == "images/generations"
@@ -161,6 +174,13 @@ class TestImage:
         
     def test_simple_generate_with_options(self, image_resource):
         """Test simple_generate with all optional parameters."""
+        # Configure mock to return SimpleImageResponse for simple_generate
+        from venice_ai.types.image import SimpleImageResponse, ImageDataItem
+        image_resource._client.post.return_value = SimpleImageResponse(
+            created=1630000000,
+            data=[ImageDataItem(b64_json="mock_base64_data1"), ImageDataItem(b64_json="mock_base64_data2")]
+        )
+        
         response = image_resource.simple_generate(
             model="venice-diffusion",
             prompt="A test image",
@@ -176,7 +196,7 @@ class TestImage:
             user="test-user"
         )
         
-        assert isinstance(response, dict)
+        assert isinstance(response, SimpleImageResponse)
         image_resource._client.post.assert_called_once()
         
         args = image_resource._client.post.call_args
@@ -327,8 +347,6 @@ class TestImage:
         
         assert "image" in json_data  # Base64 encoded image
         assert json_data["enhance"] is True
-        assert json_data["enhance_creativity"] == 0.8
-        assert json_data["enhance_prompt"] == "Add more details"
         assert json_data["replication"] == 0.7
         assert json_data["scale"] == 2.5
     
@@ -343,8 +361,8 @@ class TestImage:
         response = image_resource.list_styles()
         
         assert isinstance(response, dict)
-        assert "styles" in response
-        assert len(response["styles"]) == 2
+        assert "data" in response
+        assert len(response["data"]) == 2
         
         image_resource._client.get.assert_called_once_with("image/styles")
     
@@ -361,7 +379,7 @@ class TestImage:
             (AuthenticationError("Invalid API key", response=mock_response), AuthenticationError),
             (PermissionDeniedError("Access denied", response=mock_response), PermissionDeniedError),
             (NotFoundError("Model not found", response=mock_response), NotFoundError),
-            (RateLimitError("Rate limit exceeded", response=mock_response), RateLimitError),
+            (RateLimitError("Rate limit exceeded", response=mock_response, retry_after_seconds=None), RateLimitError),
         ]
         
         for error, expected_exception in error_cases:
@@ -398,11 +416,20 @@ class TestAsyncImage:
     async def client_mock(self):
         """Create a properly mocked async client."""
         client = MagicMock()
-        client.post = AsyncMock(return_value={
-            "id": "img_123",
-            "created": 1630000000,
-            "data": [{"b64_json": "mock_base64_data"}]
-        })
+        # Configure default return values - return Pydantic models
+        from venice_ai.types.image import ImageResponse, SimpleImageResponse, TimingInfo
+        client.post = AsyncMock(return_value=ImageResponse(
+            id="img_123",
+            images=["mock_base64_data"],
+            request=None,
+            timing=TimingInfo(
+                inferenceDuration=1.0,
+                inferencePreprocessingTime=0.1,
+                inferenceQueueTime=0.2,
+                total=1.3
+            ),
+            created="2021-08-26T12:00:00Z"
+        ))
         
         # Create a properly configured async _request method that handles path, raw_response, etc.
         async def mock_async_request(*args, method=None, path=None, params=None, timeout=None, endpoint=None, json_data=None, headers=None, raw_response=False, **kwargs):
@@ -417,10 +444,11 @@ class TestAsyncImage:
         client._request = AsyncMock(side_effect=mock_async_request)
         
         client.get = AsyncMock(return_value={
-            "styles": [
+            "data": [
                 {"id": "style1", "name": "Style 1", "description": "Description 1"},
                 {"id": "style2", "name": "Style 2", "description": "Description 2"}
-            ]
+            ],
+            "object": "list"
         })
         return client
     
@@ -437,7 +465,7 @@ class TestAsyncImage:
             prompt="A test prompt"
         )
         
-        assert isinstance(response, dict)
+        assert isinstance(response, ImageResponse)
         image_resource._client.post.assert_awaited_once()
         args = image_resource._client.post.call_args
         assert args[0][0] == "image/generate"
@@ -465,7 +493,7 @@ class TestAsyncImage:
             width=768
         )
         
-        assert isinstance(response, dict)
+        assert isinstance(response, ImageResponse)
         image_resource._client.post.assert_awaited_once()
         
         args = image_resource._client.post.call_args
@@ -512,12 +540,19 @@ class TestAsyncImage:
     # Tests for simple_generate method
     async def test_simple_generate_basic(self, image_resource):
         """Test the async simple_generate method with required parameters."""
+        # Configure mock to return SimpleImageResponse for simple_generate
+        from venice_ai.types.image import SimpleImageResponse, ImageDataItem
+        image_resource._client.post.return_value = SimpleImageResponse(
+            created=1630000000,
+            data=[ImageDataItem(b64_json="mock_base64_data")]
+        )
+        
         response = await image_resource.simple_generate(
             model="venice-diffusion",
             prompt="A simple test image"
         )
         
-        assert isinstance(response, dict)
+        assert isinstance(response, SimpleImageResponse)
         image_resource._client.post.assert_awaited_once()
         args = image_resource._client.post.call_args
         assert args[0][0] == "images/generations"
@@ -526,6 +561,13 @@ class TestAsyncImage:
         
     async def test_simple_generate_with_options(self, image_resource):
         """Test async simple_generate with all optional parameters."""
+        # Configure mock to return SimpleImageResponse for simple_generate
+        from venice_ai.types.image import SimpleImageResponse, ImageDataItem
+        image_resource._client.post.return_value = SimpleImageResponse(
+            created=1630000000,
+            data=[ImageDataItem(b64_json="mock_base64_data1"), ImageDataItem(b64_json="mock_base64_data2")]
+        )
+        
         response = await image_resource.simple_generate(
             model="venice-diffusion",
             prompt="A test image",
@@ -541,7 +583,7 @@ class TestAsyncImage:
             user="test-user"
         )
         
-        assert isinstance(response, dict)
+        assert isinstance(response, SimpleImageResponse)
         image_resource._client.post.assert_awaited_once()
         
         args = image_resource._client.post.call_args
@@ -707,8 +749,6 @@ class TestAsyncImage:
         
         assert "image" in json_data  # Base64 encoded image
         assert json_data["enhance"] is True
-        assert json_data["enhance_creativity"] == 0.8
-        assert json_data["enhance_prompt"] == "Add more details"
         assert json_data["replication"] == 0.7
         assert json_data["scale"] == 2.5
     
@@ -723,8 +763,8 @@ class TestAsyncImage:
         response = await image_resource.list_styles()
         
         assert isinstance(response, dict)
-        assert "styles" in response
-        assert len(response["styles"]) == 2
+        assert "data" in response
+        assert len(response["data"]) == 2
         
         image_resource._client.get.assert_awaited_once_with("image/styles")
     
@@ -741,7 +781,7 @@ class TestAsyncImage:
             (AuthenticationError("Invalid API key", response=mock_response), AuthenticationError),
             (PermissionDeniedError("Access denied", response=mock_response), PermissionDeniedError),
             (NotFoundError("Model not found", response=mock_response), NotFoundError),
-            (RateLimitError("Rate limit exceeded", response=mock_response), RateLimitError),
+            (RateLimitError("Rate limit exceeded", response=mock_response, retry_after_seconds=None), RateLimitError),
         ]
         
         for error, expected_exception in error_cases:

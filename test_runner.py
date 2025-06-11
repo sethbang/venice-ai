@@ -284,16 +284,9 @@ def build_pytest_command(options: dict) -> List[str]:
     
     # Add parallel execution flag if requested
     if options.get("parallel", False):
-        # First check if pytest-xdist is installed
-        try:
-            import pytest_xdist  # type: ignore[import-not-found]
-            cmd.extend(["-n", "auto"])
-        except ImportError:
-            console.print(
-                "Warning: pytest-xdist not installed. Cannot run tests in parallel.",
-                style=Style.WARNING
-            )
-            console.print("To enable parallel testing, install: poetry add --dev pytest-xdist")
+        # If parallel execution is requested, add the necessary flags.
+        # Pytest will handle the case where pytest-xdist is not installed.
+        cmd.extend(["-n", "auto"])
     
     # Handle coverage: disable pytest-cov plugin when coverage.py will handle it
     if options.get("coverage", False):
@@ -365,6 +358,7 @@ def run_tests(options: dict) -> int:
     Returns:
         int: The exit code from pytest
     """
+    
     # Get API key
     api_key = get_api_key()
     
@@ -383,9 +377,8 @@ def run_tests(options: dict) -> int:
     
     # Build the final command - wrap with coverage run if coverage is enabled
     if options.get("coverage", False):
-        # Use coverage.py to run pytest (similar to old run_tests.sh)
-        cov_source = options.get("cov_source", DEFAULT_COVERAGE_SOURCE)
-        cmd = ["poetry", "run", "python", "-m", "coverage", "run", f"--source={cov_source}", "-m", "pytest"]
+        # Use coverage.py to run pytest (let coverage.py use pyproject.toml config)
+        cmd = ["poetry", "run", "python", "-m", "coverage", "run", "-m", "pytest"]
         # Add the pytest arguments after removing "poetry run pytest" prefix
         cmd.extend(pytest_cmd[3:])  # Skip "poetry run pytest" from pytest_cmd
     else:

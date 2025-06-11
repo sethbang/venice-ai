@@ -6,7 +6,15 @@ in the Venice AI Audio API, covering the speech creation endpoint.
 """
 
 from enum import Enum
-from typing import Optional, TypedDict
+from typing import List, Literal, Optional, TypedDict
+
+__all__ = [
+    "Voice",
+    "ResponseFormat",
+    "CreateSpeechRequest",
+    "VoiceDetail",
+    "VoiceList",
+]
 
 
 class Voice(str, Enum):
@@ -128,3 +136,58 @@ class CreateSpeechRequest(TypedDict, total=False):
     response_format: ResponseFormat  # Optional: Format of returned audio (defaults to "mp3")
     speed: Optional[float]  # Optional: Speed of the generated audio (0.25-4.0, defaults to 1.0)
     user: Optional[str]  # Optional: Unique identifier representing the end-user for monitoring
+class VoiceDetail(TypedDict):
+    """
+    Detailed information about a single text-to-speech voice.
+    
+    This TypedDict represents the structure of voice information returned by the
+    get_voices() method. It contains metadata about a voice including its unique
+    identifier, associated model, gender characteristics, and regional/language
+    information derived from the voice ID.
+    
+    Attributes:
+        id: The unique identifier for the voice as provided by the API (e.g., "af_alloy", "zm_yunjian").
+        model_id: The ID of the TTS model this voice is associated with (e.g., "tts-kokoro").
+        gender: The perceived gender of the voice, parsed from the voice ID prefix. 
+            "unknown" if the prefix is not recognized or ambiguous.
+        region_code: The raw two-letter prefix from the voice ID that typically indicates 
+            region/language and gender (e.g., "af", "zm").
+        language: A descriptive name of the primary language associated with the voice, 
+            derived from the region_code (e.g., "American English", "Mandarin Chinese").
+        accent: A descriptive name of the accent or locale associated with the voice, 
+            derived from the region_code (e.g., "US", "Standard Chinese").
+    """
+    
+    id: str
+    model_id: str
+    gender: Optional[Literal["male", "female", "unknown"]]
+    region_code: Optional[str]
+    language: Optional[str]
+    accent: Optional[str]
+
+
+class VoiceList(TypedDict):
+    """
+    A list of voice details with optional filtering metadata.
+    
+    This TypedDict represents the structure returned by the get_voices() method,
+    containing a list of VoiceDetail objects along with metadata about any filters
+    that were applied to generate the list. This follows the standard API pattern
+    for list responses.
+    
+    Attributes:
+        object: A string indicating the type of API object, always "list" for lists.
+        data: A list containing VoiceDetail objects.
+        model_id_filter: The model_id that was used to filter the voices, if any. 
+            None if no model ID filter was applied.
+        gender_filter: The gender that was used to filter the voices, if any. 
+            None if no gender filter was applied.
+        region_code_filter: The region_code (e.g., "af", "zm") that was used to filter 
+            the voices, if any. None if no region code filter was applied.
+    """
+    
+    object: Literal["list"]
+    data: List[VoiceDetail]
+    model_id_filter: Optional[str]
+    gender_filter: Optional[Literal["male", "female", "unknown"]]
+    region_code_filter: Optional[str]
