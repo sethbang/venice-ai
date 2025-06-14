@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added comprehensive type imports in `src/venice_ai/types/__init__.py` for image, api_keys, audio, embeddings, and billing modules
   - Added explicit `__all__` list to `src/venice_ai/exceptions.py` for better module discovery
   - Fixed missing `ModelTraitList` and `ModelCompatibilityList` exports in types package
+- **Test Runner & Coverage**: Refactored `test_runner.py` to use `pytest-cov` directly, resolving significant code coverage reporting inaccuracies when running tests in parallel with `pytest-xdist`.
+- **Embedding Tests**: Updated `e2e_tests/test_05_embeddings.py` with improved and corrected end-to-end tests for embedding functionalities.
+- **CI Workflow**: Modified `.github/workflows/python-publish.yaml` to enhance test execution, enabling or optimizing parallel test runs.
 
 ## [1.1.0] - 2025-06-09
 

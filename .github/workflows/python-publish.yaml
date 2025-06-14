@@ -32,7 +32,7 @@ jobs:
         env:
           VENICE_API_KEY: ${{ secrets.VENICE_API_KEY }}
         run: |
-          poetry run python test_runner.py --group all --coverage
+          poetry run python test_runner.py --group all --coverage --parallel
           # Ensure this command generates a coverage.xml file in the root,
           # or adjust the Codecov action's `file` parameter accordingly.
 
