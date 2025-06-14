@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-06-13
+
+### Fixed
+
+- **Documentation Build Issues**: Fixed empty sections in Sphinx API reference documentation that were appearing in Read the Docs builds
+  - Updated `.readthedocs.yaml` to properly install the `venice_ai` package during documentation builds
+  - Added missing imports in `src/venice_ai/resources/__init__.py` for `ApiKeys`, `AsyncApiKeys`, `Audio`, `AsyncAudio`, `Billing`, `AsyncBilling`, `Embeddings`, `AsyncEmbeddings`, and `AsyncModels`
+  - Added comprehensive type imports in `src/venice_ai/types/__init__.py` for image, api_keys, audio, embeddings, and billing modules
+  - Added explicit `__all__` list to `src/venice_ai/exceptions.py` for better module discovery
+  - Fixed missing `ModelTraitList` and `ModelCompatibilityList` exports in types package
+
 ## [1.1.0] - 2025-06-09
 
 ### Added

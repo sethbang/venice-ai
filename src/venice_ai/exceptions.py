@@ -6,6 +6,25 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "VeniceError",
+    "APIError",
+    "AuthenticationError",
+    "PermissionDeniedError",
+    "InvalidRequestError",
+    "NotFoundError",
+    "ConflictError",
+    "UnprocessableEntityError",
+    "RateLimitError",
+    "InternalServerError",
+    "APIConnectionError",
+    "APITimeoutError",
+    "APIResponseProcessingError",
+    "MissingStreamClassError",
+    "StreamConsumedError",
+    "StreamClosedError",
+]
+
 class VeniceError(Exception):
     """
     Base exception for all errors raised by the Venice AI client.

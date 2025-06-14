@@ -42,4 +42,4 @@ __all__ = [
     "get_filtered_models", # Add the new utility function here
 ]
 
-__version__ = "1.0.0" # Keep in sync with pyproject.toml
+__version__ = "1.1.1" # Keep in sync with pyproject.toml

@@ -62,6 +62,55 @@ from .characters import (
     Character,
     CharacterList,
 )
+from .image import (
+    GenerateImageRequest,
+    SimpleGenerateImageRequest,
+    UpscaleImageRequest,
+    TimingInfo,
+    ImageResponse,
+    ImageDataItem,
+    SimpleImageResponse,
+    ImageStyleList,
+    ImageStyleEnum,
+)
+from .api_keys import (
+    ConsumptionLimit,
+    ApiKeyUsage,
+    ApiKey,
+    ApiKeyCreateRequest,
+    ApiKeyCreateResponse,
+    ApiKeyList,
+    ApiKeyRateLimitItem,
+    ApiTier,
+    Balances,
+    RateLimitInfo,
+    RateLimitLog,
+    RateLimitLogList,
+    ApiKeyGenerateWeb3KeyGetResponse,
+    ApiKeyGenerateWeb3KeyCreateRequest,
+    ApiKeyGenerateWeb3KeyCreateResponse,
+)
+from .audio import (
+    Voice,
+    ResponseFormat as AudioResponseFormat,
+    CreateSpeechRequest,
+    VoiceDetail,
+    VoiceList,
+)
+from .embeddings import (
+    CreateEmbeddingRequest,
+    Embedding,
+    EmbeddingUsage,
+    EmbeddingList,
+)
+from .billing import (
+    InferenceDetails,
+    BillingUsageEntry,
+    BillingUsagePagination,
+    BillingUsageResponse,
+    BillingUsageRequestParams,
+    BillingFormatEnum,
+)
 
 __all__ = [
     "ChatCompletion",
@@ -87,6 +136,8 @@ __all__ = [
     "ModelPricing",
     "ModelSpec",
     "ModelType",
+    "ModelTraitList",
+    "ModelCompatibilityList",
     "ResponseFormat",
     "StreamOptions",
     "Tool",
@@ -99,4 +150,48 @@ __all__ = [
     "VeniceParameters",
     "Character",
     "CharacterList",
+    # Image types
+    "GenerateImageRequest",
+    "SimpleGenerateImageRequest",
+    "UpscaleImageRequest",
+    "TimingInfo",
+    "ImageResponse",
+    "ImageDataItem",
+    "SimpleImageResponse",
+    "ImageStyleList",
+    "ImageStyleEnum",
+    # API Keys types
+    "ConsumptionLimit",
+    "ApiKeyUsage",
+    "ApiKey",
+    "ApiKeyCreateRequest",
+    "ApiKeyCreateResponse",
+    "ApiKeyList",
+    "ApiKeyRateLimitItem",
+    "ApiTier",
+    "Balances",
+    "RateLimitInfo",
+    "RateLimitLog",
+    "RateLimitLogList",
+    "ApiKeyGenerateWeb3KeyGetResponse",
+    "ApiKeyGenerateWeb3KeyCreateRequest",
+    "ApiKeyGenerateWeb3KeyCreateResponse",
+    # Audio types
+    "Voice",
+    "AudioResponseFormat",
+    "CreateSpeechRequest",
+    "VoiceDetail",
+    "VoiceList",
+    # Embeddings types
+    "CreateEmbeddingRequest",
+    "Embedding",
+    "EmbeddingUsage",
+    "EmbeddingList",
+    # Billing types
+    "InferenceDetails",
+    "BillingUsageEntry",
+    "BillingUsagePagination",
+    "BillingUsageResponse",
+    "BillingUsageRequestParams",
+    "BillingFormatEnum",
 ]
