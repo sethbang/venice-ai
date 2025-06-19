@@ -119,6 +119,7 @@ Further Exploration
 -------------------
 
 - Explore other parameters of the `create` method to customize model behavior (e.g., `temperature`, `max_completion_tokens`).
+- When using models with larger context windows like "Venice Large" (128k tokens), you can adjust `max_completion_tokens` accordingly to leverage the full context for longer responses or more detailed analysis.
 - Integrate this streaming logic into a web application or a command-line interface for a more interactive experience.
 - Refer to the :ref:`API Reference <api_reference>` for detailed information on all available methods and parameters.
 

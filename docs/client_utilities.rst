@@ -67,6 +67,8 @@ Model Utilities
     # Run the async example
     asyncio.run(example_model_utilities())
 
+**Note:** For detailed specifications of individual models, such as context window size (e.g., "Venice Large" supports up to 128k tokens), refer to the official Venice AI model documentation. Different models have varying capabilities that may affect your application's design.
+
 Chat Message Utilities
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -130,5 +132,5 @@ Best Practices
 
 - **Error Handling**: Always check for errors when using validation functions.
 - **Capabilities Checking**: Use the model utility functions to ensure you're working with models that support your required features.
-- **Token Management**: Use ``estimate_token_count`` to proactively manage token usage within limits.
+- **Token Management**: Use ``estimate_token_count`` to proactively manage token usage, especially when working with models with large context windows like "Venice Large" (128k tokens), to stay within API and model limits.
 - **Async Consistency**: Most model utility functions are async and should be awaited properly.

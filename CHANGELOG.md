@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-06-19
+
+### Changed
+
+- **Documentation Updates**: Updated documentation to reflect Venice.ai API improvements
+  - Added information about Venice Large model's increased context window (32k → 128k tokens)
+  - Enhanced `README.md` with Venice Large examples and context window guidance
+  - Updated `docs/client_utilities.rst` with model capability notes and token management best practices
+  - Enhanced `docs/async_chat_streaming_guide.rst` with large context window usage guidance
+  - Added practical examples showing how to leverage the 128k context window with `max_completion_tokens`
+
+### Notes
+
+- **API Compatibility**: No SDK code changes required - existing functionality automatically benefits from API improvements
+  - Venice Large's increased context size can be utilized through existing `max_completion_tokens` parameter
+  - Non-streaming chat completions now receive cleaner responses due to server-side "thinking" message processing improvements
+  - Streaming behavior remains unchanged and continues to pass through all API-sent events
+
 ## [1.1.1] - 2025-06-13
 
 ### Fixed

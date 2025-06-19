@@ -199,6 +199,10 @@ It's important to `close()` (for `VeniceClient`) or `await async_client.close()`
 
 The response objects (`response`, `chunk`) are `TypedDict`s. You can explore their structure for more details (see `src/venice_ai/types/chat.py` or the Sphinx-generated API documentation).
 
+**Model Context Windows:**
+
+Different models support different context window sizes. For example, the "Venice Large" model supports up to 128k tokens, allowing for extensive conversations or document processing. Use the `max_completion_tokens` parameter to control response length within the model's context limits.
+
 **Parameters:**
 
 :param logprobs: Whether to return log probabilities of the output tokens. If `True`, the `logprobs` field will be populated in the `choices` of the response. Defaults to `False`.
@@ -218,6 +222,24 @@ with VeniceClient() as client:
         messages=[
             {"role": "user", "content": "Hello, how are you?"}
         ]
+    )
+    print(response.choices[0].message.content)
+```
+
+**Example with Venice Large (128k context window):**
+
+```python
+from venice_ai import VeniceClient
+
+with VeniceClient() as client:
+    # Venice Large supports up to 128k tokens, ideal for long documents or conversations
+    response = client.chat.completions.create(
+        model="venice-large",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant that can analyze long documents."},
+            {"role": "user", "content": "Please analyze this extensive document..."}  # Can include very long content
+        ],
+        max_completion_tokens=4000  # Can use higher values with Venice Large's 128k context
     )
     print(response.choices[0].message.content)
 ```
@@ -434,6 +456,8 @@ with VeniceClient() as client:
     text_models = client.models.list(type="text")
     print(f"Text models: {[m.id for m in text_models.data]}")
 ```
+
+**Note:** Different models have varying capabilities and context window sizes. For example, "Venice Large" supports up to 128k tokens, making it ideal for processing extensive documents or maintaining long conversations. Refer to the official Venice AI documentation for detailed specifications of each model.
 
 ### API Key Management
 
