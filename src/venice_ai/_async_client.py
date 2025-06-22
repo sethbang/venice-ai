@@ -37,6 +37,7 @@ from .resources.embeddings import AsyncEmbeddings # Import the AsyncEmbeddings r
 from .resources.image import AsyncImage # Import the AsyncImage resource
 from .resources.models import AsyncModels # Import the AsyncModels resource
 from .types.chat import ChatCompletionChunk, ChatCompletion
+from .types.models import ModelPricing
 from .streaming import AsyncStream # For default stream class
 
 if TYPE_CHECKING:
@@ -1496,6 +1497,35 @@ class AsyncVeniceClient(BaseClient):
             # Safely get response from the exception
             exception_response = getattr(error, 'response', None)
             return APIConnectionError(message=f"{prefix} failed: {original_exception_message}", request=request_obj, response=exception_response, original_error=error)
+
+    async def get_model_pricing(self, model_id: str) -> ModelPricing:
+        """
+        Get pricing information for a specific model.
+        
+        Retrieves the pricing structure for a given model ID, including both
+        USD and VCU (Venice Compute Units) costs for input and output tokens.
+        
+        :param model_id: The ID of the model to get pricing for
+        :type model_id: str
+        :return: Pricing information for the model
+        :rtype: ModelPricing
+        :raises ValueError: If the model is not found
+        
+        Example:
+            >>> async with AsyncVeniceClient(api_key="your-api-key") as client:
+            ...     pricing = await client.get_model_pricing("llama-3.3-70b")
+            ...     print(f"Input: ${pricing['input']['usd']}/1k tokens")
+            ...     print(f"Output: ${pricing['output']['usd']}/1k tokens")
+        """
+        # Get all models
+        models_response = await self.models.list()
+        
+        # Find the requested model
+        for model in models_response['data']:
+            if model['id'] == model_id:
+                return model['model_spec']['pricing']
+        
+        raise ValueError(f"Model '{model_id}' not found")
 
     async def close(self) -> None:
         """

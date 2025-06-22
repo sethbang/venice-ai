@@ -74,15 +74,21 @@ You can install the Venice AI client library from PyPI:
 pip install venice-ai
 ```
 
+To include optional dependencies for token estimation:
+
+```bash
+pip install venice-ai[tokenizers]
+```
+
 Alternatively, to install the latest development version from source (recommended if you want to contribute or need the absolute latest changes not yet released on PyPI):
 
 ```bash
 git clone https://github.com/sethbang/venice-ai.git # Or your fork
-cd venice-ai-python
+cd venice-ai
 poetry install
 ```
 
-Note: `poetry install` installs main dependencies. For development or running all tests, install with dev dependencies: `poetry install --with dev`.
+Note: `poetry install` installs main dependencies. For development or running all tests, install with dev dependencies: `poetry install --with dev`. To include optional tokenizers support: `poetry install --extras "tokenizers"`.
 
 ### API Key Setup
 
@@ -197,7 +203,7 @@ It's important to `close()` (for `VeniceClient`) or `await async_client.close()`
 
 ### Chat Completions
 
-The response objects (`response`, `chunk`) are `TypedDict`s. You can explore their structure for more details (see `src/venice_ai/types/chat.py` or the Sphinx-generated API documentation).
+The response objects (`response`, `chunk`) are Pydantic models. You can explore their structure for more details (see `src/venice_ai/types/chat.py` or the Sphinx-generated API documentation).
 
 **Model Context Windows:**
 
@@ -205,8 +211,14 @@ Different models support different context window sizes. For example, the "Venic
 
 **Parameters:**
 
+:param logit_bias: Modify the likelihood of specified tokens appearing in the completion. Accepts a JSON object that maps tokens (specified by their token ID in the tokenizer) to an associated bias value from -100 to 100.
+:type logit_bias: Optional[Dict[str, int]]
+
 :param logprobs: Whether to return log probabilities of the output tokens. If `True`, the `logprobs` field will be populated in the `choices` of the response. Defaults to `False`.
 :type logprobs: Optional[bool]
+
+:param parallel_tool_calls: Whether to enable parallel function calling during tool use.
+:type parallel_tool_calls: Optional[bool]
 
 :param top_logprobs: An integer between 0 and 5 specifying the number of most likely tokens to return at each token position, each with an associated log probability. Requires `logprobs` to be `True`.
 :type top_logprobs: Optional[int]
@@ -362,26 +374,35 @@ with VeniceClient() as client:
 **Simple Generation (OpenAI-compatible):**
 
 ```python
-# with VeniceClient() as client:
-#     response = client.image.simple_generate(
-#         model="venice-sd35",
-#         prompt="A cute cat wearing a small hat",
-#         size="512x512"
-#     )
-#     # Process response.data[0].b64_json or response.data[0].url
+with VeniceClient() as client:
+    response = client.image.simple_generate(
+        model="venice-sd35",
+        prompt="A cute cat wearing a small hat",
+        size="512x512"
+    )
+    # Process response.data[0].b64_json or response.data[0].url
 ```
 
 **Image Upscaling:**
 
 ```python
-# with VeniceClient() as client:
-#     with open("path/to/your/image.png", "rb") as img_file:
-#         upscaled_image_bytes = client.image.upscale(
-#             image=img_file, # Can be path, bytes, or file-like object
-#             scale=2.0 # Example: 2x upscale
-#         )
-#     with open("upscaled_image.png", "wb") as f:
-#         f.write(upscaled_image_bytes)
+with VeniceClient() as client:
+    with open("path/to/your/image.png", "rb") as img_file:
+        upscaled_image_bytes = client.image.upscale(
+            image=img_file, # Can be path, bytes, or file-like object
+            scale=2.0 # Example: 2x upscale
+        )
+    with open("upscaled_image.png", "wb") as f:
+        f.write(upscaled_image_bytes)
+```
+
+**Listing Image Styles:**
+
+```python
+with VeniceClient() as client:
+    styles_response = client.image.list_styles()
+    for style in styles_response.data:
+        print(f"Available style: {style}")
 ```
 
 ### Audio Synthesis (Text-to-Speech)
@@ -657,6 +678,16 @@ count = estimate_token_count(text)
 print(f"Estimated tokens: {count}")
 ```
 
+**Note:** For accurate token counting, install the optional `tiktoken` dependency:
+
+```bash
+pip install venice-ai[tokenizers]
+# or with poetry:
+poetry install --extras "tokenizers"
+```
+
+Without `tiktoken`, the library will use a simple heuristic estimation method.
+
 ## Showcase Application
 
 This project focuses on the core Venice AI Python SDK. For an interactive demonstration of the library's capabilities, check out our separate [Venice AI Streamlit Demo](https://github.com/venice-ai/streamlit-demo) repository, which provides a comprehensive UI for chat, image generation, audio synthesis, model listing, and more.
@@ -687,7 +718,7 @@ Detailed API documentation for the Venice.ai API itself is available @ [https://
 
 ## Contributing
 
-Contributions are welcome! Please feel free to open issues for bugs or feature requests. If you'd like to contribute code, please see our (upcoming) `CONTRIBUTING.md` for guidelines on setting up your development environment, running tests, and submitting pull requests.
+Contributions are welcome! Please feel free to open issues for bugs or feature requests. If you'd like to contribute code, please see our [`CONTRIBUTING.md`](CONTRIBUTING.md) for guidelines on reporting issues.
 
 ## License
 

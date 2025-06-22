@@ -167,6 +167,25 @@ def get_model_capabilities_by_id_or_name_or_slug(identifier: str) -> Optional[Mo
         
     return cast(ModelCapabilities, capabilities_data)
 
+def get_models_by_capability(
+    models: List[Model],
+    capability: str
+) -> List[Model]:
+    """
+    Filters a list of models by a specific capability.
+
+    :param models: A list of model objects to filter.
+    :type models: List[Model]
+    :param capability: The capability to filter by (e.g., "supportsReasoning").
+    :type capability: str
+    :return: A new list of models that have the specified capability.
+    :rtype: List[Model]
+    """
+    return [
+        model for model in models
+        if model.get("model_spec", {}).get("capabilities", {}).get(capability)
+    ]
+
 def get_filtered_models(
     client: Union["VeniceClient", "AsyncVeniceClient"],
     model_type: Optional[ModelType] = None,

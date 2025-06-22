@@ -40,6 +40,7 @@ from .resources.embeddings import Embeddings # Import the Embeddings resource
 from .resources.image import Image # Import the Image resource
 from .resources import Models # Import the new Models resource
 from .types.chat import ChatCompletionChunk
+from .types.models import ModelPricing
 from .streaming import Stream # For default stream class
 
 class BaseClient:
@@ -1596,6 +1597,35 @@ class VeniceClient(BaseClient):
             return APIConnectionError(message=f"{prefix} failed: {original_exception_message}", request=request_obj, response=fallback_response, original_error=error)
             
     # Add put, patch similarly if needed
+
+    def get_model_pricing(self, model_id: str) -> ModelPricing:
+        """
+        Get pricing information for a specific model.
+        
+        Retrieves the pricing structure for a given model ID, including both
+        USD and VCU (Venice Compute Units) costs for input and output tokens.
+        
+        :param model_id: The ID of the model to get pricing for
+        :type model_id: str
+        :return: Pricing information for the model
+        :rtype: ModelPricing
+        :raises ValueError: If the model is not found
+        
+        Example:
+            >>> client = VeniceClient(api_key="your-api-key")
+            >>> pricing = client.get_model_pricing("llama-3.3-70b")
+            >>> print(f"Input: ${pricing['input']['usd']}/1k tokens")
+            >>> print(f"Output: ${pricing['output']['usd']}/1k tokens")
+        """
+        # Get all models
+        models_response = self.models.list()
+        
+        # Find the requested model
+        for model in models_response['data']:
+            if model['id'] == model_id:
+                return model['model_spec']['pricing']
+        
+        raise ValueError(f"Model '{model_id}' not found")
 
     def close(self) -> None:
         """

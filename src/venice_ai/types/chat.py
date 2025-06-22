@@ -18,7 +18,7 @@ __all__ = [
     "ChatCompletionChunkToolCallFunction", "ChatCompletionChunkToolCall",
     "ChatCompletionChunkChoiceDelta", "ChatCompletionChunkChoice", "ChatCompletionChunk",
     "StreamOptions", "ResponseFormat", "VeniceParameters", "CreateChatCompletionRequest",
-    "ChunkModelFactory"
+    "ChunkModelFactory", "WebSearchCitation", "VeniceParametersResponse"
 ]
 
 # --- Protocol Definitions ---
@@ -106,6 +106,8 @@ class ChatCompletionMessage(BaseModel): # Response DTO
     role: Literal["system", "user", "assistant"]
     content: Union[str, Sequence[Dict[str, Any]], None] = None # Content can be None if tool_calls is present
     tool_calls: Optional[List[ToolCall]] = Field(default=None)
+    name: Optional[str] = Field(default=None)
+    reasoning_content: Optional[str] = Field(default=None)
 
 
 # --- Logprobs Types (Response DTOs) ---
@@ -138,6 +140,49 @@ class ChatCompletionChoiceLogprobs(BaseModel):
 
 # --- Response Types (Response DTOs) ---
 
+class WebSearchCitation(BaseModel):
+    """
+    Represents a web search citation in the Venice parameters response.
+    
+    Contains information about web sources cited by the model when web search
+    is enabled, including the source URL, title, content snippet, and date.
+    """
+    title: str
+    """The title of the web page or source."""
+    url: str
+    """The URL of the web source."""
+    content: Optional[str] = Field(default=None)
+    """A snippet of content from the web source."""
+    date: Optional[str] = Field(default=None)
+    """The date of the web source in ISO format."""
+
+
+class VeniceParametersResponse(BaseModel):
+    """
+    Venice-specific parameters included in the chat completion response.
+    
+    Contains information about Venice-specific features that were used or
+    configured for the request, including web search settings, character
+    information, and thinking/reasoning controls.
+    """
+    enable_web_search: Literal["auto", "off", "on"]
+    """The web search setting that was used for this request."""
+    enable_web_citations: bool
+    """Whether web citations were enabled for this request."""
+    include_venice_system_prompt: bool
+    """Whether the Venice system prompt was included."""
+    include_search_results_in_stream: bool
+    """Whether search results were included in the stream."""
+    strip_thinking_response: bool
+    """Whether thinking responses were stripped from the output."""
+    disable_thinking: bool
+    """Whether thinking was disabled for this request."""
+    character_slug: Optional[str] = Field(default=None)
+    """The character slug used for this request, if any."""
+    web_search_citations: List[WebSearchCitation] = Field(default_factory=list)
+    """List of web search citations if web search was performed."""
+
+
 class UsageData(BaseModel):
     """
     Provides token usage statistics for a chat completion request.
@@ -145,6 +190,7 @@ class UsageData(BaseModel):
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
+    prompt_tokens_details: Optional[Any] = Field(default=None)
 
 
 class ChatCompletionChoice(BaseModel):
@@ -155,6 +201,7 @@ class ChatCompletionChoice(BaseModel):
     message: ChatCompletionMessage
     finish_reason: Optional[Literal["stop", "length", "tool_calls"]] = None
     logprobs: Optional[ChatCompletionChoiceLogprobs] = Field(default=None)
+    stop_reason: Optional[str] = Field(default=None)
 
 
 class ChatCompletion(BaseModel):
@@ -167,8 +214,8 @@ class ChatCompletion(BaseModel):
     model: str
     choices: List[ChatCompletionChoice]
     usage: Optional[UsageData] = Field(default=None)
-    web_search_citations: Optional[List[Any]] = Field(default=None)
-    system_fingerprint: Optional[str] = Field(default=None)
+    prompt_logprobs: Optional[Any] = Field(default=None)
+    venice_parameters: Optional[VeniceParametersResponse] = Field(default=None)
 
 
 # --- Streaming Types (Response DTOs) ---
@@ -291,6 +338,14 @@ class VeniceParameters(TypedDict, total=False):
     enable_web_search: Literal["on", "off", "auto"]
     """Optional. Controls whether the model can perform web searches to enhance responses.
     ``on`` always enables search, ``off`` disables it completely, ``auto`` (default) lets the model decide based on context."""
+    strip_thinking_response: bool
+    """Optional. Strip ``<think></think>`` blocks from the response. Applicable only to reasoning/thinking models."""
+    disable_thinking: bool
+    """Optional. On supported reasoning models, will disable thinking and strip the ``<think></think>`` blocks from the response."""
+    enable_web_citations: bool
+    """Optional. When web search is enabled, this will request that the LLM cite its sources using a ``[REF]0[/REF]`` format."""
+    include_search_results_in_stream: bool
+    """Optional. Experimental feature. When set to true, the LLM will include search results in the first emitted chunk."""
 
 
 class CreateChatCompletionRequest(TypedDict):
@@ -357,3 +412,9 @@ class CreateChatCompletionRequest(TypedDict):
     """Optional. List of token IDs at which to stop generation."""
     top_k: NotRequired[int]
     """Optional. Number of highest probability vocabulary tokens to keep for top-k-filtering."""
+    max_temp: NotRequired[float]
+    """Optional. Maximum temperature value for dynamic temperature scaling. Range: 0 <= x <= 2."""
+    min_p: NotRequired[float]
+    """Optional. Sets a minimum probability threshold for token selection. Tokens with probabilities below this value are filtered out. Range: 0 <= x <= 1."""
+    min_temp: NotRequired[float]
+    """Optional. Minimum temperature value for dynamic temperature scaling. Range: 0 <= x <= 2."""

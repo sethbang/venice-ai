@@ -5,6 +5,79 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-01-22
+
+### Added
+
+#### **💰 Cost Management & Estimation**
+
+- **New cost calculation module** ([`venice_ai.costs`](src/venice_ai/costs.py)):
+  - [`calculate_completion_cost()`](src/venice_ai/costs.py:14) - Calculate actual costs from chat completion responses
+  - [`calculate_embedding_cost()`](src/venice_ai/costs.py:116) - Calculate costs for embedding operations
+  - [`estimate_completion_cost()`](src/venice_ai/costs.py:190) - Estimate costs before making API calls
+- **Dual currency support**: All cost calculations now support both USD and VCU (Venice Compute Units)
+- **New client method** [`get_model_pricing()`](src/venice_ai/_client.py:1601) to fetch detailed pricing information for any model
+
+#### **🧠 Enhanced Chat Completions**
+
+- **Web Search Integration**:
+  - `enable_web_search` - Control web search behavior ("on", "off", "auto")
+  - `enable_web_citations` - Request citations in `[REF]0[/REF]` format
+  - `include_search_results_in_stream` - Include search results in streaming responses
+- **Reasoning/Thinking Controls**:
+  - `strip_thinking_response` - Remove `<think></think>` blocks from responses
+  - `disable_thinking` - Disable thinking mode entirely on supported models
+- **Advanced Sampling Parameters**:
+  - `logit_bias` - Modify token likelihood with bias values (-100 to 100)
+  - `parallel_tool_calls` - Enable parallel function calling
+  - `max_temp`, `min_temp` - Dynamic temperature scaling
+  - `min_p` - Minimum probability threshold for token selection
+
+#### **🔧 Utility Enhancements**
+
+- New [`get_models_by_capability()`](src/venice_ai/utils.py:170) function to filter models by specific capabilities
+- Improved model filtering and capability detection
+
+### Changed
+
+#### **🏗️ Model Type Structure Refactoring**
+
+- Model metadata (capabilities, constraints, pricing) is now consolidated under `model_spec`
+- Pricing structure now uses dedicated [`PricingUnit`](src/venice_ai/types/models.py:34) and [`PricingDetail`](src/venice_ai/types/models.py:45) types
+- Legacy pricing fields are maintained for backward compatibility but are now optional
+
+#### **📦 Response Type Updates**
+
+- Chat completion responses now use Pydantic models instead of TypedDict
+- New [`VeniceParametersResponse`](src/venice_ai/types/chat.py:143) type for Venice-specific response metadata
+- `web_search_citations` moved into `venice_parameters` response field
+
+#### **🏃‍♂️ Dependency Optimization**
+
+- Made `tiktoken` optional - because not everyone needs to count their tokens obsessively
+- Relocated `numpy`, `Pillow`, `beautifulsoup4`, and `pypandoc` to dev dependencies where they can contemplate their existence without affecting your production builds
+- **Installation options**:
+  ```bash
+  pip install venice-ai              # Lean and mean
+  pip install venice-ai[tokenizers]  # With token counting
+  ```
+
+### Fixed
+
+- Improved error handling in model listing operations
+- Fixed edge cases in token estimation fallback logic
+- Enhanced type safety throughout the codebase
+
+### Security
+
+- Project status upgraded from Beta to Production/Stable
+- Enhanced input validation for new chat completion parameters
+
+### Performance
+
+- Reduced package size and installation time through dependency optimization
+- Streamlined test suite for improved CI/CD performance
+
 ## [1.1.2] - 2025-06-19
 
 ### Changed

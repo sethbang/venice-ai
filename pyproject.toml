@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "venice-ai"
-version = "1.1.2"
+version = "1.2.0"
 description = "Python client library for interacting with the Venice.ai API, offering comprehensive access to its features."
 readme = "README.md"
 license = "MIT"
@@ -21,7 +21,7 @@ keywords = [
     "venice-ai",
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
@@ -38,18 +38,16 @@ classifiers = [
     "Typing :: Typed",
 ]
 packages = [{ include = "venice_ai", from = "src" }]
+extras = { tokenizers = ["tiktoken"] }
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
-httpx = "^0.28.0"            # Using httpx for sync/async requests
-httpx-retries = "^0.4.0"     # For automatic retries with httpx
-typing_extensions = "^4.7.0" # For Literal, TypedDict etc. on older pythons
-pydantic = "^2.7.0"          # For data validation and serialization
-numpy = "^2.2.0"             # For numerical operations, required by some tests
-tiktoken = ">=0.9.0"         # For token estimation
-Pillow = "^11.2.1"           # For image processing (e.g., dimension checks)
-pypandoc = "^1.15"
-beautifulsoup4 = "^4.13.4"
+httpx = "^0.28.0"                                   # Using httpx for sync/async requests
+httpx-retries = "^0.4.0"                            # For automatic retries with httpx
+typing_extensions = "^4.7.0"                        # For Literal, TypedDict etc. on older pythons
+pydantic = "^2.7.0"                                 # For data validation and serialization
+tiktoken = { version = ">=0.9.0", optional = true } # For token estimation (optional)
+
 
 [tool.poetry.urls]
 Homepage = "https://github.com/sethbang/venice-ai"
@@ -75,6 +73,11 @@ rich = "^14.0.0"
 typing_extensions = "^4.7.0"
 furo = "^2024.8.6"
 pytest-xdist = "^3.7.0"
+beautifulsoup4 = "^4.13.4"
+Pillow = "^11.2.1"           # For image processing (e.g., dimension checks)
+numpy = "^2.2.0"             # For numerical operations, required by some tests
+pypandoc = "^1.15"
+tiktoken = "^0.9.0"          # For token estimation in tests
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -107,9 +110,6 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "    pass",                   # Allow 'pass' on its own line if it's the only thing in a TYPE_CHECKING block
 ]
-
-[tool.poetry.extras]
-tokenizers = []
 
 [tool.poetry.scripts]
 test-runner = "test_runner:main"

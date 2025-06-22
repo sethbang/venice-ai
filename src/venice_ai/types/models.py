@@ -1,6 +1,8 @@
-from typing import Dict, List, Literal, Optional, TypedDict
+from typing import Any, Dict, List, Literal, Optional, TypedDict
 
 __all__ = [
+    "PricingUnit",
+    "PricingDetail",
     "ModelPricing",
     "ModelCapabilities",
     "ModelConstraintsTemperature",
@@ -29,16 +31,50 @@ a different class of AI functionality:
 - ``"upscale"``: Models for image upscaling and enhancement
 """
 
-class ModelPricing(TypedDict, total=False):
+class PricingUnit(TypedDict):
+    """Represents a pricing unit with both USD and VCU values.
+    
+    :param usd: Cost in US dollars.
+    :type usd: float
+    :param vcu: Cost in Venice Compute Units.
+    :type vcu: float
+    """
+    usd: float
+    vcu: float
+
+class PricingDetail(TypedDict):
+    """Represents pricing details for input and output.
+    
+    :param input: Pricing for input (per 1000 tokens for text models).
+    :type input: PricingUnit
+    :param output: Pricing for output (per 1000 tokens for text models).
+    :type output: PricingUnit
+    """
+    input: PricingUnit
+    output: PricingUnit
+
+class ModernPricing(TypedDict):
+    """Represents the modern pricing structure with required input/output."""
+    input: PricingUnit
+    output: PricingUnit
+
+class ModelPricing(ModernPricing, total=False):
     """Represents pricing information for an AI model.
     
     Defines the cost structure for using a model, including costs per token,
     image, or time unit depending on the model type. Used within the :class:`Model`
     class to provide billing information.
     
-    :param input_cost_per_mtok: Cost for input per 1000 tokens.
+    The pricing structure now supports both USD and VCU (Venice Compute Units)
+    for accurate cost tracking and billing.
+    
+    :param input: Pricing for input operations.
+    :type input: PricingUnit
+    :param output: Pricing for output operations.
+    :type output: PricingUnit
+    :param input_cost_per_mtok: Legacy: Cost for input per 1000 tokens (USD only).
     :type input_cost_per_mtok: float
-    :param output_cost_per_mtok: Cost for output per 1000 tokens.
+    :param output_cost_per_mtok: Legacy: Cost for output per 1000 tokens (USD only).
     :type output_cost_per_mtok: float
     :param input_cost_per_image: Cost for input per image.
     :type input_cost_per_image: float
@@ -49,6 +85,7 @@ class ModelPricing(TypedDict, total=False):
     :param output_cost_per_second: Cost for output per second (e.g., audio).
     :type output_cost_per_second: float
     """
+    # Legacy fields for backward compatibility
     input_cost_per_mtok: float
     output_cost_per_mtok: float
     input_cost_per_image: float
@@ -128,27 +165,44 @@ class ModelConstraints(TypedDict):
     top_p: ModelConstraintsTopP
 
 class ModelSpec(TypedDict):
-    """Defines the input and output format specifications for a model.
+    """Defines the specifications for a model including pricing and capabilities.
     
-    Specifies what data formats a model expects as input and produces as
-    output. Used within the :class:`Model` class to describe model I/O
-    requirements.
+    Contains detailed information about a model's pricing structure, capabilities,
+    constraints, and other specifications. This is the main container for model
+    metadata in the API response.
     
-    :param input_format: Expected input format (e.g., ``"text"``, ``"image_url"``).
-    :type input_format: str
-    :param output_format: Output format (e.g., ``"text"``, ``"image_url"``).
-    :type output_format: str
+    :param pricing: Pricing information for the model with USD and VCU costs.
+    :type pricing: ModelPricing
+    :param availableContextTokens: Maximum context window size in tokens.
+    :type availableContextTokens: int
+    :param capabilities: Model capabilities and feature support.
+    :type capabilities: Dict[str, Any]
+    :param constraints: Parameter constraints for the model.
+    :type constraints: ModelConstraints
+    :param name: Human-readable name of the model.
+    :type name: str
+    :param modelSource: URL or reference to the model source.
+    :type modelSource: str
+    :param offline: Whether the model is currently offline.
+    :type offline: bool
+    :param traits: List of model traits (e.g., "default", "fastest").
+    :type traits: List[str]
     """
-    input_format: str
-    output_format: str
+    pricing: ModelPricing
+    availableContextTokens: int
+    capabilities: Dict[str, Any]
+    constraints: ModelConstraints
+    name: str
+    modelSource: str
+    offline: bool
+    traits: List[str]
 
 class Model(TypedDict):
     """Represents a single AI model available through the Venice.ai API.
     
     Contains comprehensive information about an AI model including its
-    identification, capabilities, pricing, constraints, and specifications.
-    Typically returned by the list models endpoint and used throughout
-    the API to reference specific models.
+    identification and specifications. The model_spec field contains all
+    the detailed information about pricing, capabilities, and constraints.
     
     :param id: Unique identifier for the model.
     :type id: str
@@ -158,32 +212,17 @@ class Model(TypedDict):
     :type created: int
     :param owned_by: Organization or user that owns the model.
     :type owned_by: str
-    :param name: Name of the model.
-    :type name: str
-    :param description: Description of the model.
-    :type description: str
     :param type: Type of the model (e.g., ``"text"``, ``"image"``).
     :type type: ModelType
-    :param pricing: Pricing information for the model.
-    :type pricing: ModelPricing
-    :param capabilities: Capabilities of the model.
-    :type capabilities: ModelCapabilities
-    :param constraints: Constraints for model parameters.
-    :type constraints: ModelConstraints
-    :param spec: Specification details for the model.
-    :type spec: ModelSpec
+    :param model_spec: Detailed specifications including pricing, capabilities, and constraints.
+    :type model_spec: ModelSpec
     """
     id: str
     object: Literal["model"]
     created: int
     owned_by: str
-    name: str
-    description: str
     type: ModelType
-    pricing: ModelPricing
-    capabilities: ModelCapabilities
-    constraints: ModelConstraints
-    spec: ModelSpec
+    model_spec: ModelSpec
 
 class ModelList(TypedDict):
     """Represents a collection of AI models returned by the list models endpoint.

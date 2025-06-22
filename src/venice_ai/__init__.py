@@ -18,6 +18,7 @@ from .exceptions import (
 
 # Import utility functions
 from .utils import get_filtered_models
+from .costs import calculate_completion_cost, calculate_embedding_cost, estimate_completion_cost
 
 # Optional: Configure logging
 import logging
@@ -40,6 +41,9 @@ __all__ = [
     "StreamConsumedError",
     "StreamClosedError",
     "get_filtered_models", # Add the new utility function here
+    "calculate_completion_cost",
+    "calculate_embedding_cost",
+    "estimate_completion_cost",
 ]
 
-__version__ = "1.1.1" # Keep in sync with pyproject.toml
+__version__ = "1.2.0" # Keep in sync with pyproject.toml

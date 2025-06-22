@@ -155,3 +155,5 @@ api.xml
 local/
 venice-ai-streamlit-demo/
 venice_ai_test_runs/
+temp/
+benchmark_data/
