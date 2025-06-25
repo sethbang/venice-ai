@@ -997,8 +997,39 @@ class VeniceClient(BaseClient):
                                         continue # Skip this chunk
                                 else:
                                     # Default to ChatCompletionChunk if no cast_to is provided
-                                    # This maintains previous behavior for non-chat streams if any
-                                    yield cast(ChatCompletionChunk, json_chunk)
+                                    # For streaming responses, we need to handle incomplete chunks gracefully
+                                    try:
+                                        # First try direct validation
+                                        parsed_chunk = ChatCompletionChunk.model_validate(json_chunk)
+                                        yield parsed_chunk
+                                    except Exception as e:
+                                        # If validation fails, try to construct a minimal valid chunk
+                                        # This handles cases where the API sends partial data
+                                        try:
+                                            # Ensure we have at least the choices data
+                                            if 'choices' in json_chunk:
+                                                # Add default values for required fields if missing
+                                                chunk_data = {
+                                                    'id': json_chunk.get('id', 'chunk-unknown'),
+                                                    'object': 'chat.completion.chunk',
+                                                    'created': json_chunk.get('created', 0),
+                                                    'model': json_chunk.get('model', 'unknown'),
+                                                    'choices': json_chunk['choices']
+                                                }
+                                                # Ensure each choice has an index
+                                                for i, choice in enumerate(chunk_data['choices']):
+                                                    if 'index' not in choice:
+                                                        choice['index'] = i
+                                                
+                                                parsed_chunk = ChatCompletionChunk.model_validate(chunk_data)
+                                                yield parsed_chunk
+                                            else:
+                                                # If we can't create a valid chunk, yield raw JSON
+                                                yield json_chunk
+                                        except Exception as inner_e:
+                                            logger.error(f"Failed to construct valid ChatCompletionChunk: {inner_e}")
+                                            # Yield raw JSON as fallback
+                                            yield json_chunk
                             except json.JSONDecodeError as e_json:
                                 logger.error(f"Failed to parse JSON in streaming response: {e_json}")
                                 logger.error(f"Problematic JSON string: '{json_str}'")
@@ -1623,7 +1654,11 @@ class VeniceClient(BaseClient):
         # Find the requested model
         for model in models_response['data']:
             if model['id'] == model_id:
-                return model['model_spec']['pricing']
+                pricing = model['model_spec'].get('pricing')
+                if pricing is None:
+                    raise ValueError(f"Model '{model_id}' does not have pricing information available")
+                else:
+                    return pricing
         
         raise ValueError(f"Model '{model_id}' not found")
 

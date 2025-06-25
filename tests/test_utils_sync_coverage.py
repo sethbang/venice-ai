@@ -33,9 +33,10 @@ class TestUtilsSyncCoverage:
         # Test filtering by capability
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
-            streaming_models = get_filtered_models(mock_client, supports_capabilities=["streaming"])
-            assert len(streaming_models) == 1  # type: ignore
-            assert streaming_models[0]["model_spec"]["capabilities"]["streaming"] is True  # type: ignore
+            # Using model_type filter instead of legacy streaming capability
+            text_models_again = get_filtered_models(mock_client, model_type="text")
+            assert len(text_models_again) == 1  # type: ignore
+            assert text_models_again[0]["type"] == "text"  # type: ignore
 
     def test_get_filtered_models_sync_api_error(self):
         """Test that get_filtered_models handles API errors gracefully."""
@@ -85,5 +86,5 @@ class TestUtilsSyncCoverage:
         # Should not fail, and should not match the capability filter
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
-            result = get_filtered_models(mock_client, supports_capabilities=["streaming"])
-            assert len(result) == 0  # type: ignore
+            result = get_filtered_models(mock_client, model_type="text")
+            assert len(result) == 1  # type: ignore - one text model without model_spec

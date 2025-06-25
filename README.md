@@ -444,14 +444,18 @@ with VeniceClient() as client:
 
 ### Embeddings Creation
 
+The embeddings endpoint now supports `base64` encoding and accepts a `user` parameter for improved OpenAI compatibility (though the `user` parameter is discarded by the Venice API).
+
 ```python
 from venice_ai import VeniceClient
 
 with VeniceClient() as client:
     response = client.embeddings.create(
         model="text-embedding-bge-m3", # Or your preferred embeddings model
-        input="The Venice AI Python client makes API interaction seamless."
+        input="The Venice AI Python client makes API interaction seamless.",
         # input=["Batch sentence 1", "Batch sentence 2"] # For batching
+        encoding_format="float", # Can be "float" or "base64"
+        user="user-123" # Accepted for OpenAI compatibility, but has no effect
     )
     if response.data and response.data[0].embedding:
         first_embedding_vector = response.data[0].embedding
@@ -478,7 +482,7 @@ with VeniceClient() as client:
     print(f"Text models: {[m.id for m in text_models.data]}")
 ```
 
-**Note:** Different models have varying capabilities and context window sizes. For example, "Venice Large" supports up to 128k tokens, making it ideal for processing extensive documents or maintaining long conversations. Refer to the official Venice AI documentation for detailed specifications of each model.
+**Note:** Different models have varying capabilities and context window sizes. The SDK now exposes new model capabilities like `supportsVision`, `supportsReasoning`, and `quantization`. You can use the `get_filtered_models` utility to select models based on these capabilities. For example, "Venice Large" supports up to 128k tokens, making it ideal for processing extensive documents or maintaining long conversations. Refer to the official Venice AI documentation for detailed specifications of each model.
 
 ### API Key Management
 
@@ -525,6 +529,8 @@ Common exceptions include:
 - `venice_ai.exceptions.AuthenticationError`: For API key issues (HTTP 401).
 - `venice_ai.exceptions.InvalidRequestError`: For bad request parameters (HTTP 400).
 - `venice_ai.exceptions.RateLimitError`: When API rate limits are exceeded (HTTP 429).
+- `venice_ai.exceptions.PaymentRequiredError`: When payment is required (HTTP 402).
+- `venice_ai.exceptions.ServiceUnavailableError`: When the service is temporarily unavailable (HTTP 503).
 - `venice_ai.exceptions.NotFoundError`: For non-existent resources (HTTP 404).
 - `venice_ai.exceptions.APIConnectionError`: For network connectivity issues.
 - `venice_ai.exceptions.APITimeoutError`: For request timeouts.

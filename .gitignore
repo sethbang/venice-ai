@@ -138,7 +138,7 @@ logs/
 
 # Custom Ignores from your project
 run_tests.sh
-./.github/ # Typically, .github/ (workflows, etc.) is committed. Remove this line if you want to commit its contents.
+.github/
 .venv_gradio_test
 dev-docs
 venice-ai/.venv/
@@ -157,3 +157,4 @@ venice-ai-streamlit-demo/
 venice_ai_test_runs/
 temp/
 benchmark_data/
+.roo/

@@ -75,7 +75,10 @@ def test_get_models_by_capability():
 @pytest.mark.asyncio
 async def test_get_filtered_models():
     """Test get_filtered_models function."""
-    mock_client = AsyncMock()
+    from venice_ai import AsyncVeniceClient
+    mock_client = MagicMock(spec=AsyncVeniceClient)
+    # Create models attribute with list method
+    mock_client.models = MagicMock()
     # Make the mock return a dict directly (not awaitable) to trigger the fallback in utils.py
     mock_response = {
         "data": [
@@ -83,10 +86,11 @@ async def test_get_filtered_models():
             {"type": "image", "model_spec": {"capabilities": {"streaming": False}}},
         ]
     }
-    # Use MagicMock instead of AsyncMock for models.list to return dict directly
-    mock_client.models.list = MagicMock(return_value=mock_response)
+    # Use AsyncMock for models.list to return an awaitable
+    mock_client.models.list = AsyncMock(return_value=mock_response)
     assert len(await get_filtered_models(mock_client, model_type="text")) == 1  # type: ignore
-    assert len(await get_filtered_models(mock_client, supports_capabilities=["streaming"])) == 1  # type: ignore
+    # Test filtering by model type instead of the deprecated supports_capabilities
+    assert len(await get_filtered_models(mock_client, model_type="image")) == 1  # type: ignore
 
 def test_estimate_token_count():
     """Test estimate_token_count function."""

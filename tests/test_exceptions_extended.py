@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 from venice_ai.exceptions import (
     VeniceError, APIError, AuthenticationError, PermissionDeniedError,
     InvalidRequestError, NotFoundError, ConflictError, UnprocessableEntityError,
-    RateLimitError, InternalServerError, _make_status_error
+    RateLimitError, InternalServerError, _make_status_error, PaymentRequiredError, ServiceUnavailableError
 )
 
 class TestMakeStatusErrorExtended:
@@ -70,7 +70,7 @@ class TestMakeStatusErrorExtended:
         assert "HTTP Status 415" in str(error)
         
     @pytest.mark.parametrize("status_code", [
-        501, 502, 503, 504, 505, 506, 507, 508, 510, 511
+        501, 502, 504, 505, 506, 507, 508, 510, 511 # Removed 503
     ])
     def test_various_5xx_statuses(self, status_code):
         """Test handling of various 5xx status codes to ensure they all map to InternalServerError."""
@@ -81,9 +81,17 @@ class TestMakeStatusErrorExtended:
         
         assert isinstance(error, InternalServerError)
         assert f"HTTP Status {status_code}" in str(error)
+
+    def test_503_service_unavailable(self):
+        """Test specific handling of 503 status code."""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_response.status_code = 503
+        error = _make_status_error(None, body=None, response=mock_response)
+        assert isinstance(error, ServiceUnavailableError)
+        assert "HTTP Status 503" in str(error)
         
     @pytest.mark.parametrize("status_code", [
-        402, 405, 406, 407, 408, 410, 411, 412, 414, 416, 417, 418, 421, 423, 424, 426, 428
+        405, 406, 407, 408, 410, 411, 412, 414, 416, 417, 418, 421, 423, 424, 426, 428 # Removed 402
     ])
     def test_various_4xx_statuses(self, status_code):
         """Test handling of various 4xx status codes to ensure they map to general APIError."""
@@ -93,9 +101,18 @@ class TestMakeStatusErrorExtended:
         error = _make_status_error(None, body=None, response=mock_response)
         
         assert isinstance(error, APIError)
-        assert not isinstance(error, (InvalidRequestError, AuthenticationError, PermissionDeniedError, NotFoundError, ConflictError, UnprocessableEntityError, RateLimitError))
+        assert not isinstance(error, (InvalidRequestError, AuthenticationError, PermissionDeniedError, NotFoundError, ConflictError, UnprocessableEntityError, RateLimitError, PaymentRequiredError))
         assert f"HTTP Status {status_code}" in str(error)
-        assert "Unhandled 4xx error" in str(error)
+        # The "Unhandled 4xx error" message is no longer added by default for generic APIError
+        # assert "Unhandled 4xx error" in str(error)
+
+    def test_402_payment_required(self):
+        """Test specific handling of 402 status code."""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_response.status_code = 402
+        error = _make_status_error(None, body=None, response=mock_response)
+        assert isinstance(error, PaymentRequiredError)
+        assert "HTTP Status 402" in str(error)
         
     def test_custom_message_with_error_detail(self):
         """Test combining custom message with error details."""

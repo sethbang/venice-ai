@@ -894,15 +894,22 @@ class AsyncVeniceClient(BaseClient):
                 params=params,
             )
             
+            logger.debug("Entering stream context manager")
             async with stream_context_manager as response:
+                logger.debug(f"Stream response status: {response.status_code}")
                 response.raise_for_status()  # Check status inside the context
+                
+                await asyncio.sleep(0.1) # Add a small delay
                 
                 # If successful, proceed to yield from the stream
                 chunk_count = 0
+                logger.debug("Starting to iterate over stream lines")
                 async for line in response.aiter_lines():
+                    logger.debug(f"Received line: {line}")
                     # Skip empty lines
                     line = line.strip()
                     if not line:
+                        logger.debug("Skipping empty line")
                         continue
                     
                     # Decode bytes to string if needed
@@ -913,17 +920,20 @@ class AsyncVeniceClient(BaseClient):
                         
                     # Check for stream termination signal
                     if line_str == "data: [DONE]":
+                        logger.debug("Received [DONE] signal")
                         break
                         
                     # Process data lines
                     if line_str.startswith("data: "):
                         # Extract the JSON part after "data: "
                         json_str = line_str[6:]  # Skip "data: " prefix
+                        logger.debug(f"Extracted JSON string: {json_str}")
                         
                         try:
                             # Parse JSON into a dictionary
                             chunk_data = json.loads(json_str)
                             chunk_count += 1
+                            logger.debug(f"Successfully parsed chunk: {chunk_data}")
                             
                             if cast_to:
                                 try:
@@ -933,7 +943,38 @@ class AsyncVeniceClient(BaseClient):
                                     # raise APIResponseProcessingError(message=f"Failed to cast async SSE chunk: {exc_cast}", response=response, original_error=exc_cast) from exc_cast
                                     continue # Skip this chunk
                             else:
-                                yield cast(ChatCompletionChunk, chunk_data)
+                                # Default to ChatCompletionChunk if no cast_to is provided
+                                try:
+                                    # First try direct validation
+                                    parsed_chunk = ChatCompletionChunk.model_validate(chunk_data)
+                                    yield parsed_chunk
+                                except Exception as e:
+                                    # If validation fails, try to construct a minimal valid chunk
+                                    try:
+                                        # Ensure we have at least the choices data
+                                        if 'choices' in chunk_data:
+                                            # Add default values for required fields if missing
+                                            chunk_dict = {
+                                                'id': chunk_data.get('id', 'chunk-unknown'),
+                                                'object': 'chat.completion.chunk',
+                                                'created': chunk_data.get('created', 0),
+                                                'model': chunk_data.get('model', 'unknown'),
+                                                'choices': chunk_data['choices']
+                                            }
+                                            # Ensure each choice has an index
+                                            for i, choice in enumerate(chunk_dict['choices']):
+                                                if 'index' not in choice:
+                                                    choice['index'] = i
+                                            
+                                            parsed_chunk = ChatCompletionChunk.model_validate(chunk_dict)
+                                            yield parsed_chunk
+                                        else:
+                                            # If we can't create a valid chunk, yield raw JSON
+                                            yield chunk_data
+                                    except Exception as inner_e:
+                                        logger.error(f"Failed to construct valid ChatCompletionChunk: {inner_e}")
+                                        # Yield raw JSON as fallback
+                                        yield chunk_data
                             
                         except json.JSONDecodeError as e:
                             # Log and skip invalid JSON instead of failing the entire stream
@@ -1523,7 +1564,11 @@ class AsyncVeniceClient(BaseClient):
         # Find the requested model
         for model in models_response['data']:
             if model['id'] == model_id:
-                return model['model_spec']['pricing']
+                model_spec = model.get('model_spec', {})
+                if 'pricing' in model_spec:
+                    return model_spec['pricing']
+                else:
+                    raise ValueError(f"Model '{model_id}' does not have pricing information")
         
         raise ValueError(f"Model '{model_id}' not found")
 

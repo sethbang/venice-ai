@@ -6,7 +6,8 @@ from unittest.mock import MagicMock, patch
 from venice_ai.exceptions import (
     VeniceError, APIError, AuthenticationError, PermissionDeniedError,
     InvalidRequestError, NotFoundError, ConflictError, UnprocessableEntityError,
-    RateLimitError, InternalServerError, APIResponseProcessingError, _make_status_error
+    RateLimitError, InternalServerError, APIResponseProcessingError, _make_status_error,
+    PaymentRequiredError, ServiceUnavailableError
 )
 
 class TestVeniceError:
@@ -44,6 +45,7 @@ class TestMakeStatusError:
     @pytest.mark.parametrize("status_code,error_class", [
         (400, InvalidRequestError),
         (401, AuthenticationError),
+        (402, PaymentRequiredError),
         (403, PermissionDeniedError),
         (404, NotFoundError),
         (409, ConflictError),
@@ -52,7 +54,7 @@ class TestMakeStatusError:
         (422, UnprocessableEntityError),
         (429, RateLimitError),
         (500, InternalServerError),
-        (503, InternalServerError),
+        (503, ServiceUnavailableError),
         (450, APIError),  # Unhandled 4xx
         (550, InternalServerError),  # Unhandled 5xx
     ])
@@ -128,8 +130,9 @@ class TestMakeStatusError:
         error = _make_status_error(None, body=None, response=mock_response)
         
         assert isinstance(error, APIError)
-        assert not isinstance(error, (InvalidRequestError, AuthenticationError, PermissionDeniedError, NotFoundError, ConflictError, UnprocessableEntityError, RateLimitError))
-        assert "Unhandled 4xx error" in str(error)
+        assert not isinstance(error, (InvalidRequestError, AuthenticationError, PermissionDeniedError, NotFoundError, ConflictError, UnprocessableEntityError, RateLimitError, PaymentRequiredError))
+        # The "Unhandled 4xx error" message is no longer added by default for generic APIError
+        # assert "Unhandled 4xx error" in str(error)
         assert "HTTP Status 418" in str(error)
         assert error.status_code == 418
 

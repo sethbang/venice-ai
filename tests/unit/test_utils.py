@@ -45,72 +45,53 @@ class TestGetFilteredModels:
         """Test error handling in _get_filtered_models_sync."""
         mock_sync_client.models.list.side_effect = Exception("API Error")
         
-        # Capture stderr
-        old_stderr = sys.stderr
-        sys.stderr = captured_stderr = io.StringIO()
+        # Capture stdout
+        old_stdout = sys.stdout
+        sys.stdout = captured_stdout = io.StringIO()
 
         result = _get_filtered_models_sync(mock_sync_client)
 
-        sys.stderr = old_stderr # Restore stderr
+        sys.stdout = old_stdout # Restore stdout
         
         assert result == []
-        assert "Error fetching models: API Error" in captured_stderr.getvalue()
+        assert "Error fetching models: API Error" in captured_stdout.getvalue()
 
     @pytest.mark.asyncio
     async def test_get_filtered_models_async_error_handling(self, mock_async_client):
         """Test error handling in _get_filtered_models_async."""
         mock_async_client.models.list.side_effect = Exception("API Error Async")
 
-        # Capture stderr
-        old_stderr = sys.stderr
-        sys.stderr = captured_stderr = io.StringIO()
+        # Capture stdout
+        old_stdout = sys.stdout
+        sys.stdout = captured_stdout = io.StringIO()
 
         result = await _get_filtered_models_async(mock_async_client)
 
-        sys.stderr = old_stderr # Restore stderr
+        sys.stdout = old_stdout # Restore stdout
 
         assert result == []
-        assert "Error fetching models: API Error Async" in captured_stderr.getvalue()
+        assert "Error fetching models: API Error Async" in captured_stdout.getvalue()
 
 class TestEstimateTokenCount:
-    @patch("venice_ai.utils.__import__")
-    def test_fallback_without_tiktoken(self, mock_import):
+    @patch("venice_ai.utils._TIKTOKEN_AVAILABLE", False)
+    def test_fallback_without_tiktoken(self):
         """Test estimate_token_count fallback when tiktoken is not available."""
-        mock_import.side_effect = ImportError("No module named 'tiktoken'")
+        with pytest.warns(UserWarning, match="tiktoken library not found"):
+            text = "This is a test string for fallback."
+            estimated_tokens = estimate_token_count(text)
+            # Fallback is len(text) / 4, rounded down, min 1
+            expected_tokens = max(1, int(len(text) / 4.0))
+            assert estimated_tokens == expected_tokens
 
-        # Capture stderr
-        old_stderr = sys.stderr
-        sys.stderr = captured_stderr = io.StringIO()
-
-        text = "This is a test string for fallback."
-        estimated_tokens = estimate_token_count(text)
-
-        sys.stderr = old_stderr # Restore stderr
-
-        # Fallback is len(text) / 4, rounded down, min 1
-        expected_tokens = max(1, int(len(text) / 4.0))
-        assert estimated_tokens == expected_tokens
-        assert "Warning: tiktoken library not found" in captured_stderr.getvalue()
-
-    @patch("venice_ai.utils.__import__")
-    def test_fallback_with_tiktoken_attribute_error(self, mock_import):
+    @patch("venice_ai.utils.tiktoken")
+    def test_fallback_with_tiktoken_attribute_error(self, mock_tiktoken):
         """Test estimate_token_count fallback when tiktoken import succeeds but attribute access fails."""
-        mock_tiktoken = MagicMock()
         mock_tiktoken.get_encoding.side_effect = AttributeError("Encoding not found")
-        mock_import.return_value = mock_tiktoken
-
-        # Capture stderr
-        old_stderr = sys.stderr
-        sys.stderr = captured_stderr = io.StringIO()
-
-        text = "Another test string for fallback."
-        estimated_tokens = estimate_token_count(text)
-
-        sys.stderr = old_stderr # Restore stderr
-
-        expected_tokens = max(1, int(len(text) / 4.0))
-        assert estimated_tokens == expected_tokens
-        assert "Warning: tiktoken library not found or error occurred" in captured_stderr.getvalue()
+        with pytest.warns(UserWarning, match="Warning: tiktoken attribute error occurred: Encoding not found. Using a simple character-based heuristic for token estimation."):
+            text = "Another test string for fallback."
+            estimated_tokens = estimate_token_count(text)
+            expected_tokens = max(1, int(len(text) / 4.0))
+            assert estimated_tokens == expected_tokens
 
 
 class TestValidateChatMessages:
@@ -157,7 +138,7 @@ class TestValidateChatMessages:
             {"role": "tool", "tool_call_id": "call_123"}, # Missing content
         ]
         result = validate_chat_messages(messages)
-        assert "Tool message at index 1 missing required 'content' field." in result["errors"]
+        assert "Tool message at index 1 is missing 'content'." in result["errors"]
 
     def test_tool_message_invalid_content_type(self):
         """Test tool message validation with invalid content type."""
@@ -220,7 +201,7 @@ class TestValidateChatMessages:
             {"role": "assistant", "tool_calls": [{"id": "call_123", "type": "function", "function": {"name": "func"}}]}, # Missing arguments
         ]
         result = validate_chat_messages(messages)
-        assert "Function in tool call 0 in message 1 missing 'arguments' field." in result["errors"]
+        assert "Function call at index 0 in message 1 is missing 'arguments'." in result["errors"]
 
     def test_assistant_message_tool_call_invalid_function_name_type(self):
         """Test assistant message validation with invalid tool call function name type."""
@@ -238,7 +219,7 @@ class TestValidateChatMessages:
             {"role": "assistant", "tool_calls": [{"id": "call_123", "type": "function", "function": {"name": "func", "arguments": {}}}]}, # Invalid arguments type
         ]
         result = validate_chat_messages(messages)
-        assert "Function in tool call 0 in message 1 has invalid 'arguments' field type." in result["errors"]
+        assert "Function call at index 0 in message 1 has invalid 'arguments' field type." in result["errors"]
 
     def test_assistant_message_with_tool_calls_and_non_string_content(self):
         """Test assistant message with tool_calls and non-string content."""
@@ -430,36 +411,37 @@ class TestFindModelById:
         ]})
         return client
 
-    def test_find_model_by_id_sync_error_handling(self, mock_sync_client):
+    @pytest.mark.asyncio
+    async def test_find_model_by_id_sync_error_handling(self, mock_sync_client):
         """Test error handling in find_model_by_id sync."""
         mock_sync_client.models.list.side_effect = Exception("API Error Sync Find")
 
-        # Capture stderr
-        old_stderr = sys.stderr
-        sys.stderr = captured_stderr = io.StringIO()
+        # Capture stdout
+        old_stdout = sys.stdout
+        sys.stdout = captured_stdout = io.StringIO()
 
         result = find_model_by_id(mock_sync_client, "model1")
 
-        sys.stderr = old_stderr # Restore stderr
+        sys.stdout = old_stdout # Restore stdout
 
         assert result is None
-        assert "Error finding model by ID: API Error Sync Find" in captured_stderr.getvalue()
+        assert "Error finding model by ID: API Error Sync Find" in captured_stdout.getvalue()
 
     @pytest.mark.asyncio
     async def test_find_model_by_id_async_error_handling(self, mock_async_client):
         """Test error handling in find_model_by_id async."""
         mock_async_client.models.list.side_effect = Exception("API Error Async Find")
 
-        # Capture stderr
-        old_stderr = sys.stderr
-        sys.stderr = captured_stderr = io.StringIO()
+        # Capture stdout
+        old_stdout = sys.stdout
+        sys.stdout = captured_stdout = io.StringIO()
 
         result = await find_model_by_id(mock_async_client, "model1-async")
 
-        sys.stderr = old_stderr # Restore stderr
+        sys.stdout = old_stdout # Restore stdout
 
         assert result is None
-        assert "Error finding model by ID: API Error Async Find" in captured_stderr.getvalue()
+        assert "Error finding model by ID: API Error Async Find" in captured_stdout.getvalue()
 
 class TestGetModelCapabilities:
     @pytest.fixture
@@ -477,20 +459,21 @@ class TestGetModelCapabilities:
         return client
 
     @patch("venice_ai.utils.find_model_by_id")
-    def test_get_model_capabilities_sync_error_handling(self, mock_find_model_by_id, mock_sync_client):
+    @pytest.mark.asyncio
+    async def test_get_model_capabilities_sync_error_handling(self, mock_find_model_by_id, mock_sync_client):
         """Test error handling in get_model_capabilities sync."""
         mock_find_model_by_id.side_effect = Exception("Find Model Error Sync")
 
-        # Capture stderr
-        old_stderr = sys.stderr
-        sys.stderr = captured_stderr = io.StringIO()
+        # Capture stdout
+        old_stdout = sys.stdout
+        sys.stdout = captured_stdout = io.StringIO()
 
-        result = get_model_capabilities(mock_sync_client, "model1")
+        result = await get_model_capabilities(mock_sync_client, "model1")
 
-        sys.stderr = old_stderr # Restore stderr
+        sys.stdout = old_stdout # Restore stdout
 
         assert result is None
-        assert "Error getting model capabilities: Find Model Error Sync" in captured_stderr.getvalue()
+        assert "Error getting model capabilities: Find Model Error Sync" in captured_stdout.getvalue()
 
     @pytest.mark.asyncio
     @patch("venice_ai.utils.find_model_by_id")
@@ -498,16 +481,16 @@ class TestGetModelCapabilities:
         """Test error handling in get_model_capabilities async."""
         mock_find_model_by_id.side_effect = Exception("Find Model Error Async")
 
-        # Capture stderr
-        old_stderr = sys.stderr
-        sys.stderr = captured_stderr = io.StringIO()
+        # Capture stdout
+        old_stdout = sys.stdout
+        sys.stdout = captured_stdout = io.StringIO()
 
         result = await get_model_capabilities(mock_async_client, "model1-async")
 
-        sys.stderr = old_stderr # Restore stderr
+        sys.stdout = old_stdout # Restore stdout
 
         assert result is None
-        assert "Error getting model capabilities: Find Model Error Async" in captured_stderr.getvalue()
+        assert "Error getting model capabilities: Find Model Error Async" in captured_stdout.getvalue()
 
 class TestFormatToolResponse:
     def test_format_tool_response_non_string_non_dict_non_list(self):

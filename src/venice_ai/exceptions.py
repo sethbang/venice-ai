@@ -23,6 +23,8 @@ __all__ = [
     "MissingStreamClassError",
     "StreamConsumedError",
     "StreamClosedError",
+    "PaymentRequiredError",
+    "ServiceUnavailableError",
 ]
 
 class VeniceError(Exception):
@@ -256,6 +258,26 @@ class RateLimitError(APIError):
         super().__init__(message, request=request, response=response, body=body)
         self.retry_after_seconds = retry_after_seconds
 
+class PaymentRequiredError(APIError):
+    """
+    Raised for 402 Payment Required errors when there is insufficient balance.
+    
+    This exception is raised when the API returns a 402 status code, indicating that
+    the request cannot be processed due to insufficient USD or VCU (Venice Compute Units)
+    balance in the account. The client should add funds or credits before retrying.
+    
+    :param message: Human-readable description of the error.
+    :type message: str
+    :param request: Optional. The ``httpx.Request`` object that led to the error.
+    :type request: Optional[httpx.Request]
+    :param response: The ``httpx.Response`` object from the API call.
+    :type response: httpx.Response
+    :param body: Optional. The parsed response body, if available.
+    :type body: Optional[Any]
+    """
+    def __init__(self, message: str, *, request: Optional[httpx.Request] = None, response: httpx.Response, body: Optional[Any] = None) -> None:
+        super().__init__(message, request=request, response=response, body=body)
+
 class InternalServerError(APIError):
     """
     Raised for 500 Internal Server Error and other 5xx server-side errors.
@@ -281,6 +303,32 @@ class InternalServerError(APIError):
     :type body: Optional[Any]
     """
     pass # INFERENCE_FAILED, UPSCALE_FAILED, UNKNOWN_ERROR maps here
+
+class ServiceUnavailableError(APIError):
+    """
+    Raised for 503 Service Unavailable errors when the service is temporarily unavailable.
+    
+    This exception is raised when the API returns a 503 status code, indicating that
+    the service is temporarily unavailable. This commonly occurs when:
+    
+    - The requested model is at capacity
+    - The service is undergoing maintenance
+    - Temporary server overload
+    
+    Clients should implement retry logic with exponential backoff when encountering
+    this error.
+    
+    :param message: Human-readable description of the error.
+    :type message: str
+    :param request: Optional. The ``httpx.Request`` object that led to the error.
+    :type request: Optional[httpx.Request]
+    :param response: The ``httpx.Response`` object from the API call.
+    :type response: httpx.Response
+    :param body: Optional. The parsed response body, if available.
+    :type body: Optional[Any]
+    """
+    def __init__(self, message: str, *, request: Optional[httpx.Request] = None, response: httpx.Response, body: Optional[Any] = None) -> None:
+        super().__init__(message, request=request, response=response, body=body)
 
 # Add other specific errors as needed (e.g., FileSizeError for 413)
 
@@ -547,6 +595,8 @@ def _make_status_error(
         return InvalidRequestError(message=err_msg, request=request, response=response, body=body)
     if status_code == 401:
         return AuthenticationError(message=err_msg, request=request, response=response, body=body)
+    if status_code == 402:
+        return PaymentRequiredError(message=err_msg, request=request, response=response, body=body)
     if status_code == 403:
         return PermissionDeniedError(message=err_msg, request=request, response=response, body=body)
     if status_code == 404:
@@ -569,6 +619,9 @@ def _make_status_error(
         if retry_after_header:
             parsed_retry_after_seconds = _parse_retry_after_header(retry_after_header, date_header)
         return RateLimitError(message=err_msg, request=request, response=response, body=body, retry_after_seconds=parsed_retry_after_seconds)
+    # Handle specific 5xx status codes
+    if status_code == 503:
+        return ServiceUnavailableError(message=err_msg, request=request, response=response, body=body)
     # Only treat actual HTTP 5xx status codes as InternalServerError
     if 500 <= status_code < 600:
         return InternalServerError(message=err_msg, request=request, response=response, body=body) # Includes 500-599 only

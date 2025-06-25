@@ -168,14 +168,14 @@ class TestAsyncChatCompletions:
         )
         
         # Verify response
-        assert isinstance(response, dict)
-        assert response["id"] == "chat-12345"
-        assert response["object"] == "chat.completion"
-        assert len(response["choices"]) == 1
-        assert response["choices"][0]["message"]["content"] == (
+        assert isinstance(response, ChatCompletion)
+        assert response.id == "chat-12345"
+        assert response.object == "chat.completion"
+        assert len(response.choices) == 1
+        assert response.choices[0].message.content == (
             "I am a helpful AI assistant created by Venice AI."
         )
-        assert response["choices"][0]["finish_reason"] == "stop"
+        assert response.choices[0].finish_reason == "stop"
         
         # Verify request was made correctly
         request = httpx_mock.get_request()
@@ -203,7 +203,7 @@ class TestAsyncChatCompletions:
             model="venice-classic",
             messages=CHAT_MESSAGES,
             temperature=0.7,
-            max_tokens=100,
+            max_completion_tokens=100,
             top_p=0.9,
             frequency_penalty=0.5,
             presence_penalty=0.2,
@@ -215,7 +215,7 @@ class TestAsyncChatCompletions:
         body = json.loads(request.content)
         
         assert body["temperature"] == 0.7
-        assert body["max_tokens"] == 100
+        assert body["max_completion_tokens"] == 100
         assert body["top_p"] == 0.9
         assert body["frequency_penalty"] == 0.5
         assert body["presence_penalty"] == 0.2
@@ -258,11 +258,11 @@ class TestAsyncChatCompletions:
         assert len(chunks) == 4
         
         # Verify individual chunks
-        assert chunks[0]["choices"][0]["delta"].get("content") == "I am "
-        assert chunks[1]["choices"][0]["delta"].get("content") == "a helpful "
-        assert chunks[2]["choices"][0]["delta"].get("content") == "AI assistant "
-        assert chunks[3]["choices"][0]["delta"].get("content") == "created by Venice AI."
-        assert chunks[3]["choices"][0]["finish_reason"] == "stop"
+        assert chunks[0].choices[0].delta.content == "I am "
+        assert chunks[1].choices[0].delta.content == "a helpful "
+        assert chunks[2].choices[0].delta.content == "AI assistant "
+        assert chunks[3].choices[0].delta.content == "created by Venice AI."
+        assert chunks[3].choices[0].finish_reason == "stop"
         
         # Verify request was made correctly
         request = httpx_mock.get_request()
@@ -550,6 +550,6 @@ class TestAsyncChatCompletions:
             # assert issubclass(w[-1].category, UserWarning)
             # assert "stream_cls is ignored when stream=False" in str(w[-1].message)
 
-        assert isinstance(response, dict) # Should be a normal dict response
-        assert response["id"] == MOCK_COMPLETION_RESPONSE["id"]
+        assert isinstance(response, ChatCompletion)
+        assert response.id == MOCK_COMPLETION_RESPONSE["id"]
         assert not isinstance(response, MyCustomAsyncStream)

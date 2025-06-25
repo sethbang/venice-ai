@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Optional, Dict, Any, Union, Set, cast
+from typing import TYPE_CHECKING, List, Optional, Dict, Any, Union, Set, cast, Coroutine
 import json
 import inspect
 import warnings
@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from ._async_client import AsyncVeniceClient
 
 from .types.models import ModelType, Model, ModelCapabilities
+from typing import Dict, Any
 
 # Try to import tiktoken at module level
 try:
@@ -83,6 +84,34 @@ def import_module_from_path(module_name: str, file_path: str) -> Module:
     return module
 
 # Mock data for models - this would typically come from an API or database
+def normalize_model_capabilities(capabilities: Any) -> Dict[str, Any]:
+    """
+    Normalize capability field names between API (camelCase) and SDK (snake_case).
+    
+    This provides backward compatibility while supporting the new API structure.
+    Adds snake_case aliases for camelCase fields to maintain compatibility with
+    existing code that expects snake_case field names.
+    
+    :param capabilities: The capabilities dictionary from the API response.
+    :type capabilities: Dict[str, Any]
+    :return: Normalized capabilities with both camelCase and snake_case fields.
+    :rtype: Dict[str, Any]
+    """
+    if not isinstance(capabilities, dict):
+        return capabilities
+    
+    normalized = capabilities.copy()
+    
+    # Add snake_case aliases for backward compatibility
+    if 'supportsFunctionCalling' in capabilities:
+        normalized['supports_functions'] = capabilities['supportsFunctionCalling']
+    
+    # Map other camelCase fields to snake_case if needed by legacy code
+    # Note: We keep the original camelCase fields as well
+    
+    return normalized
+
+
 MODELS_DATA = [
     {
         "id": "gpt-4",
@@ -164,8 +193,11 @@ def get_model_capabilities_by_id_or_name_or_slug(identifier: str) -> Optional[Mo
     
     if capabilities_data is None:  # If 'capabilities' key could be absent or its value None
         return None
+    
+    # Normalize the capabilities to ensure backward compatibility
+    normalized_capabilities = normalize_model_capabilities(capabilities_data)
         
-    return cast(ModelCapabilities, capabilities_data)
+    return cast(ModelCapabilities, normalized_capabilities)
 
 def get_models_by_capability(
     models: List[Model],
@@ -173,6 +205,9 @@ def get_models_by_capability(
 ) -> List[Model]:
     """
     Filters a list of models by a specific capability.
+    
+    Supports both camelCase (API format) and snake_case (legacy format) capability names.
+    For example, both "supportsFunctionCalling" and "supports_functions" will work.
 
     :param models: A list of model objects to filter.
     :type models: List[Model]
@@ -181,194 +216,185 @@ def get_models_by_capability(
     :return: A new list of models that have the specified capability.
     :rtype: List[Model]
     """
-    return [
-        model for model in models
-        if model.get("model_spec", {}).get("capabilities", {}).get(capability)
-    ]
+    filtered_models = []
+    for model in models:
+        capabilities = model.get("model_spec", {}).get("capabilities", {})
+        if not isinstance(capabilities, dict):
+            continue
+
+        # Check for both camelCase and snake_case versions of the capability
+        if capabilities.get(capability) or \
+           (capability == "supports_functions" and capabilities.get("supportsFunctionCalling")):
+            filtered_models.append(model)
+            
+    return filtered_models
 
 def get_filtered_models(
     client: Union["VeniceClient", "AsyncVeniceClient"],
     model_type: Optional[ModelType] = None,
-    supports_capabilities: Optional[List[str]] = None,
-    # Add other potential filters here in the future
-):
+    supports_vision: Optional[bool] = None,
+    supports_reasoning: Optional[bool] = None,
+    supports_function_calling: Optional[bool] = None,
+    supports_web_search: Optional[bool] = None,
+    supports_log_probs: Optional[bool] = None,
+    optimized_for_code: Optional[bool] = None,
+    quantization: Optional[str] = None,
+    is_beta: Optional[bool] = None,
+    has_trait: Optional[str] = None,
+    # supports_capabilities: Optional[List[str]] = None, # Legacy: Kept for context, but new filters are preferred
+) -> Union[List[Model], Coroutine[Any, Any, List[Model]]]: # Adjusted return type
     """
-    Retrieves a list of models filtered by type and capabilities.
+    Retrieves a list of models filtered by type and various capabilities.
 
     This function provides a unified interface for filtering models from the Venice.ai API
-    based on model type and required capabilities. It automatically handles both synchronous
-    and asynchronous clients, returning the appropriate response type.
+    based on model type and specific capabilities. It automatically handles both synchronous
+    and asynchronous clients.
 
-    :param client: An instance of ``~venice_ai.VeniceClient`` or ``~venice_ai.AsyncVeniceClient`` used to fetch models.
-    :type client: Union[venice_ai._client.VeniceClient, venice_ai._async_client.AsyncVeniceClient]
-    :param model_type: Optional filter for model type (e.g., ``'text'``, ``'image'``).
-        If ``None``, models of all types are included.
-    :type model_type: Optional[venice_ai.types.models.ModelType]
-    :param supports_capabilities: Optional list of capabilities the model must support
-        (e.g., ``['streaming', 'supports_functions']``). Models must have all specified
-        capabilities set to ``True`` to be included in results.
-    :type supports_capabilities: Optional[List[str]]
-
-    :return: A list of :class:`~venice_ai.types.models.Model` objects that match the specified filters.
-        If the client is synchronous, this is a direct list.
-        If asynchronous, this is an awaitable resolving to the list.
-    :rtype: List[venice_ai.types.models.Model]
-
-    :raises Exception: If there's an error fetching models from the API (returns empty list).
-
-    .. note::
-        When using a synchronous client in an asynchronous context, a deprecation warning
-        will be issued to encourage proper async/await usage.
-
-    Example:
-        >>> # Filter for text models that support streaming
-        >>> filtered_models = get_filtered_models(
-        ...     client=venice_client,
-        ...     model_type="text",
-        ...     supports_capabilities=["streaming"]
-        ... )
+    :param client: An instance of ``~venice_ai.VeniceClient`` or ``~venice_ai.AsyncVeniceClient``.
+    :param model_type: Optional. Filter for model type.
+    :param supports_vision: Optional. Filter by vision support.
+    :param supports_reasoning: Optional. Filter by reasoning support.
+    :param supports_function_calling: Optional. Filter by function calling support.
+    :param supports_web_search: Optional. Filter by web search support.
+    :param supports_log_probs: Optional. Filter by log probability support.
+    :param optimized_for_code: Optional. Filter by code optimization.
+    :param quantization: Optional. Filter by quantization type (e.g., "fp16", "fp8").
+    :param is_beta: Optional. Filter by beta status.
+    :param has_trait: Optional. Filter by a specific model trait.
+    :return: A list of :class:`~venice_ai.types.models.Model` objects that match the filters.
+             If the client is asynchronous, this is an awaitable resolving to the list.
+    :rtype: Union[List[venice_ai.types.models.Model], Coroutine[Any, Any, List[venice_ai.types.models.Model]]]
+    :raises TypeError: If the client type is unsupported.
     """
     from ._client import VeniceClient
     from ._async_client import AsyncVeniceClient
+    from typing import Coroutine # Added for explicit Coroutine type hint
+    from collections.abc import Coroutine # For Python 3.9+ compatibility with typing.Coroutine
     
-    # Check if called with sync client in a sync context
-    frame = inspect.currentframe()
-    if isinstance(client, VeniceClient) and frame and frame.f_back and not inspect.iscoroutinefunction(frame.f_back.f_code):
-        import warnings
-        warnings.warn("Calling an async function without awaiting", DeprecationWarning, stacklevel=2)
-        return _get_filtered_models_sync(client, model_type, supports_capabilities)
-    
-    # For async client or functions called from async context, return a coroutine for proper await
-    return _get_filtered_models_async(client, model_type, supports_capabilities)
+    filter_kwargs = {
+        "model_type": model_type,
+        "supports_vision": supports_vision,
+        "supports_reasoning": supports_reasoning,
+        "supports_function_calling": supports_function_calling,
+        "supports_web_search": supports_web_search,
+        "supports_log_probs": supports_log_probs,
+        "optimized_for_code": optimized_for_code,
+        "quantization": quantization,
+        "is_beta": is_beta,
+        "has_trait": has_trait,
+    }
+
+    if isinstance(client, VeniceClient):
+        # Check if called with sync client in a sync context
+        frame = inspect.currentframe()
+        if frame and frame.f_back and not inspect.iscoroutinefunction(frame.f_back.f_code):
+            # This is a synchronous call with a synchronous client
+            return _get_filtered_models_sync(client, **filter_kwargs)
+        else:
+            # This is a synchronous client called from an async context, which is problematic.
+            # For now, we'll proceed synchronously but issue a warning.
+            # Ideally, the user should use AsyncVeniceClient in async contexts.
+            warnings.warn(
+                "Using a synchronous VeniceClient in an asynchronous context. "
+                "Consider using AsyncVeniceClient for proper asynchronous behavior.",
+                DeprecationWarning,
+                stacklevel=2
+            )
+            return _get_filtered_models_sync(client, **filter_kwargs)
+    elif isinstance(client, AsyncVeniceClient):
+        return _get_filtered_models_async(client, **filter_kwargs)
+    else:
+        raise TypeError("Unsupported client type. Must be VeniceClient or AsyncVeniceClient.")
 
 
 def _get_filtered_models_sync(
     client: "VeniceClient",
-    model_type: Optional[ModelType] = None,
-    supports_capabilities: Optional[List[str]] = None,
+    **filters: Any,
 ) -> List[Model]:
-    """
-    Synchronous implementation of :func:`get_filtered_models`.
-
-    :param client: An instance of ``~venice_ai.VeniceClient``.
-    :type client: venice_ai._client.VeniceClient
-    :param model_type: Optional. Filter for model type.
-    :type model_type: Optional[venice_ai.types.models.ModelType]
-    :param supports_capabilities: Optional. List of required capabilities.
-    :type supports_capabilities: Optional[List[str]]
-    :return: A list of filtered :class:`~venice_ai.types.models.Model` objects.
-    :rtype: List[venice_ai.types.models.Model]
-    """
-    from ._client import VeniceClient
-    
+    """Synchronous implementation of model filtering."""
     try:
-        models_list_response = client.models.list()
+        models_list_response = client.models.list() # type: ignore
         all_models = models_list_response.get("data", []) if models_list_response else []
     except Exception as e:
         print(f"Error fetching models: {e}")
-        return [] # Return empty list on error
+        return []
 
-    # Handle case where data is None
     if all_models is None:
         all_models = []
 
-    filtered_list = []
-    for model_data in all_models:
-        # Get the model capabilities
-        model_spec = model_data.get("model_spec", {})
-        capabilities = model_spec.get("capabilities", {})
-
-        passes_filter = True
-
-        # Filter by model type if specified
-        if model_type is not None and model_data.get("type") != model_type:
-            passes_filter = False
-
-        # Filter by capabilities if specified
-        if passes_filter and supports_capabilities and len(supports_capabilities) > 0:
-            # Check that all required capabilities are present and set to True
-            for capability in supports_capabilities:
-                if not capabilities.get(capability, False):
-                    passes_filter = False
-                    break
-
-        if passes_filter:
-            filtered_list.append(model_data)
-
-    return filtered_list
+    return _apply_model_filters(all_models, **filters)
 
 
 async def _get_filtered_models_async(
-    client: Union["VeniceClient", "AsyncVeniceClient"],
-    model_type: Optional[ModelType] = None,
-    supports_capabilities: Optional[List[str]] = None,
+    client: "AsyncVeniceClient",
+    **filters: Any,
 ) -> List[Model]:
-    """
-    Asynchronous implementation of :func:`get_filtered_models`.
-
-    :param client: An instance of ``~venice_ai.VeniceClient`` or ``~venice_ai.AsyncVeniceClient``.
-    :type client: Union[venice_ai._client.VeniceClient, venice_ai._async_client.AsyncVeniceClient]
-    :param model_type: Optional. Filter for model type.
-    :type model_type: Optional[venice_ai.types.models.ModelType]
-    :param supports_capabilities: Optional. List of required capabilities.
-    :type supports_capabilities: Optional[List[str]]
-    :return: A list of filtered :class:`~venice_ai.types.models.Model` objects.
-    :rtype: List[venice_ai.types.models.Model]
-    """
-    from ._client import VeniceClient
-    from ._async_client import AsyncVeniceClient
-    
+    """Asynchronous implementation of model filtering."""
     try:
-        # First, get all models
-        if isinstance(client, AsyncVeniceClient):
-            try:
-                # Try awaiting, but fallback to direct access for mocks
-                models_list_response = await client.models.list()
-                all_models = models_list_response.get("data", []) if models_list_response else []
-            except (TypeError, RuntimeError) as e:
-                # Handle case where a non-awaitable mock is used in tests
-                if "object dict can't be used in 'await' expression" in str(e) or "asyncio.run() cannot be called" in str(e):
-                    models_list_response = client.models.list()  # type: ignore
-                    all_models = models_list_response.get("data", []) if models_list_response else []  # type: ignore
-                else:
-                    raise
-        else:
-            # Handle sync client
-            models_list_response = client.models.list()
-            all_models = models_list_response.get("data", []) if models_list_response else []
+        models_list_response = await client.models.list() # type: ignore
+        all_models = models_list_response.get("data", []) if models_list_response else []
     except Exception as e:
         print(f"Error fetching models: {e}")
-        return [] # Return empty list on error
+        return []
 
-    # Handle case where data is None
     if all_models is None:
         all_models = []
+        
+    return _apply_model_filters(all_models, **filters)
 
+def _apply_model_filters(
+    models: List[Model],
+    model_type: Optional[ModelType] = None,
+    supports_vision: Optional[bool] = None,
+    supports_reasoning: Optional[bool] = None,
+    supports_function_calling: Optional[bool] = None,
+    supports_web_search: Optional[bool] = None,
+    supports_log_probs: Optional[bool] = None,
+    optimized_for_code: Optional[bool] = None,
+    quantization: Optional[str] = None,
+    is_beta: Optional[bool] = None,
+    has_trait: Optional[str] = None,
+) -> List[Model]:
+    """Helper function to apply filters to a list of models."""
     filtered_list = []
-    for model_data in all_models:
-        # Get the model capabilities
+    for model_data in models:
         model_spec = model_data.get("model_spec", {})
-        capabilities = model_spec.get("capabilities", {})
+        if not isinstance(model_spec, dict): continue
+        
+        # Use the normalize_model_capabilities to handle both camelCase and snake_case
+        capabilities = normalize_model_capabilities(model_spec.get("capabilities", {}))
+        if not isinstance(capabilities, dict): continue
 
         passes_filter = True
 
-        # Filter by model type if specified
         if model_type is not None and model_data.get("type") != model_type:
             passes_filter = False
-
-        # Filter by capabilities if specified
-        if passes_filter and supports_capabilities and len(supports_capabilities) > 0:
-            # Check that all required capabilities are present and set to True
-            for capability in supports_capabilities:
-                if not capabilities.get(capability, False):
-                    passes_filter = False
-                    break
-
-        # Add other filter checks here if needed
-
+        if passes_filter and supports_vision is not None and capabilities.get('supportsVision') != supports_vision:
+            passes_filter = False
+        if passes_filter and supports_reasoning is not None and capabilities.get('supportsReasoning') != supports_reasoning:
+            passes_filter = False
+        if passes_filter and supports_function_calling is not None:
+            # Check both new API name and legacy SDK name
+            api_match = capabilities.get('supportsFunctionCalling') == supports_function_calling
+            legacy_match = capabilities.get('supports_functions') == supports_function_calling
+            if not (api_match or legacy_match):
+                 passes_filter = False
+        if passes_filter and supports_web_search is not None and capabilities.get('supportsWebSearch') != supports_web_search:
+            passes_filter = False
+        if passes_filter and supports_log_probs is not None and capabilities.get('supportsLogProbs') != supports_log_probs:
+            passes_filter = False
+        if passes_filter and optimized_for_code is not None and capabilities.get('optimizedForCode') != optimized_for_code:
+            passes_filter = False
+        if passes_filter and quantization is not None and capabilities.get('quantization') != quantization:
+            passes_filter = False
+        if passes_filter and is_beta is not None and model_spec.get('beta', False) != is_beta: # Check beta from model_spec
+            passes_filter = False
+        if passes_filter and has_trait is not None and has_trait not in model_spec.get('traits', []): # Check traits from model_spec
+            passes_filter = False
+            
         if passes_filter:
             filtered_list.append(model_data)
-
+            
     return filtered_list
 
 def estimate_token_count(text: str, model_id: Optional[str] = None) -> int:
@@ -444,11 +470,7 @@ def estimate_token_count(text: str, model_id: Optional[str] = None) -> int:
             warnings.warn(f"Warning: unexpected error with tiktoken: {e}. Using a simple character-based heuristic for token estimation.", UserWarning)
             return fallback_estimation(text_str, original_is_string, original_is_numeric)
     else:
-        warnings.warn(
-            "tiktoken library not found or unavailable. "
-            "Using a simple character-based heuristic for token estimation.",
-            UserWarning
-        )
+        warnings.warn("tiktoken library not found", UserWarning)
         return fallback_estimation(text_str, original_is_string, original_is_numeric)
 
 def validate_chat_messages(

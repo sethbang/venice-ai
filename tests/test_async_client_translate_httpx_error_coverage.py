@@ -12,6 +12,7 @@ from venice_ai.exceptions import (
     InvalidRequestError,
     NotFoundError,
     ConflictError,
+ServiceUnavailableError,
     UnprocessableEntityError,
     RateLimitError,
     InternalServerError,
@@ -38,7 +39,7 @@ class TestAsyncTranslateHttpxErrorToApiErrorComprehensive:
             (429, RateLimitError),
             (500, InternalServerError),
             (502, InternalServerError),
-            (503, InternalServerError),
+            (503, ServiceUnavailableError),
             (504, InternalServerError),
             (418, APIError),  # Testing a non-standard status code
         ]

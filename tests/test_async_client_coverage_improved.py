@@ -655,6 +655,7 @@ class TestAsyncClientStreamRequestHeaderHandling:
             
             # Setup stream context manager
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.status_code = 200
             mock_response.headers = {}
             mock_response.raise_for_status = Mock()
             
@@ -704,6 +705,7 @@ class TestAsyncClientStreamRequestHeaderHandling:
             
             # Setup stream context manager
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.status_code = 200
             mock_response.headers = {}
             mock_response.raise_for_status = Mock()
             
@@ -757,6 +759,7 @@ class TestAsyncClientStreamRequestExceptionHandling:
             
             # Setup stream context manager with failing aiter_lines
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.status_code = 200
             mock_response.headers = {}
             mock_response.raise_for_status = Mock()
             
@@ -841,6 +844,7 @@ class TestAsyncClientStreamRequestRawHeaderHandling:
             
             # Setup stream context manager
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.status_code = 200
             mock_response.headers = {}
             mock_response.raise_for_status = Mock()
             
@@ -890,6 +894,7 @@ class TestAsyncClientStreamRequestRawHeaderHandling:
             
             # Setup stream context manager
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.status_code = 200
             mock_response.headers = {}
             mock_response.raise_for_status = Mock()
             
@@ -942,6 +947,7 @@ class TestAsyncClientStreamRequestRawExceptionHandling:
             
             # Setup stream context manager with failing aiter_bytes
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.status_code = 200
             mock_response.headers = {}
             mock_response.raise_for_status = Mock()
             

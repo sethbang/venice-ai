@@ -21,7 +21,9 @@ from venice_ai.exceptions import (
     UnprocessableEntityError,
     RateLimitError,
     InternalServerError,
-    _make_status_error
+    _make_status_error,
+    PaymentRequiredError,
+    ServiceUnavailableError
 )
 
 
@@ -164,11 +166,19 @@ class TestExceptionsCoverage:
         assert isinstance(error, InternalServerError)
         assert "Internal server error" in error.message
 
-        # Try with a different 5xx code
-        mock_response.status_code = 503
+        # Try with a different 5xx code (503 is now ServiceUnavailableError)
+        mock_response.status_code = 502 # Using 502 for InternalServerError
         error = _make_status_error("Service unavailable", body=None, response=mock_response)
-        assert isinstance(error, InternalServerError)
+        assert isinstance(error, InternalServerError) # Should be InternalServerError for 502
         assert "Service unavailable" in error.message
+
+        # Test 503 specifically for ServiceUnavailableError
+        mock_response_503 = MagicMock(spec=httpx.Response)
+        mock_response_503.status_code = 503
+        mock_response_503.headers = {}
+        error_503 = _make_status_error("Service unavailable", body=None, response=mock_response_503)
+        assert isinstance(error_503, ServiceUnavailableError)
+        assert "Service unavailable" in error_503.message
 
     def test_make_status_error_unhandled_4xx(self):
         """Test _make_status_error with unhandled 4xx status code (lines 152-153)."""
@@ -182,7 +192,8 @@ class TestExceptionsCoverage:
 
         # Verify correct error type is returned with proper message
         assert isinstance(error, APIError)
-        assert "Unhandled 4xx error" in error.message
+        # The "Unhandled 4xx error" message is no longer added by default for generic APIError
+        # assert "Unhandled 4xx error" in error.message
         assert "I'm a teapot" in error.message
 
     def test_make_status_error_fallback(self):

@@ -5,7 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2025-01-22
+## [1.3.0] - 2025-06-24
+
+### Added
+
+#### **🚨 Enhanced Exception Handling**
+
+- **New exception classes** for better error handling:
+  - [`PaymentRequiredError`](src/venice_ai/exceptions.py) (HTTP 402) - Raised when payment is required to access the service
+  - [`ServiceUnavailableError`](src/venice_ai/exceptions.py) (HTTP 503) - Raised when the service is temporarily unavailable
+- **Improved error mapping** in [`_make_status_error()`](src/venice_ai/exceptions.py) function for more specific exception types
+
+#### **🔧 Embeddings API Enhancements**
+
+- **Input validation** for embeddings API:
+  - Maximum array length validation (2048 items limit)
+  - Raises `InvalidRequestError` with descriptive message when limit is exceeded
+- **Base64 encoding support**:
+  - Embedding responses can now return base64-encoded strings in addition to float arrays
+  - Support for `encoding_format` parameter with values "float" or "base64"
+- **OpenAI compatibility improvements**:
+  - `user` parameter now accepted (though discarded by Venice API) for better OpenAI client compatibility
+  - Enhanced documentation clarifying parameter behavior
+
+#### **🎯 Model Capabilities Expansion**
+
+- **New model capabilities** in [`ModelCapabilities`](src/venice_ai/types/models.py):
+  - `supportsVision` - Indicates if model supports image inputs
+  - `supportsReasoning` - Indicates if model has reasoning capabilities
+  - `quantization` - Specifies model quantization type (e.g., "fp16", "int8")
+- **Beta field support** in [`ModelSpec`](src/venice_ai/types/models.py) for identifying beta models
+- **Enhanced model filtering** in [`get_filtered_models()`](src/venice_ai/utils.py):
+  - New capability-based filtering parameters
+  - Deprecated `supports_capabilities` parameter in favor of specific capability flags
+
+#### **📚 Documentation & Analysis**
+
+- **Comprehensive documentation files**:
+  - `embeddings_api_alignment_summary.md` - Details embeddings API alignment with OpenAI
+  - `model_improvements_summary.md` - Recommendations for Model class enhancements
+  - `model_class_analysis.md` - In-depth analysis of Model class structure
+  - `model_class_fixes_summary.md` - Summary of Model class fixes
+- **New test suite** [`tests/test_embeddings_api_alignment.py`](tests/test_embeddings_api_alignment.py) with 28 new tests for embeddings API
+
+#### **💻 Developer Resources**
+
+- Added [`recommended_model_updates.py`](recommended_model_updates.py) providing example utility classes (e.g., `ModelWrapper`, `ModelSelector`) for advanced model interaction and management.
+
+### Changed
+
+- **Test Suites**: Updated 13 test files to align with new exception handling and model capabilities.
+- **E2E Tests**: Enhanced `e2e_tests/test_01_models.py` to verify new model fields and capabilities.
+
+### Fixed
+
+- Corrected various tests to handle new exception types and model filtering logic.
+- Enhanced client-side robustness in stream handling, pricing information retrieval, and cost calculations.
+
+## [1.2.0] - 2025-06-22
 
 ### Added
 

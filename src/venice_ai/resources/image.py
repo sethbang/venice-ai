@@ -223,13 +223,13 @@ class Image(APIResource):
         if return_binary:
             headers = {"Accept": "image/*"}
             response = self._client._request(
-                "POST",
-                "image/generate",
+                method="POST",
+                path="image/generate",
                 json_data=body,
                 headers=headers,
-                raw_response=True  # This is a hypothetical parameter that would need to be implemented
+                raw_response=True
             )
-            return cast(bytes, response)  # This would be the raw bytes
+            return cast(bytes, response)
         else:
             response = self._client.post("image/generate", json_data=body, cast_to=ImageResponse)
             return cast(ImageResponse, response)
@@ -681,13 +681,13 @@ class AsyncImage(AsyncAPIResource):
         if return_binary:
             headers = {"Accept": "image/*"}
             response = await self._client._request(
-                "POST",
-                "image/generate",
+                method="POST",
+                path="image/generate",
                 json_data=body,
                 headers=headers,
-                raw_response=True  # This is a hypothetical parameter that would need to be implemented
+                raw_response=True
             )
-            return cast(bytes, response)  # This would be the raw bytes
+            return cast(bytes, response)
         else:
             response = await self._client.post("image/generate", json_data=body, cast_to=ImageResponse)
             return cast(ImageResponse, response)

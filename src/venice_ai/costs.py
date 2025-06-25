@@ -59,28 +59,33 @@ def calculate_completion_cost(
     
     # Handle new pricing structure first
     if 'input' in model_pricing and 'output' in model_pricing:
-        input_pricing = model_pricing['input']
-        output_pricing = model_pricing['output']
+        input_pricing = model_pricing.get('input', {})
+        output_pricing = model_pricing.get('output', {})
         
         # Check if new pricing has non-zero values
         has_new_pricing = False
         
-        if 'usd' in input_pricing and input_pricing['usd'] > 0:
-            # Assuming input_pricing['usd'] is cost PER MILLION TOKENS
-            usd_cost += (prompt_tokens / 1_000_000) * input_pricing['usd']
+        input_usd_cost = input_pricing.get('usd', 0.0)
+        input_vcu_cost = input_pricing.get('vcu', 0.0)
+        output_usd_cost = output_pricing.get('usd', 0.0)
+        output_vcu_cost = output_pricing.get('vcu', 0.0)
+
+        if input_usd_cost > 0:
+            # Assuming input_usd_cost is cost PER MILLION TOKENS
+            usd_cost += (prompt_tokens / 1_000_000) * input_usd_cost
             has_new_pricing = True
-        if 'vcu' in input_pricing and input_pricing['vcu'] > 0:
-            # Assuming input_pricing['vcu'] is cost PER MILLION TOKENS
-            vcu_cost += (prompt_tokens / 1_000_000) * input_pricing['vcu']
+        if input_vcu_cost > 0:
+            # Assuming input_vcu_cost is cost PER MILLION TOKENS
+            vcu_cost += (prompt_tokens / 1_000_000) * input_vcu_cost
             has_new_pricing = True
         
-        if 'usd' in output_pricing and output_pricing['usd'] > 0:
-            # Assuming output_pricing['usd'] is cost PER MILLION TOKENS
-            usd_cost += (completion_tokens / 1_000_000) * output_pricing['usd']
+        if output_usd_cost > 0:
+            # Assuming output_usd_cost is cost PER MILLION TOKENS
+            usd_cost += (completion_tokens / 1_000_000) * output_usd_cost
             has_new_pricing = True
-        if 'vcu' in output_pricing and output_pricing['vcu'] > 0:
-            # Assuming output_pricing['vcu'] is cost PER MILLION TOKENS
-            vcu_cost += (completion_tokens / 1_000_000) * output_pricing['vcu']
+        if output_vcu_cost > 0:
+            # Assuming output_vcu_cost is cost PER MILLION TOKENS
+            vcu_cost += (completion_tokens / 1_000_000) * output_vcu_cost
             has_new_pricing = True
         
         # If new pricing structure has all zero values, fall back to legacy

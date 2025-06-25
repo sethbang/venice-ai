@@ -93,56 +93,84 @@ class ModelPricing(ModernPricing, total=False):
     input_cost_per_second: float
     output_cost_per_second: float
 
-class ModelCapabilities(TypedDict):
+class ModelCapabilities(TypedDict, total=False):
     """Defines the functional capabilities and limitations of an AI model.
     
-    Specifies what features a model supports, such as streaming responses,
-    asynchronous operations, token limits, and function calling. Used within
-    the :class:`Model` class to describe model features.
+    Specifies what features a model supports, including code optimization,
+    quantization method, reasoning, vision, and various other capabilities.
+    Uses camelCase field names to match the API response format.
     
-    :param streaming: Indicates if the model supports streaming responses.
+    :param optimizedForCode: Indicates if the model is optimized for code generation.
+    :type optimizedForCode: bool
+    :param quantization: The quantization method used (e.g., "fp16", "fp8").
+    :type quantization: str
+    :param supportsFunctionCalling: Indicates if the model supports function calling.
+    :type supportsFunctionCalling: bool
+    :param supportsReasoning: Indicates if the model supports reasoning capabilities.
+    :type supportsReasoning: bool
+    :param supportsResponseSchema: Indicates if the model supports structured response schemas.
+    :type supportsResponseSchema: bool
+    :param supportsVision: Indicates if the model supports vision/image understanding.
+    :type supportsVision: bool
+    :param supportsWebSearch: Indicates if the model supports web search integration.
+    :type supportsWebSearch: bool
+    :param supportsLogProbs: Indicates if the model supports log probability output.
+    :type supportsLogProbs: bool
+    :param streaming: Legacy field - Indicates if the model supports streaming responses.
     :type streaming: bool
-    :param async_: Indicates if the model supports asynchronous operations.
-        Note: Field name is ``async_`` due to ``async`` being a Python keyword.
+    :param async_: Legacy field - Indicates if the model supports asynchronous operations.
     :type async_: bool
-    :param max_tokens: Maximum number of tokens the model can process in a single request.
+    :param max_tokens: Legacy field - Maximum number of tokens the model can process.
     :type max_tokens: int
-    :param supports_functions: Indicates if the model supports function calling.
+    :param supports_functions: Legacy field - Use supportsFunctionCalling instead.
     :type supports_functions: bool
     """
+    # Current API fields (camelCase as returned by API)
+    optimizedForCode: bool
+    quantization: str
+    supportsFunctionCalling: bool
+    supportsReasoning: bool
+    supportsResponseSchema: bool
+    supportsVision: bool
+    supportsWebSearch: bool
+    supportsLogProbs: bool
+    
+    # Legacy fields for backward compatibility
     streaming: bool
     async_: bool  # Field name is async_ due to async being a keyword
     max_tokens: int
-    supports_functions: bool
+    supports_functions: bool  # Deprecated, use supportsFunctionCalling
 
-class ModelConstraintsTemperature(TypedDict):
+class ModelConstraintsTemperature(TypedDict, total=False):
     """Defines valid range and default value for the temperature parameter.
     
     Specifies the constraints for the temperature parameter that controls
     randomness in model outputs. Used within :class:`ModelConstraints`.
+    Note: The API may only return 'default' without min/max values.
     
-    :param default: Default temperature value.
+    :param default: Default temperature value (always present).
     :type default: float
-    :param min: Minimum allowed temperature value.
+    :param min: Minimum allowed temperature value (optional).
     :type min: float
-    :param max: Maximum allowed temperature value.
+    :param max: Maximum allowed temperature value (optional).
     :type max: float
     """
     default: float
     min: float
     max: float
 
-class ModelConstraintsTopP(TypedDict):
+class ModelConstraintsTopP(TypedDict, total=False):
     """Defines valid range and default value for the top_p parameter.
     
     Specifies the constraints for the top_p parameter that controls nucleus
     sampling in model outputs. Used within :class:`ModelConstraints`.
+    Note: The API may only return 'default' without min/max values.
     
-    :param default: Default top_p value.
+    :param default: Default top_p value (always present).
     :type default: float
-    :param min: Minimum allowed top_p value.
+    :param min: Minimum allowed top_p value (optional).
     :type min: float
-    :param max: Maximum allowed top_p value.
+    :param max: Maximum allowed top_p value (optional).
     :type max: float
     """
     default: float
@@ -164,7 +192,7 @@ class ModelConstraints(TypedDict):
     temperature: ModelConstraintsTemperature
     top_p: ModelConstraintsTopP
 
-class ModelSpec(TypedDict):
+class ModelSpec(TypedDict, total=False):
     """Defines the specifications for a model including pricing and capabilities.
     
     Contains detailed information about a model's pricing structure, capabilities,
@@ -176,7 +204,7 @@ class ModelSpec(TypedDict):
     :param availableContextTokens: Maximum context window size in tokens.
     :type availableContextTokens: int
     :param capabilities: Model capabilities and feature support.
-    :type capabilities: Dict[str, Any]
+    :type capabilities: ModelCapabilities
     :param constraints: Parameter constraints for the model.
     :type constraints: ModelConstraints
     :param name: Human-readable name of the model.
@@ -187,15 +215,18 @@ class ModelSpec(TypedDict):
     :type offline: bool
     :param traits: List of model traits (e.g., "default", "fastest").
     :type traits: List[str]
+    :param beta: Indicates if this is a beta model (optional).
+    :type beta: bool
     """
     pricing: ModelPricing
     availableContextTokens: int
-    capabilities: Dict[str, Any]
+    capabilities: ModelCapabilities  # Changed from Dict[str, Any] to use proper type
     constraints: ModelConstraints
     name: str
     modelSource: str
     offline: bool
     traits: List[str]
+    beta: bool  # New optional field for beta models
 
 class Model(TypedDict):
     """Represents a single AI model available through the Venice.ai API.

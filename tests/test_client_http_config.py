@@ -12,6 +12,7 @@ from venice_ai.exceptions import (
     APIConnectionError,
     APIError,
     InternalServerError,
+ServiceUnavailableError,
     InvalidRequestError
 )
 from venice_ai.utils import NOT_GIVEN
@@ -697,8 +698,8 @@ class TestSyncClientRetryFunctionality:
             max_retries=1  # Only 1 retry allowed - explicitly enable retries for this test
         )
         
-        # Should raise InternalServerError after exhausting retries
-        with pytest.raises(InternalServerError):
+        # Should raise ServiceUnavailableError after exhausting retries
+        with pytest.raises(ServiceUnavailableError):
             client.models.list()
         
         # Verify transport was called max_retries + 1 times (original + retries)
@@ -924,8 +925,8 @@ class TestAsyncClientRetryFunctionality:
             max_retries=1  # Only 1 retry allowed - explicitly enable retries for this test
         )
         
-        # Should raise InternalServerError after exhausting retries
-        with pytest.raises(InternalServerError):
+        # Should raise ServiceUnavailableError after exhausting retries
+        with pytest.raises(ServiceUnavailableError):
             await async_client.models.list()
         
         # Verify async transport was called max_retries + 1 times (original + retries)

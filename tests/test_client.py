@@ -468,8 +468,8 @@ class TestVeniceClient:
             mock_httpx_client.return_value.request.return_value = mock_response
             
             client = VeniceClient(api_key="test-api-key")
-            from venice_ai.exceptions import InternalServerError
-            with pytest.raises(InternalServerError) as exc_info:
+            from venice_ai.exceptions import ServiceUnavailableError
+            with pytest.raises(ServiceUnavailableError) as exc_info:
                 client._request("GET", "models")
             
             error = exc_info.value
@@ -604,8 +604,8 @@ class TestVeniceClient:
             client = VeniceClient(api_key="test-api-key")
             chunks = list(client._stream_request("POST", "chat/completions", json_data={"model": "venice-1"}))
             assert len(chunks) == 2
-            assert chunks[0]["choices"][0]["delta"].get("content", "") == "chunk1"
-            assert chunks[1]["choices"][0]["delta"].get("content", "") == "chunk2"
+            assert chunks[0].choices[0].delta.content == "chunk1"
+            assert chunks[1].choices[0].delta.content == "chunk2"
 
     def test_stream_request_empty_lines(self):
         with patch('httpx.Client') as mock_httpx_client:
@@ -619,7 +619,7 @@ class TestVeniceClient:
             client = VeniceClient(api_key="test-api-key")
             chunks = list(client._stream_request("POST", "chat/completions", json_data={"model": "venice-1"}))
             assert len(chunks) == 1
-            assert chunks[0]["choices"][0]["delta"].get("content", "") == "chunk1"
+            assert chunks[0].choices[0].delta.content == "chunk1"
 
     def test_stream_request_json_decode_error(self):
         with patch('httpx.Client') as mock_httpx_client:
@@ -635,7 +635,7 @@ class TestVeniceClient:
                 client = VeniceClient(api_key="test-api-key")
                 chunks = list(client._stream_request("POST", "chat/completions", json_data={"model": "venice-1"}))
                 assert len(chunks) == 1
-                assert chunks[0]["choices"][0]["delta"].get("content", "") == "chunk1"
+                assert chunks[0].choices[0].delta.content or "" == "chunk1"
                 # Check if the expected error message was logged
                 mock_logger.error.assert_any_call(
                     "Failed to parse JSON in streaming response: Expecting value: line 1 column 1 (char 0)"
@@ -993,10 +993,10 @@ class TestVeniceClient:
             chunks = list(client._stream_request("POST", "chat/completions", json_data={"model": "venice-1"}))
             
             assert len(chunks) == 3
-            assert chunks[0]["id"] == "chunk-1"
-            assert chunks[0]["choices"][0]["delta"].get("content") == "Hello"
-            assert chunks[1]["choices"][0]["delta"].get("content") == " world"
-            assert chunks[2]["choices"][0]["delta"].get("content") == "!"
+            assert chunks[0].id == "chunk-1"
+            assert chunks[0].choices[0].delta.content == "Hello"
+            assert chunks[1].choices[0].delta.content == " world"
+            assert chunks[2].choices[0].delta.content == "!"
 
     def test_stream_request_with_custom_headers_and_params(self):
         """Test _stream_request with custom headers and parameters."""
@@ -1047,7 +1047,7 @@ class TestVeniceClient:
             chunks = list(client._stream_request("POST", "chat/completions"))
             
             assert len(chunks) == 1
-            assert chunks[0]["choices"][0]["delta"].get("content") == "byte test"
+            assert chunks[0].choices[0].delta.content == "byte test"
 
     def test_stream_request_skips_non_data_lines(self):
         """Test _stream_request skips lines that don't start with 'data: '."""
@@ -1070,7 +1070,7 @@ class TestVeniceClient:
             chunks = list(client._stream_request("POST", "chat/completions"))
             
             assert len(chunks) == 1
-            assert chunks[0]["choices"][0]["delta"].get("content") == "valid"
+            assert chunks[0].choices[0].delta.content == "valid"
 
     def test_stream_request_handles_malformed_json_gracefully(self):
         """Test _stream_request continues processing after encountering malformed JSON."""
@@ -1093,8 +1093,8 @@ class TestVeniceClient:
                 chunks = list(client._stream_request("POST", "chat/completions"))
                 
                 assert len(chunks) == 2
-                assert chunks[0]["choices"][0]["delta"].get("content") == "first"
-                assert chunks[1]["choices"][0]["delta"].get("content") == "second"
+                assert chunks[0].choices[0].delta.content == "first"
+                assert chunks[1].choices[0].delta.content == "second"
                 # Verify error was logged
                 mock_logger.error.assert_called()
 
@@ -1184,7 +1184,7 @@ class TestVeniceClient:
             iterator = client._stream_request("POST", "chat/completions")
             # First chunk should work
             first_chunk = next(iterator)
-            assert first_chunk["choices"][0]["delta"].get("content") == "first"
+            assert first_chunk.choices[0].delta.content == "first"
             
             # Second iteration should raise APIConnectionError
             with pytest.raises(APIConnectionError) as exc_info:
@@ -1218,7 +1218,7 @@ class TestVeniceClient:
             iterator = client._stream_request("POST", "chat/completions")
             # First chunk should work
             first_chunk = next(iterator)
-            assert first_chunk["choices"][0]["delta"].get("content") == "first"
+            assert first_chunk.choices[0].delta.content == "first"
             
             # Second iteration should raise APIError
             with pytest.raises(APIError) as exc_info:
@@ -1249,7 +1249,7 @@ class TestVeniceClient:
             iterator = client._stream_request("POST", "chat/completions")
             # First chunk should work
             first_chunk = next(iterator)
-            assert first_chunk["choices"][0]["delta"].get("content") == "first"
+            assert first_chunk.choices[0].delta.content == "first"
             
             # Second iteration should raise APIError
             with pytest.raises(APIError) as exc_info:
@@ -1772,8 +1772,8 @@ class TestVeniceClient:
             
             result = client._translate_httpx_error_to_api_error(http_error, mock_request)
             
-            from venice_ai.exceptions import InternalServerError
-            assert isinstance(result, InternalServerError)
+            from venice_ai.exceptions import ServiceUnavailableError
+            assert isinstance(result, ServiceUnavailableError)
             assert result.status_code == 503
 
     def test_translate_httpx_timeout_exception(self):

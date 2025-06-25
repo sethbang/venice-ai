@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 from venice_ai.exceptions import (
     VeniceError, APIError, AuthenticationError, PermissionDeniedError,
     InvalidRequestError, NotFoundError, ConflictError, UnprocessableEntityError,
-    RateLimitError, InternalServerError, _make_status_error
+    RateLimitError, InternalServerError, _make_status_error, PaymentRequiredError, ServiceUnavailableError
 )
 
 
@@ -167,7 +167,7 @@ class TestMakeStatusErrorStatusCodes:
     def test_make_status_error_internal_server_error_5xx(self):
         """Test status codes 500+ returning InternalServerError."""
         # Test multiple 5xx status codes
-        for status_code in [500, 502, 503, 504]:
+        for status_code in [500, 502, 504]:
             mock_response = MagicMock(spec=httpx.Response)
             mock_response.status_code = status_code
             mock_response.headers = {}
@@ -180,7 +180,7 @@ class TestMakeStatusErrorStatusCodes:
     def test_make_status_error_other_4xx(self):
         """Test other 4xx codes returning generic APIError."""
         # Test some unhandled 4xx status codes
-        for status_code in [402, 405, 418, 451]:
+        for status_code in [405, 418, 451]:
             mock_response = MagicMock(spec=httpx.Response)
             mock_response.status_code = status_code
             mock_response.headers = {}
@@ -190,9 +190,9 @@ class TestMakeStatusErrorStatusCodes:
             assert isinstance(error, APIError)
             assert not isinstance(error, (
                 InvalidRequestError, AuthenticationError, PermissionDeniedError,
-                NotFoundError, ConflictError, UnprocessableEntityError, RateLimitError
+                NotFoundError, ConflictError, UnprocessableEntityError, RateLimitError,
+                PaymentRequiredError
             ))
-            assert "Unhandled 4xx error" in error.message
     
     def test_make_status_error_unexpected_status(self):
         """Test any other status code returning generic APIError."""
@@ -263,7 +263,7 @@ from unittest.mock import MagicMock, patch
 from venice_ai.exceptions import (
     VeniceError, APIError, AuthenticationError, PermissionDeniedError,
     InvalidRequestError, NotFoundError, ConflictError, UnprocessableEntityError,
-    RateLimitError, InternalServerError, _make_status_error
+    RateLimitError, InternalServerError, _make_status_error, PaymentRequiredError, ServiceUnavailableError
 )
 
 class TestVeniceError:
@@ -301,6 +301,7 @@ class TestMakeStatusError:
     @pytest.mark.parametrize("status_code,error_class", [
         (400, InvalidRequestError),
         (401, AuthenticationError),
+        (402, PaymentRequiredError),
         (403, PermissionDeniedError),
         (404, NotFoundError),
         (409, ConflictError),
@@ -309,7 +310,7 @@ class TestMakeStatusError:
         (422, UnprocessableEntityError),
         (429, RateLimitError),
         (500, InternalServerError),
-        (503, InternalServerError),
+        (503, ServiceUnavailableError),
         (450, APIError),  # Unhandled 4xx
         (550, InternalServerError),  # Unhandled 5xx
     ])
@@ -385,8 +386,7 @@ class TestMakeStatusError:
         error = _make_status_error(None, body=None, response=mock_response)
         
         assert isinstance(error, APIError)
-        assert not isinstance(error, (InvalidRequestError, AuthenticationError, PermissionDeniedError, NotFoundError, ConflictError, UnprocessableEntityError, RateLimitError))
-        assert "Unhandled 4xx error" in str(error)
+        assert not isinstance(error, (InvalidRequestError, AuthenticationError, PermissionDeniedError, NotFoundError, ConflictError, UnprocessableEntityError, RateLimitError, PaymentRequiredError))
         assert "HTTP Status 418" in str(error)
         assert error.status_code == 418
 

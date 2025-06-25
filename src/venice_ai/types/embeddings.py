@@ -50,13 +50,13 @@ class Embedding(TypedDict):
     contains the actual numerical vector that can be used for similarity calculations.
     
     Attributes:
-        embedding: Embedding vector as a list of floats.
+        embedding: Embedding vector as a list of floats or base64-encoded string.
         index: Index of this embedding in the list.
         object: Type of the object, always "embedding".
     """
     
-    embedding: List[float]
-    """The embedding vector, which is a list of floats. The length of vector depends on the model used."""
+    embedding: Union[List[float], str]
+    """The embedding vector, which is a list of floats or a base64-encoded string (when encoding_format="base64"). The length of vector depends on the model used."""
     index: int
     """The index of the embedding in the list of embeddings."""
     object: Literal["embedding"]

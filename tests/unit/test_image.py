@@ -6,6 +6,7 @@ from pathlib import Path
 from venice_ai.resources.image import Image, AsyncImage, _guess_image_type
 from venice_ai._client import VeniceClient
 from venice_ai._async_client import AsyncVeniceClient
+from venice_ai.types.image import ImageResponse, SimpleImageResponse
 
 class TestImage:
     @pytest.fixture
@@ -29,7 +30,8 @@ class TestImage:
             json_data={
                 "model": model,
                 "prompt": prompt,
-            }
+            },
+            cast_to=ImageResponse
         )
         mock_client._request.assert_not_called() # Ensure _request is not called for non-binary
 
@@ -88,7 +90,8 @@ class TestImage:
                 "steps": steps,
                 "style_preset": style_preset,
                 "width": width,
-            }
+            },
+            cast_to=ImageResponse
         )
         mock_client._request.assert_not_called()
 
@@ -103,8 +106,8 @@ class TestImage:
         result = image_resource.generate(model=model, prompt=prompt, return_binary=return_binary)
 
         mock_client._request.assert_called_once_with(
-            "POST",
-            "image/generate",
+            method="POST",
+            path="image/generate",
             json_data={
                 "model": model,
                 "prompt": prompt,
@@ -129,7 +132,8 @@ class TestImage:
             json_data={
                 "model": model,
                 "prompt": prompt,
-            }
+            },
+            cast_to=SimpleImageResponse
         )
 
     def test_simple_generate_with_all_optional_params(self, mock_client):
@@ -178,7 +182,8 @@ class TestImage:
                 "size": size,
                 "style": style,
                 "user": user,
-            }
+            },
+            cast_to=SimpleImageResponse
         )
 
     @patch("venice_ai.resources.image.base64.b64encode")
@@ -215,8 +220,8 @@ class TestImage:
         result = image_resource.upscale(image=image_bytes)
 
         mock_client._request.assert_called_once_with(
-            "POST",
-            "image/upscale",
+            method="POST",
+            path="image/upscale",
             json_data={"image": "base64encodedimage", "scale": 2.0},
             headers={"Accept": "application/json"},
             raw_response=True,
@@ -236,8 +241,8 @@ class TestImage:
         result = image_resource.upscale(image=file_obj)
 
         mock_client._request.assert_called_once_with(
-            "POST",
-            "image/upscale",
+            method="POST",
+            path="image/upscale",
             json_data={"image": "base64encodedimage", "scale": 2.0},
             headers={"Accept": "application/json"},
             raw_response=True,
@@ -270,8 +275,8 @@ class TestImage:
         )
 
         mock_client._request.assert_called_once_with(
-            "POST",
-            "image/upscale",
+            method="POST",
+            path="image/upscale",
             json_data={
                 "image": "base64encodedimage",
                 "enhance": True, # True is passed as a boolean
@@ -318,7 +323,8 @@ class TestAsyncImage:
             json_data={
                 "model": model,
                 "prompt": prompt,
-            }
+            },
+            cast_to=ImageResponse
         )
         mock_async_client._request.assert_not_called() # Ensure _request is not called for non-binary
 
@@ -378,7 +384,8 @@ class TestAsyncImage:
                 "steps": steps,
                 "style_preset": style_preset,
                 "width": width,
-            }
+            },
+            cast_to=ImageResponse
         )
         mock_async_client._request.assert_not_called()
 
@@ -394,8 +401,8 @@ class TestAsyncImage:
         result = await image_resource.generate(model=model, prompt=prompt, return_binary=return_binary)
 
         mock_async_client._request.assert_awaited_once_with(
-            "POST",
-            "image/generate",
+            method="POST",
+            path="image/generate",
             json_data={
                 "model": model,
                 "prompt": prompt,
@@ -421,7 +428,8 @@ class TestAsyncImage:
             json_data={
                 "model": model,
                 "prompt": prompt,
-            }
+            },
+            cast_to=SimpleImageResponse
         )
 
     @pytest.mark.asyncio
@@ -471,7 +479,8 @@ class TestAsyncImage:
                 "size": size,
                 "style": style,
                 "user": user,
-            }
+            },
+            cast_to=SimpleImageResponse
         )
 
     @pytest.mark.asyncio
@@ -510,8 +519,8 @@ class TestAsyncImage:
         result = await image_resource.upscale(image=image_bytes)
 
         mock_async_client._request.assert_awaited_once_with(
-            "POST",
-            "image/upscale",
+            method="POST",
+            path="image/upscale",
             json_data={"image": "base64encodedimageasync", "scale": 2.0},
             headers={"Accept": "application/json"},
             raw_response=True,
@@ -532,8 +541,8 @@ class TestAsyncImage:
         result = await image_resource.upscale(image=file_obj)
 
         mock_async_client._request.assert_awaited_once_with(
-            "POST",
-            "image/upscale",
+            method="POST",
+            path="image/upscale",
             json_data={"image": "base64encodedimageasync", "scale": 2.0},
             headers={"Accept": "application/json"},
             raw_response=True,
@@ -567,8 +576,8 @@ class TestAsyncImage:
         )
 
         mock_async_client._request.assert_awaited_once_with(
-            "POST",
-            "image/upscale",
+            method="POST",
+            path="image/upscale",
             json_data={
                 "image": "base64encodedimageasync",
                 "enhance": False, # False is passed as a boolean

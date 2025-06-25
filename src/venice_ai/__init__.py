@@ -46,4 +46,4 @@ __all__ = [
     "estimate_completion_cost",
 ]
 
-__version__ = "1.2.0" # Keep in sync with pyproject.toml
+__version__ = "1.3.0" # Keep in sync with pyproject.toml

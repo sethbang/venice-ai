@@ -90,8 +90,11 @@ class TestChatCompletionsSyncMissedLines:
         Test Case 1.3: Cover lines 286, 295 (false), 300, 303, 310 (path where stream_cls is a class but not a Stream subclass).
         Lines to cover: 286, 300, 303, 310
         """
-        # Setup: Use dict as a class that's not a Stream subclass
-        stream_cls_arg = dict
+        # Setup: Use a simple class that's not a Stream subclass
+        class NotAStream:
+            def __init__(self, **data):
+                pass
+        stream_cls_arg = NotAStream
 
         # Mock _stream_request to return a dummy iterator
         dummy_iterator = iter([{"data": "chunk2"}])

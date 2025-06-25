@@ -64,8 +64,9 @@ class Embeddings(APIResource):
             to ``'float'`` for numerical arrays. Use ``'base64'`` for base64-encoded
             string representation.
         :type encoding_format: Optional[Literal["float", "base64"]]
-        :param user: A unique identifier representing your end-user, which can help
-            Venice AI monitor and detect abuse.
+        :param user: A unique identifier representing your end-user. This parameter
+            is supported for compatibility with OpenAI clients but is discarded by
+            the Venice API and does not affect the response.
         :type user: Optional[str]
 
         :return: A response object containing the generated embeddings and usage data.
@@ -139,6 +140,18 @@ class Embeddings(APIResource):
             dummy_request = httpx.Request("POST", str(self._client._base_url.join("embeddings")))
             dummy_response = httpx.Response(400, request=dummy_request, json={"error": {"message": "input cannot be empty."}})
             raise InvalidRequestError("input cannot be empty.", request=dummy_request, response=dummy_response, body=dummy_response.json())
+        
+        # Validate array length constraint
+        if isinstance(input, list) and len(input) > 2048:
+            dummy_request = httpx.Request("POST", str(self._client._base_url.join("embeddings")))
+            dummy_response = httpx.Response(400, request=dummy_request, json={"error": {"message": f"input array must have 2048 or fewer items, but got {len(input)} items."}})
+            raise InvalidRequestError(f"input array must have 2048 or fewer items, but got {len(input)} items.", request=dummy_request, response=dummy_response, body=dummy_response.json())
+        
+        # Validate array length constraint
+        if isinstance(input, list) and len(input) > 2048:
+            dummy_request = httpx.Request("POST", str(self._client._base_url.join("embeddings")))
+            dummy_response = httpx.Response(400, request=dummy_request, json={"error": {"message": f"input array must have 2048 or fewer items, but got {len(input)} items."}})
+            raise InvalidRequestError(f"input array must have 2048 or fewer items, but got {len(input)} items.", request=dummy_request, response=dummy_response, body=dummy_response.json())
 
         # Build the request body
         body: Dict[str, Any] = {
@@ -210,8 +223,9 @@ class AsyncEmbeddings(AsyncAPIResource):
             to ``'float'`` for numerical arrays. Use ``'base64'`` for base64-encoded
             string representation.
         :type encoding_format: Optional[Literal["float", "base64"]]
-        :param user: A unique identifier representing your end-user, which can help
-            Venice AI monitor and detect abuse.
+        :param user: A unique identifier representing your end-user. This parameter
+            is supported for compatibility with OpenAI clients but is discarded by
+            the Venice API and does not affect the response.
         :type user: Optional[str]
 
         :return: A response object containing the generated embeddings and usage data.
@@ -297,6 +311,12 @@ class AsyncEmbeddings(AsyncAPIResource):
             dummy_request = httpx.Request("POST", str(self._client._base_url.join("embeddings")))
             dummy_response = httpx.Response(400, request=dummy_request, json={"error": {"message": "input cannot be empty."}})
             raise InvalidRequestError("input cannot be empty.", request=dummy_request, response=dummy_response, body=dummy_response.json())
+        
+        # Validate array length constraint
+        if isinstance(input, list) and len(input) > 2048:
+            dummy_request = httpx.Request("POST", str(self._client._base_url.join("embeddings")))
+            dummy_response = httpx.Response(400, request=dummy_request, json={"error": {"message": f"input array must have 2048 or fewer items, but got {len(input)} items."}})
+            raise InvalidRequestError(f"input array must have 2048 or fewer items, but got {len(input)} items.", request=dummy_request, response=dummy_response, body=dummy_response.json())
 
         # Build the request body
         body: Dict[str, Any] = {

@@ -224,9 +224,12 @@ class TestClientPydanticCastingErrors:
         results = list(client._stream_request("POST", "stream", json_data={}))
         
         assert len(results) == 2
-        # Results should be dict-like (cast to ChatCompletionChunk which is a dict)
-        assert isinstance(results[0], dict)
-        assert "choices" in results[0]
+        # Results should be ChatCompletionChunk objects when no cast_to is provided
+        from venice_ai.types.chat import ChatCompletionChunk
+        assert isinstance(results[0], ChatCompletionChunk)
+        assert hasattr(results[0], 'choices')
+        assert results[0].choices[0].delta.content == "Hello"
+        assert results[1].choices[0].delta.content == " world"
     
     def test_stream_request_json_decode_error_in_chunk(self, client, mock_httpx_client):
         """Test _stream_request handling of malformed JSON in SSE chunk."""

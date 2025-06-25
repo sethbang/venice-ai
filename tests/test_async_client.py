@@ -12,6 +12,7 @@ from venice_ai._client_with_retries import AsyncVeniceClientWithRetries
 from venice_ai.exceptions import (
     VeniceError, APIError, InvalidRequestError, AuthenticationError, PermissionDeniedError,
     NotFoundError, RateLimitError, ConflictError, UnprocessableEntityError, InternalServerError,
+ServiceUnavailableError,
     APIConnectionError, APITimeoutError, APIResponseProcessingError, StreamConsumedError, StreamClosedError
 )
 from venice_ai import _constants
@@ -487,7 +488,7 @@ class TestAsyncVeniceClient:
             (429, RateLimitError, {"error": {"message": "Rate limit exceeded"}}),
             (500, InternalServerError, {"error": {"message": "Internal server error"}}),
             (502, InternalServerError, {"error": {"message": "Bad gateway"}}),
-            (503, InternalServerError, {"error": {"message": "Service unavailable"}}),
+            (503, ServiceUnavailableError, {"error": {"message": "Service unavailable"}}),
         ]
     )
     async def test_request_comprehensive_api_error_mapping(self, api_key: str, status_code: int, error_class: type, error_body: dict):
@@ -611,6 +612,7 @@ class TestAsyncVeniceClient:
             mock_httpx_client_instance.aclose = AsyncMock()
             # Configure the mock stream response
             mock_response = AsyncMock(spec=httpx.Response) # This is for the response from stream.__aenter__
+            mock_response.status_code = 200
             mock_response.headers = {}
             mock_response.aiter_lines.return_value = mock_async_iterator([
                 "data: {\"choices\": [{\"delta\": {\"content\": \"chunk1\"}}]}",
@@ -635,8 +637,10 @@ class TestAsyncVeniceClient:
                 chunks.append(chunk)
             
             assert len(chunks) == 2
-            assert chunks[0]["choices"][0]["delta"]["content"] == "chunk1"
-            assert chunks[1]["choices"][0]["delta"]["content"] == "chunk2"
+            from venice_ai.types.chat import ChatCompletionChunk
+            assert isinstance(chunks[0], ChatCompletionChunk)
+            assert chunks[0].choices[0].delta.content == "chunk1"
+            assert chunks[1].choices[0].delta.content == "chunk2"
 
     @pytest.mark.asyncio
     async def test_stream_request_edge_cases(self, api_key: str, caplog):
@@ -646,6 +650,7 @@ class TestAsyncVeniceClient:
         
         # Empty line test
         mock_response = AsyncMock(spec=httpx.Response)
+        mock_response.status_code = 200
         mock_response.headers = {}
         mock_response.aiter_lines.return_value = mock_async_iterator([
             "",
@@ -663,10 +668,13 @@ class TestAsyncVeniceClient:
             async for chunk in client._stream_request("POST", "chat/completions", json_data={"model": "venice-1"}):
                 chunks.append(chunk)
             assert len(chunks) == 1, "Should have 1 valid chunk after filtering empty lines"
-            assert chunks[0]["choices"][0]["delta"]["content"] == "chunk1"
+            from venice_ai.types.chat import ChatCompletionChunk
+            assert isinstance(chunks[0], ChatCompletionChunk)
+            assert chunks[0].choices[0].delta.content == "chunk1"
         
         # JSON decode error test
         mock_response = AsyncMock(spec=httpx.Response)
+        mock_response.status_code = 200
         mock_response.headers = {}
         mock_response.aiter_lines.return_value = mock_async_iterator([
             "data: invalid_json",
@@ -685,7 +693,9 @@ class TestAsyncVeniceClient:
                 async for chunk in client._stream_request("POST", "chat/completions", json_data={"model": "venice-1"}):
                     chunks.append(chunk)
                 assert len(chunks) == 1, "Should skip invalid JSON and return valid chunk"
-                assert chunks[0]["choices"][0]["delta"]["content"] == "chunk1"
+                from venice_ai.types.chat import ChatCompletionChunk
+                assert isinstance(chunks[0], ChatCompletionChunk)
+                assert chunks[0].choices[0].delta.content == "chunk1"
                 # Check that an error message containing "Failed to parse JSON" was logged
                 assert any("Failed to parse JSON" in record.message for record in caplog.records)
 
@@ -694,6 +704,7 @@ class TestAsyncVeniceClient:
         """Test raw binary streaming for audio/speech endpoints."""
         # Configure the mock response
         mock_response = AsyncMock(spec=httpx.Response)
+        mock_response.status_code = 200
         mock_response.headers = {}
         mock_response.aiter_bytes.return_value = mock_async_iterator([b"chunk1", b"chunk2"])
         mock_response.raise_for_status = MagicMock()
@@ -732,6 +743,7 @@ class TestAsyncVeniceClient:
             mock_httpx_client_instance.aclose = AsyncMock()
             
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.status_code = 200
             mock_response.headers = {}
             mock_response.aiter_lines.return_value = mock_async_iterator([
                 "data: {\"choices\": [{\"delta\": {\"content\": \"chunk1\"}}]}",
@@ -763,9 +775,10 @@ class TestAsyncVeniceClient:
             
             # _stream_request yields parsed JSON objects from SSE "data:" lines
             assert len(chunks) == 2
-            assert all(isinstance(chunk, dict) for chunk in chunks)
-            assert chunks[0]["choices"][0]["delta"]["content"] == "chunk1"
-            assert chunks[1]["choices"][0]["delta"]["content"] == "chunk2"
+            from venice_ai.types.chat import ChatCompletionChunk
+            assert all(isinstance(chunk, ChatCompletionChunk) for chunk in chunks)
+            assert chunks[0].choices[0].delta.content == "chunk1"
+            assert chunks[1].choices[0].delta.content == "chunk2"
 
     # B2b: Add tests for _stream_request with cast_to=bytes and stream_cls=AsyncStream
     @pytest.mark.asyncio
@@ -781,6 +794,7 @@ class TestAsyncVeniceClient:
             mock_httpx_client_instance.aclose = AsyncMock()
             
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.status_code = 200
             mock_response.headers = {}
             # _stream_request uses aiter_lines, not aiter_bytes, and expects SSE format
             sse_lines = [
@@ -843,6 +857,7 @@ class TestAsyncVeniceClient:
                 request=mock_request,
                 response=mock_response
             ))
+            mock_response.status_code = 404
             
             mock_stream_context = AsyncMock()
             mock_stream_context.__aenter__.return_value = mock_response
@@ -888,6 +903,7 @@ class TestAsyncVeniceClient:
                 raise exception_class(exception_message, request=mock_request)
             
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.status_code = 200
             mock_response.headers = {}
             mock_response.aiter_lines.return_value = error_iterator()
             mock_response.raise_for_status = MagicMock()
@@ -904,7 +920,9 @@ class TestAsyncVeniceClient:
             
             # Should have received one chunk before the error
             assert len(chunks) == 1
-            assert chunks[0]["choices"][0]["delta"]["content"] == "chunk1"
+            from venice_ai.types.chat import ChatCompletionChunk
+            assert isinstance(chunks[0], ChatCompletionChunk)
+            assert chunks[0].choices[0].delta.content == "chunk1"
 
     @pytest.mark.asyncio
     async def test_request_multipart_basic(self, api_key: str, mock_response: MagicMock):
@@ -1235,6 +1253,7 @@ class TestAsyncVeniceClient:
             
             mock_response_content = ["data: [DONE]"]
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.status_code = 200
             mock_response.headers = {}
             mock_response.aiter_lines.return_value = mock_async_iterator(mock_response_content)
             mock_response.raise_for_status = MagicMock()
@@ -1306,6 +1325,7 @@ class TestAsyncVeniceClient:
             
             mock_response_content = [b"done"]
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.status_code = 200
             mock_response.headers = {}
             mock_response.aiter_bytes.return_value = mock_async_iterator(mock_response_content)
             mock_response.raise_for_status = MagicMock()
@@ -2003,6 +2023,7 @@ class TestAsyncVeniceClient:
             
             # Setup streaming response
             mock_response = AsyncMock(spec=httpx.Response)
+            mock_response.status_code = 200
             mock_response.headers = {}
             mock_response.aiter_lines.return_value = mock_async_iterator([
                 'data: {"choices": [{"delta": {"content": "chunk1"}}]}',
@@ -2024,8 +2045,10 @@ class TestAsyncVeniceClient:
             
             # Verify streaming worked
             assert len(chunks) == 2  # Only 2 valid JSON chunks, [DONE] is filtered out
-            assert chunks[0]["choices"][0]["delta"]["content"] == "chunk1"
-            assert chunks[1]["choices"][0]["delta"]["content"] == "chunk2"
+            from venice_ai.types.chat import ChatCompletionChunk
+            assert isinstance(chunks[0], ChatCompletionChunk)
+            assert chunks[0].choices[0].delta.content == "chunk1"
+            assert chunks[1].choices[0].delta.content == "chunk2"
             
             # Verify aclose was called on exit
             mock_httpx_client_instance.aclose.assert_awaited_once()

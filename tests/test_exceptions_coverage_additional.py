@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 from venice_ai.exceptions import (
     VeniceError, APIError, AuthenticationError, PermissionDeniedError,
     InvalidRequestError, NotFoundError, ConflictError, UnprocessableEntityError,
-    RateLimitError, InternalServerError, _make_status_error
+    RateLimitError, InternalServerError, _make_status_error, PaymentRequiredError, ServiceUnavailableError
 )
 
 
@@ -167,7 +167,7 @@ class TestMakeStatusErrorStatusCodes:
     def test_make_status_error_internal_server_error_5xx(self):
         """Test status codes 500+ returning InternalServerError."""
         # Test multiple 5xx status codes
-        for status_code in [500, 502, 503, 504]:
+        for status_code in [500, 502, 504]: # Removed 503 as it's now ServiceUnavailableError
             mock_response = MagicMock(spec=httpx.Response)
             mock_response.status_code = status_code
             mock_response.headers = {}
@@ -176,11 +176,19 @@ class TestMakeStatusErrorStatusCodes:
             
             assert isinstance(error, InternalServerError)
             assert f"Server error {status_code}" in error.message
+        
+        # Test 503 specifically for ServiceUnavailableError
+        mock_response_503 = MagicMock(spec=httpx.Response)
+        mock_response_503.status_code = 503
+        mock_response_503.headers = {}
+        error_503 = _make_status_error("Server error 503", body=None, response=mock_response_503)
+        assert isinstance(error_503, ServiceUnavailableError)
+        assert "Server error 503" in error_503.message
     
     def test_make_status_error_other_4xx(self):
         """Test other 4xx codes returning generic APIError."""
         # Test some unhandled 4xx status codes
-        for status_code in [402, 405, 418, 451]:
+        for status_code in [405, 418, 451]: # Removed 402 as it's now PaymentRequiredError
             mock_response = MagicMock(spec=httpx.Response)
             mock_response.status_code = status_code
             mock_response.headers = {}
@@ -190,9 +198,19 @@ class TestMakeStatusErrorStatusCodes:
             assert isinstance(error, APIError)
             assert not isinstance(error, (
                 InvalidRequestError, AuthenticationError, PermissionDeniedError,
-                NotFoundError, ConflictError, UnprocessableEntityError, RateLimitError
+                NotFoundError, ConflictError, UnprocessableEntityError, RateLimitError, PaymentRequiredError
             ))
-            assert "Unhandled 4xx error" in error.message
+            # The "Unhandled 4xx error" message is no longer added by default for generic APIError
+            # assert "Unhandled 4xx error" in error.message
+            assert f"Error {status_code}" in error.message
+
+        # Test 402 specifically for PaymentRequiredError
+        mock_response_402 = MagicMock(spec=httpx.Response)
+        mock_response_402.status_code = 402
+        mock_response_402.headers = {}
+        error_402 = _make_status_error("Error 402", body=None, response=mock_response_402)
+        assert isinstance(error_402, PaymentRequiredError)
+        assert "Error 402" in error_402.message
     
     def test_make_status_error_unexpected_status(self):
         """Test any other status code returning generic APIError."""

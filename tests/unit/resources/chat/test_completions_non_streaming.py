@@ -9,6 +9,7 @@ to directly test the classes without HTTP layer dependencies.
 import unittest
 from unittest.mock import Mock, AsyncMock, patch
 from typing import Dict, Any, Iterator, AsyncIterator, cast
+import asyncio
 
 from venice_ai.resources.chat.completions import ChatCompletions, AsyncChatCompletions
 from venice_ai.streaming import Stream, AsyncStream
@@ -20,10 +21,12 @@ class IncompatibleStreamWrapper:
     def __init__(self, iterator: Any, client: Any):
         pass
 
-async def dummy_async_iterator() -> AsyncIterator[ChatCompletionChunk]:
+async def dummy_async_iterator():
     """A dummy async iterator yielding mock ChatCompletionChunk objects."""
     # Example structure for a ChatCompletionChunk. Adjust if different.
-    yield ChatCompletionChunk(id="chunk1", choices=[{"delta": {"content": "test"}}], model="test-model", object="chat.completion.chunk", created=123) # type: ignore
+    from venice_ai.types.chat import ChatCompletionChunkChoice, ChatCompletionChunkChoiceDelta
+    choice = ChatCompletionChunkChoice(index=0, delta=ChatCompletionChunkChoiceDelta(content="test"))
+    yield ChatCompletionChunk(id="chunk1", choices=[choice], model="test-model", object="chat.completion.chunk", created=123)
 
 # New dummy class for patching 'venice_ai.resources.chat.completions.AsyncStream'.
 # This class will be used as a type in the issubclass check, resolving the TypeError.
@@ -48,7 +51,7 @@ class TestChatCompletionsNonStreaming(unittest.TestCase):
             model="test-model", messages=[{"role": "user", "content": "Hi"}], stream=False
         )
         expected_payload = {"model": "test-model", "messages": [{"role": "user", "content": "Hi"}], "stream": False}
-        mock_client.post.assert_called_once_with("chat/completions", json_data=expected_payload)
+        mock_client.post.assert_called_once_with("chat/completions", json_data=expected_payload, cast_to=ChatCompletion)
         self.assertEqual(response, dummy_response)
 
     def test_chat_completions_create_non_streaming_default_stream(self):
@@ -64,7 +67,7 @@ class TestChatCompletionsNonStreaming(unittest.TestCase):
         completions_resource = ChatCompletions(client=mock_client)
         response = completions_resource.create(model="test-model", messages=[{"role": "user", "content": "Hello"}])
         expected_payload = {"model": "test-model", "messages": [{"role": "user", "content": "Hello"}], "stream": False}
-        mock_client.post.assert_called_once_with("chat/completions", json_data=expected_payload)
+        mock_client.post.assert_called_once_with("chat/completions", json_data=expected_payload, cast_to=ChatCompletion)
         self.assertEqual(response, dummy_response)
 
     @patch('venice_ai.resources.chat.completions.Stream', spec=Stream)
@@ -72,7 +75,7 @@ class TestChatCompletionsNonStreaming(unittest.TestCase):
         """Test ChatCompletions.create with stream=True and an incompatible class for stream_cls."""
         mock_client = Mock()
         dummy_iterator: Iterator[ChatCompletionChunk] = iter([
-            ChatCompletionChunk(id="chunk1", choices=[{"delta": {"content": "test"}}], model="test-model", object="chat.completion.chunk", created=123) # type: ignore
+            ChatCompletionChunk(id="chunk1", choices=[{"index": 0, "delta": {"content": "test"}}], model="test-model", object="chat.completion.chunk", created=123) # type: ignore
         ])
         mock_client._stream_request = Mock(return_value=dummy_iterator)
         
@@ -112,7 +115,7 @@ class TestAsyncChatCompletionsNonStreaming(unittest.IsolatedAsyncioTestCase):
             model="test-model", messages=[{"role": "user", "content": "Hi"}], stream=False
         )
         expected_payload = {"model": "test-model", "messages": [{"role": "user", "content": "Hi"}], "stream": False}
-        mock_async_client.post.assert_called_once_with("chat/completions", json_data=expected_payload)
+        mock_async_client.post.assert_called_once_with("chat/completions", json_data=expected_payload, cast_to=ChatCompletion)
         self.assertEqual(response, dummy_response)
 
     async def test_async_chat_completions_create_non_streaming_default_stream(self):
@@ -130,7 +133,7 @@ class TestAsyncChatCompletionsNonStreaming(unittest.IsolatedAsyncioTestCase):
             model="test-model", messages=[{"role": "user", "content": "Hello async"}]
         )
         expected_payload = {"model": "test-model", "messages": [{"role": "user", "content": "Hello async"}], "stream": False}
-        mock_async_client.post.assert_called_once_with("chat/completions", json_data=expected_payload)
+        mock_async_client.post.assert_called_once_with("chat/completions", json_data=expected_payload, cast_to=ChatCompletion)
         self.assertEqual(response, dummy_response)
 
     @patch('venice_ai.resources.chat.completions.AsyncStream', new_callable=lambda: DummyAsyncStreamForTest)

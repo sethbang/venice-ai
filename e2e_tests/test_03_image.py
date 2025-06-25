@@ -308,7 +308,8 @@ def test_simple_generate_image_with_all_params_sync(venice_client):
 @pytest.mark.asyncio
 async def test_simple_generate_image_with_all_params_async(async_venice_client):
     """Test simple image generation with all available parameters (Async)"""
-    client = async_venice_client
+    # Use a dedicated client with a longer timeout for this E2E test
+    client = AsyncVeniceClient(timeout=180.0)
     prompt = "An abstract concept async"
     logger.info("Attempting async simple image generation with all params")
     try:

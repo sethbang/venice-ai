@@ -278,9 +278,14 @@ def build_pytest_command(options: dict) -> List[str]:
     if options.get("verbose", False):
         cmd.append("-v")
     
+    
+    
     # Add fail-fast flag
     if options.get("fail_fast", False):
         cmd.append("-x")
+    
+    # Add log level
+    cmd.append("--log-cli-level=DEBUG")
     
     # Add parallel execution flag if requested
     if options.get("parallel", False):

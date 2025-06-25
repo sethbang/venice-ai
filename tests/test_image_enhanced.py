@@ -93,11 +93,13 @@ class TestImageSync:
         assert result == mock_binary_data
         image_resource._client._request.assert_called_once()
         call_args = image_resource._client._request.call_args
-        assert call_args[0][0] == "POST"
-        assert call_args[0][1] == "image/generate"
+        # Check keyword arguments instead of positional
+        assert call_args.kwargs.get("method") == "POST"
+        assert call_args.kwargs.get("path") == "image/generate"
         
-        # Verify headers for binary response
-        assert call_args[1].get("raw_response", False) is True
+        # Verify headers and raw_response for binary response
+        assert call_args.kwargs.get("raw_response", False) is True
+        assert call_args.kwargs.get("headers") == {"Accept": "image/*"}
 
     def test_simple_generate_with_all_parameters(self, image_resource, mocker):
         """Test simple_generate with all optional parameters."""
@@ -365,12 +367,13 @@ class TestImageAsync:
         assert result == mock_binary_data
         image_resource._client._request.assert_awaited_once()
         call_args = image_resource._client._request.call_args
-        assert call_args[0][0] == "POST"
-        assert call_args[0][1] == "image/generate"
+        # Check keyword arguments instead of positional
+        assert call_args.kwargs.get("method") == "POST"
+        assert call_args.kwargs.get("path") == "image/generate"
         
-        # Verify proper headers for binary response
-        assert "headers" in call_args[1]
-        assert call_args[1]["headers"] == {"Accept": "image/*"}
+        # Verify proper headers and raw_response for binary response
+        assert call_args.kwargs.get("headers") == {"Accept": "image/*"}
+        assert call_args.kwargs.get("raw_response", False) is True
 
     async def test_simple_generate_with_all_parameters(self, image_resource):
         """Test async simple_generate with all optional parameters."""

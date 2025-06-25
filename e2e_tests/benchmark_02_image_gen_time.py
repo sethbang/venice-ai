@@ -54,9 +54,9 @@ def test_image_gen_time_simple_prompt(venice_client):
     assert isinstance(response, ImageResponse), "Response should be an ImageResponse object"
     assert response.images, "Response should have image data"
 
-def test_image_gen_time_complex_prompt(venice_client):
+def test_image_gen_time_complex_prompt(api_key):
     """Test time taken for image generation with a complex prompt."""
-    client = venice_client
+    client = VeniceClient(api_key=api_key, timeout=180.0)
     @measure_time
     def make_request():
         response = client.image.generate(

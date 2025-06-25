@@ -80,10 +80,10 @@ class TestImage:
         
         assert isinstance(response, ImageResponse)
         image_resource._client.post.assert_called_once()
-        args = image_resource._client.post.call_args
-        assert args[0][0] == "image/generate"
-        assert args[1]["json_data"]["model"] == "test-model"
-        assert args[1]["json_data"]["prompt"] == "A test prompt"
+        args, kwargs = image_resource._client.post.call_args
+        assert args[0] == "image/generate"
+        assert kwargs["json_data"]["model"] == "test-model"
+        assert kwargs["json_data"]["prompt"] == "A test prompt"
         
     def test_generate_with_options(self, image_resource):
         """Test generate with all optional parameters."""
@@ -109,8 +109,8 @@ class TestImage:
         assert isinstance(response, ImageResponse)
         image_resource._client.post.assert_called_once()
         
-        args = image_resource._client.post.call_args
-        json_data = args[1]["json_data"]
+        args, kwargs = image_resource._client.post.call_args
+        json_data = kwargs["json_data"]
         
         # Verify all parameters were passed correctly
         assert json_data["model"] == "test-model"
@@ -142,13 +142,13 @@ class TestImage:
         assert response == b"mock_binary_data"
         
         image_resource._client._request.assert_called_once()
-        args = image_resource._client._request.call_args
+        args, kwargs = image_resource._client._request.call_args
         
         # Check method, endpoint and options
-        assert args[0][0] == "POST"
-        assert args[0][1] == "image/generate"
-        assert args[1]["headers"] == {"Accept": "image/*"}
-        assert args[1]["raw_response"] is True
+        assert kwargs["method"] == "POST"
+        assert kwargs["path"] == "image/generate"
+        assert kwargs["headers"] == {"Accept": "image/*"}
+        assert kwargs["raw_response"] is True
         
     # Tests for simple_generate method
     def test_simple_generate_basic(self, image_resource):
@@ -167,10 +167,10 @@ class TestImage:
         
         assert isinstance(response, SimpleImageResponse)
         image_resource._client.post.assert_called_once()
-        args = image_resource._client.post.call_args
-        assert args[0][0] == "images/generations"
-        assert args[1]["json_data"]["model"] == "venice-diffusion"
-        assert args[1]["json_data"]["prompt"] == "A simple test image"
+        args, kwargs = image_resource._client.post.call_args
+        assert args[0] == "images/generations"
+        assert kwargs["json_data"]["model"] == "venice-diffusion"
+        assert kwargs["json_data"]["prompt"] == "A simple test image"
         
     def test_simple_generate_with_options(self, image_resource):
         """Test simple_generate with all optional parameters."""
@@ -199,8 +199,8 @@ class TestImage:
         assert isinstance(response, SimpleImageResponse)
         image_resource._client.post.assert_called_once()
         
-        args = image_resource._client.post.call_args
-        json_data = args[1]["json_data"]
+        args, kwargs = image_resource._client.post.call_args
+        json_data = kwargs["json_data"]
         
         # Verify all parameters were passed correctly
         assert json_data["model"] == "venice-diffusion"
@@ -232,8 +232,8 @@ class TestImage:
         
         # Check that base64 encoding was done correctly
         image_resource._client._request.assert_called_once()
-        args = image_resource._client._request.call_args
-        json_data = args[1]["json_data"]
+        args, kwargs = image_resource._client._request.call_args
+        json_data = kwargs["json_data"]
         
         # Decode and verify the base64 image
         decoded_data = base64.b64decode(json_data["image"])
@@ -342,8 +342,8 @@ class TestImage:
         
         # Verify all parameters were passed correctly
         image_resource._client._request.assert_called_once()
-        args = image_resource._client._request.call_args
-        json_data = args[1]["json_data"]
+        args, kwargs = image_resource._client._request.call_args
+        json_data = kwargs["json_data"]
         
         assert "image" in json_data  # Base64 encoded image
         assert json_data["enhance"] is True
@@ -467,10 +467,10 @@ class TestAsyncImage:
         
         assert isinstance(response, ImageResponse)
         image_resource._client.post.assert_awaited_once()
-        args = image_resource._client.post.call_args
-        assert args[0][0] == "image/generate"
-        assert args[1]["json_data"]["model"] == "test-model"
-        assert args[1]["json_data"]["prompt"] == "A test prompt"
+        args, kwargs = image_resource._client.post.call_args
+        assert args[0] == "image/generate"
+        assert kwargs["json_data"]["model"] == "test-model"
+        assert kwargs["json_data"]["prompt"] == "A test prompt"
         
     async def test_generate_with_options(self, image_resource):
         """Test async generate with all optional parameters."""
@@ -496,8 +496,8 @@ class TestAsyncImage:
         assert isinstance(response, ImageResponse)
         image_resource._client.post.assert_awaited_once()
         
-        args = image_resource._client.post.call_args
-        json_data = args[1]["json_data"]
+        args, kwargs = image_resource._client.post.call_args
+        json_data = kwargs["json_data"]
         
         # Verify all parameters were passed correctly
         assert json_data["model"] == "test-model"
@@ -529,13 +529,13 @@ class TestAsyncImage:
         assert response == b"mock_binary_data"
         
         image_resource._client._request.assert_awaited_once()
-        args = image_resource._client._request.call_args
+        args, kwargs = image_resource._client._request.call_args
         
         # Check method, endpoint and options
-        assert args[0][0] == "POST"
-        assert args[0][1] == "image/generate"
-        assert args[1]["headers"] == {"Accept": "image/*"}
-        assert args[1]["raw_response"] is True
+        assert kwargs["method"] == "POST"
+        assert kwargs["path"] == "image/generate"
+        assert kwargs["headers"] == {"Accept": "image/*"}
+        assert kwargs["raw_response"] is True
         
     # Tests for simple_generate method
     async def test_simple_generate_basic(self, image_resource):
@@ -554,10 +554,10 @@ class TestAsyncImage:
         
         assert isinstance(response, SimpleImageResponse)
         image_resource._client.post.assert_awaited_once()
-        args = image_resource._client.post.call_args
-        assert args[0][0] == "images/generations"
-        assert args[1]["json_data"]["model"] == "venice-diffusion"
-        assert args[1]["json_data"]["prompt"] == "A simple test image"
+        args, kwargs = image_resource._client.post.call_args
+        assert args[0] == "images/generations"
+        assert kwargs["json_data"]["model"] == "venice-diffusion"
+        assert kwargs["json_data"]["prompt"] == "A simple test image"
         
     async def test_simple_generate_with_options(self, image_resource):
         """Test async simple_generate with all optional parameters."""
@@ -586,8 +586,8 @@ class TestAsyncImage:
         assert isinstance(response, SimpleImageResponse)
         image_resource._client.post.assert_awaited_once()
         
-        args = image_resource._client.post.call_args
-        json_data = args[1]["json_data"]
+        args, kwargs = image_resource._client.post.call_args
+        json_data = kwargs["json_data"]
         
         # Verify all parameters were passed correctly
         assert json_data["model"] == "venice-diffusion"
@@ -619,8 +619,8 @@ class TestAsyncImage:
         
         # Check that base64 encoding was done correctly
         image_resource._client._request.assert_awaited_once()
-        args = image_resource._client._request.call_args
-        json_data = args[1]["json_data"]
+        args, kwargs = image_resource._client._request.call_args
+        json_data = kwargs["json_data"]
         
         # Decode and verify the base64 image
         decoded_data = base64.b64decode(json_data["image"])
@@ -744,8 +744,8 @@ class TestAsyncImage:
         
         # Verify all parameters were passed correctly
         image_resource._client._request.assert_awaited_once()
-        args = image_resource._client._request.call_args
-        json_data = args[1]["json_data"]
+        args, kwargs = image_resource._client._request.call_args
+        json_data = kwargs["json_data"]
         
         assert "image" in json_data  # Base64 encoded image
         assert json_data["enhance"] is True
@@ -824,8 +824,8 @@ class TestImageEdgeCases:
         )
         
         # Verify the parameters were passed correctly
-        args = client_mock.post.call_args
-        json_data = args[1]["json_data"]
+        args, kwargs = client_mock.post.call_args
+        json_data = kwargs["json_data"]
         
         assert json_data["cfg_scale"] == 30.0
         assert json_data["height"] == 2048
@@ -888,8 +888,8 @@ class TestAsyncImageEdgeCases:
         )
         
         # Verify the parameters were passed correctly
-        args = client_mock.post.call_args
-        json_data = args[1]["json_data"]
+        args, kwargs = client_mock.post.call_args
+        json_data = kwargs["json_data"]
         
         assert json_data["cfg_scale"] == 30.0
         assert json_data["height"] == 2048
