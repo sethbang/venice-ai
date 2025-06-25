@@ -41,11 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### **📚 Documentation & Analysis**
 
-- **Comprehensive documentation files**:
-  - `embeddings_api_alignment_summary.md` - Details embeddings API alignment with OpenAI
-  - `model_improvements_summary.md` - Recommendations for Model class enhancements
-  - `model_class_analysis.md` - In-depth analysis of Model class structure
-  - `model_class_fixes_summary.md` - Summary of Model class fixes
 - **New test suite** [`tests/test_embeddings_api_alignment.py`](tests/test_embeddings_api_alignment.py) with 28 new tests for embeddings API
 
 #### **💻 Developer Resources**
