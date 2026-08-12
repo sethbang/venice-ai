@@ -150,6 +150,10 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH,MEDIUM'
+          # Passed explicitly: Trivy auto-detects the plain-text `.trivyignore`
+          # but not the YAML form, and the YAML form is what carries the
+          # per-entry expiry dates.
+          trivyignores: '.trivyignore.yaml'
       
       # Code Scanning ingestion requires GitHub Advanced Security on private
       # repos. The artifact upload below preserves the SARIF either way, so we
