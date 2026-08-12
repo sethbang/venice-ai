@@ -1,0 +1,27 @@
+# Accepted findings, scoped to the documentation site.
+#
+# Nothing listed here reaches anyone who installs the package: pyproject.toml
+# ships src/venice_ai alone, and website/ builds a static site that Cloudflare
+# Pages serves with no runtime server of its own.
+#
+# Every entry carries an expiry so it returns for review instead of suppressing
+# a finding that has since become fixable.
+
+vulnerabilities:
+  - id: CVE-2025-71329
+    paths:
+      - "website/package-lock.json"
+    statement: >-
+      image-size denial of service via a crafted image buffer. No fixed release
+      exists: 2.0.2 is the latest published version, and @docusaurus/mdx-loader
+      requires ^2.0.2. Reached only at build time, over images committed to this
+      repository.
+    expired_at: 2026-11-12
+
+  - id: CVE-2025-71330
+    paths:
+      - "website/package-lock.json"
+    statement: >-
+      image-size denial of service via a crafted ICNS buffer. Same unfixable
+      constraint and same build-time-only exposure as CVE-2025-71329.
+    expired_at: 2026-11-12

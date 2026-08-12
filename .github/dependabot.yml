@@ -38,6 +38,38 @@ updates:
           - "minor"
           - "patch"
 
+  # Docs site (Docusaurus). Its tree is ~1,300 packages, almost all of them
+  # transitive under @docusaurus/*, so the groups below keep a weekly run from
+  # arriving as dozens of separate pull requests.
+  - package-ecosystem: "npm"
+    directory: "/website"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "documentation"
+      - "automated"
+    commit-message:
+      prefix: "deps(website)"
+    reviewers:
+      - "sethbang"
+    assignees:
+      - "sethbang"
+    groups:
+      docusaurus:
+        patterns:
+          - "@docusaurus/*"
+          - "docusaurus-plugin-*"
+      website-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"

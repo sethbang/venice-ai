@@ -1,3 +1,12 @@
+# .github/workflows/docs.yml
+# Builds the Docusaurus site and, on pushes to main, deploys it to Cloudflare Pages.
+#
+# Action SHA pinning:
+#   Every action below is pinned to a 40-char commit SHA with the matching
+#   version tag in a trailing comment, as in ci-validation.yaml. `wranglerVersion`
+#   is pinned too: wrangler-action v4 installs `latest` when it is omitted, which
+#   would let an upstream wrangler release change this deploy with no commit here.
+
 name: Docs
 
 on:
@@ -22,15 +31,15 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
         with:
           node-version: '20'
           cache: npm
           cache-dependency-path: website/package-lock.json
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
         with:
           python-version: '3.13'
 
@@ -49,8 +58,9 @@ jobs:
 
       - name: Deploy to Cloudflare Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: cloudflare/wrangler-action@v4
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0  # v4.0.0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4.122.0'
           command: pages deploy website/build --project-name=venice-ai-docs --branch=main
