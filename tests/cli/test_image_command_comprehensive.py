@@ -3842,6 +3842,56 @@ class TestMultiEditCommand:
         assert kwargs["quality"] == "high"
         assert out_file.read_bytes() == result_bytes
 
+    @staticmethod
+    async def _run_multi_edit_failure(mock_ctx, tmp_path, exc):
+        """Drive _multi_edit_async into its error handler; return the mocked reporter."""
+        from venice_ai.cli.commands.image.multi_edit import _multi_edit_async
+
+        paths = [tmp_path / name for name in ("a.png", "b.png", "c.png")]
+        for p in paths:
+            p.write_bytes(b"\x89PNG\r\n\x1a\n")
+
+        mock_client = AsyncMock()
+        mock_client.image.multi_edit = AsyncMock(side_effect=exc)
+
+        with (
+            patch("venice_ai.cli.config.ensure_api_key", return_value="test-key"),
+            patch("venice_ai.cli.commands.image.multi_edit.VeniceClient") as MockClient,
+            patch("venice_ai.cli.commands.image.multi_edit.print_error") as mock_err,
+        ):
+            mock_cm = AsyncMock()
+            mock_cm.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_cm.__aexit__ = AsyncMock(return_value=None)
+            MockClient.return_value = mock_cm
+
+            with pytest.raises(SystemExit):
+                await _multi_edit_async(
+                    ctx=mock_ctx,
+                    prompt="combine these",
+                    image=str(paths[0]),
+                    image_2=str(paths[1]),
+                    image_3=str(paths[2]),
+                    model="hidream",
+                    output=str(tmp_path / "out.png"),
+                    aspect_ratio="1:1",
+                    output_format="png",
+                    quality="high",
+                )
+
+        return mock_err
+
+    @pytest.mark.asyncio
+    async def test_multi_edit_async_venice_error(self, mock_ctx, tmp_path):
+        """A Venice API failure is reported and exits non-zero."""
+        mock_err = await self._run_multi_edit_failure(mock_ctx, tmp_path, VeniceError("API Error"))
+        assert "Venice API error" in mock_err.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_multi_edit_async_unexpected_error(self, mock_ctx, tmp_path):
+        """An unexpected failure is reported and exits non-zero."""
+        mock_err = await self._run_multi_edit_failure(mock_ctx, tmp_path, RuntimeError("boom"))
+        assert "Unexpected error" in mock_err.call_args[0][0]
+
     @pytest.mark.asyncio
     async def test_multi_edit_async_single_image(self, mock_ctx, tmp_path):
         """Optional layer images are omitted when not provided."""
