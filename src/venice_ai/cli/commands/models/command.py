@@ -105,7 +105,7 @@ async def list_models(
 
                 if len(models_to_compare) < 2:
                     print_error("Need at least 2 models to compare")
-                    return
+                    raise SystemExit(1)
 
                 comparison_table = ModelComparator.compare_models(models_to_compare, currency)
                 if comparison_table:
@@ -117,7 +117,7 @@ async def list_models(
                 model = ModelComparator.find_model_by_id(all_models, detail_id)
                 if not model:
                     print_error(f"Model not found: {detail_id}")
-                    return
+                    raise SystemExit(1)
 
                 panel = ModelFormatter.format_verbose_model(model, currency)
                 console.print(panel)
@@ -232,5 +232,7 @@ async def list_models(
 
     except VeniceError as e:
         print_error(f"Venice API error: {e}")
+        raise SystemExit(1) from e
     except Exception as e:
         print_error(f"Unexpected error: {e}")
+        raise SystemExit(1) from e

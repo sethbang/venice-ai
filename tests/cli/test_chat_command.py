@@ -724,20 +724,21 @@ class TestChatAsync:
             ),
             patch("venice_ai.cli.commands.chat.print_error") as mock_error,
         ):
-            await _chat_async(
-                ctx=mock_ctx,
-                model=None,
-                select_model=True,
-                system_prompt=None,
-                temperature=None,
-                max_completion_tokens=None,
-                stream=True,
-                show_thinking=False,
-                animation="smooth",
-                animation_speed=0.03,
-                show_stats=False,
-                initial_message=None,
-            )
+            with pytest.raises(SystemExit):
+                await _chat_async(
+                    ctx=mock_ctx,
+                    model=None,
+                    select_model=True,
+                    system_prompt=None,
+                    temperature=None,
+                    max_completion_tokens=None,
+                    stream=True,
+                    show_thinking=False,
+                    animation="smooth",
+                    animation_speed=0.03,
+                    show_stats=False,
+                    initial_message=None,
+                )
             mock_error.assert_called_with("No model selected. Exiting.")
 
     @pytest.mark.asyncio
@@ -755,20 +756,21 @@ class TestChatAsync:
             patch("venice_ai.cli.commands.chat.VeniceClient", return_value=mock_client),
             patch("venice_ai.cli.commands.chat.print_error") as mock_error,
         ):
-            await _chat_async(
-                ctx=mock_ctx,
-                model="test-model",
-                select_model=False,
-                system_prompt=None,
-                temperature=None,
-                max_completion_tokens=None,
-                stream=True,
-                show_thinking=False,
-                animation="smooth",
-                animation_speed=0.03,
-                show_stats=False,
-                initial_message="test",
-            )
+            with pytest.raises(SystemExit):
+                await _chat_async(
+                    ctx=mock_ctx,
+                    model="test-model",
+                    select_model=False,
+                    system_prompt=None,
+                    temperature=None,
+                    max_completion_tokens=None,
+                    stream=True,
+                    show_thinking=False,
+                    animation="smooth",
+                    animation_speed=0.03,
+                    show_stats=False,
+                    initial_message="test",
+                )
             mock_error.assert_called()
 
     @pytest.mark.asyncio
@@ -786,20 +788,21 @@ class TestChatAsync:
             patch("venice_ai.cli.commands.chat.VeniceClient", return_value=mock_client),
             patch("venice_ai.cli.commands.chat.print_error") as mock_error,
         ):
-            await _chat_async(
-                ctx=mock_ctx,
-                model="test-model",
-                select_model=False,
-                system_prompt=None,
-                temperature=None,
-                max_completion_tokens=None,
-                stream=True,
-                show_thinking=False,
-                animation="smooth",
-                animation_speed=0.03,
-                show_stats=False,
-                initial_message="test",
-            )
+            with pytest.raises(SystemExit):
+                await _chat_async(
+                    ctx=mock_ctx,
+                    model="test-model",
+                    select_model=False,
+                    system_prompt=None,
+                    temperature=None,
+                    max_completion_tokens=None,
+                    stream=True,
+                    show_thinking=False,
+                    animation="smooth",
+                    animation_speed=0.03,
+                    show_stats=False,
+                    initial_message="test",
+                )
             mock_error.assert_called()
 
     @pytest.mark.asyncio

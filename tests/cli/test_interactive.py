@@ -682,7 +682,8 @@ class TestInteractiveWizardErrorHandling:
             # Return empty prompt
             mock_to_thread.return_value = ""
 
-            await _interactive_image_generation(mock_click_context)
+            with pytest.raises(SystemExit):
+                await _interactive_image_generation(mock_click_context)
 
             # Verify error was shown
             mock_console_functions["error"].assert_called_with("Prompt is required!")

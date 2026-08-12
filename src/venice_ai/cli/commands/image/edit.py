@@ -205,8 +205,10 @@ async def _edit_async(
 
     except VeniceError as e:
         print_error(f"Venice API error: {e}")
+        raise SystemExit(1) from e
     except Exception as e:
         print_error(f"Unexpected error: {e}")
+        raise SystemExit(1) from e
 
 
 @click.command(name="remove-bg")
@@ -318,5 +320,7 @@ async def _remove_bg_async(
 
     except VeniceError as e:
         print_error(f"Venice API error: {e}")
+        raise SystemExit(1) from e
     except Exception as e:
         print_error(f"Unexpected error: {e}")
+        raise SystemExit(1) from e

@@ -297,16 +297,17 @@ class TestGenerateImageAsync:
                 ),
                 patch("venice_ai.cli.commands.image.generate.print_error") as mock_error,
             ):
-                await _generate_image_async(
-                    ctx=mock_ctx,
-                    prompt="test",
-                    model="hidream",
-                    size="1024x1024",
-                    num_images=1,
-                    output=None,
-                    save_dir=None,
-                    show_timing=True,
-                )
+                with pytest.raises(SystemExit):
+                    await _generate_image_async(
+                        ctx=mock_ctx,
+                        prompt="test",
+                        model="hidream",
+                        size="1024x1024",
+                        num_images=1,
+                        output=None,
+                        save_dir=None,
+                        show_timing=True,
+                    )
                 mock_error.assert_called_once()
 
     @pytest.mark.asyncio
@@ -451,16 +452,17 @@ class TestGenerateImageAsync:
         ):
             MockClient.return_value.__aenter__ = AsyncMock(side_effect=VeniceError("API Error"))
             with patch("venice_ai.cli.commands.image.generate.print_error") as mock_error:
-                await _generate_image_async(
-                    ctx=mock_ctx,
-                    prompt="test",
-                    model="hidream",
-                    size="1024x1024",
-                    num_images=1,
-                    output=None,
-                    save_dir=None,
-                    show_timing=True,
-                )
+                with pytest.raises(SystemExit):
+                    await _generate_image_async(
+                        ctx=mock_ctx,
+                        prompt="test",
+                        model="hidream",
+                        size="1024x1024",
+                        num_images=1,
+                        output=None,
+                        save_dir=None,
+                        show_timing=True,
+                    )
                 mock_error.assert_called()
 
     @pytest.mark.asyncio
@@ -478,16 +480,17 @@ class TestGenerateImageAsync:
                 side_effect=RuntimeError("Unexpected error")
             )
             with patch("venice_ai.cli.commands.image.generate.print_error") as mock_error:
-                await _generate_image_async(
-                    ctx=mock_ctx,
-                    prompt="test",
-                    model="hidream",
-                    size="1024x1024",
-                    num_images=1,
-                    output=None,
-                    save_dir=None,
-                    show_timing=True,
-                )
+                with pytest.raises(SystemExit):
+                    await _generate_image_async(
+                        ctx=mock_ctx,
+                        prompt="test",
+                        model="hidream",
+                        size="1024x1024",
+                        num_images=1,
+                        output=None,
+                        save_dir=None,
+                        show_timing=True,
+                    )
                 mock_error.assert_called()
 
     @pytest.mark.asyncio
@@ -527,16 +530,17 @@ class TestGenerateImageAsync:
                     patch("venice_ai.cli.commands.image.generate.print_error") as mock_error,
                 ):
                     # The function catches exceptions and calls print_error
-                    await _generate_image_async(
-                        ctx=mock_ctx,
-                        prompt="test",
-                        model="hidream",
-                        size="1024x1024",
-                        num_images=1,
-                        output=None,
-                        save_dir=None,
-                        show_timing=True,
-                    )
+                    with pytest.raises(SystemExit):
+                        await _generate_image_async(
+                            ctx=mock_ctx,
+                            prompt="test",
+                            model="hidream",
+                            size="1024x1024",
+                            num_images=1,
+                            output=None,
+                            save_dir=None,
+                            show_timing=True,
+                        )
                     # Verify error was reported
                     mock_error.assert_called()
 
@@ -656,6 +660,7 @@ class TestInteractiveImageGeneration:
             with (
                 patch("asyncio.to_thread", return_value=None),  # Prompt returns None
                 patch("venice_ai.cli.commands.image.wizard.print_error"),
+                pytest.raises(SystemExit),
             ):
                 await _interactive_image_generation(mock_ctx)
 
@@ -683,6 +688,7 @@ class TestInteractiveImageGeneration:
             with (
                 patch("asyncio.to_thread", return_value=None),  # Empty prompt
                 patch("venice_ai.cli.commands.image.wizard.print_error"),
+                pytest.raises(SystemExit),
             ):
                 await _interactive_image_generation(mock_ctx)
 
@@ -716,6 +722,7 @@ class TestInteractiveImageGeneration:
             with (
                 patch("asyncio.to_thread", return_value=None),
                 patch("venice_ai.cli.commands.image.wizard.print_error"),
+                pytest.raises(SystemExit),
             ):
                 await _interactive_image_generation(mock_ctx)
 
@@ -730,7 +737,10 @@ class TestInteractiveImageGeneration:
             patch("venice_ai.cli.commands.image.wizard.VeniceClient") as MockClient,
         ):
             MockClient.return_value.__aenter__ = AsyncMock(side_effect=Exception("Wizard error"))
-            with patch("venice_ai.cli.commands.image.wizard.print_error"):
+            with (
+                patch("venice_ai.cli.commands.image.wizard.print_error"),
+                pytest.raises(SystemExit),
+            ):
                 await _interactive_image_generation(mock_ctx)
 
 
@@ -1015,6 +1025,7 @@ class TestInteractiveFlowPaths:
             with (
                 patch("asyncio.to_thread", side_effect=mock_to_thread),
                 patch("venice_ai.cli.commands.image.wizard.print_info"),
+                pytest.raises(SystemExit),
             ):
                 await _interactive_image_generation(mock_ctx)
 
@@ -1254,6 +1265,7 @@ class TestListStylesAsync:
             with (
                 patch("venice_ai.cli.commands.image.styles.print_info"),
                 patch("venice_ai.cli.commands.image.styles.print_error"),
+                pytest.raises(SystemExit),
             ):
                 await _list_styles_async(mock_ctx)
 
@@ -1275,6 +1287,7 @@ class TestListStylesAsync:
             with (
                 patch("venice_ai.cli.commands.image.styles.print_info"),
                 patch("venice_ai.cli.commands.image.styles.print_error"),
+                pytest.raises(SystemExit),
             ):
                 await _list_styles_async(mock_ctx)
 
@@ -1326,13 +1339,14 @@ class TestBatchGenerateAsync:
             mock_ctx.obj["config"] = mock_config
 
             with patch("venice_ai.cli.commands.image.generate.print_error") as mock_error:
-                await _batch_generate_async(
-                    ctx=mock_ctx,
-                    prompts_file=str(prompts_file),
-                    model="hidream",
-                    size="1024x1024",
-                    save_dir=None,
-                )
+                with pytest.raises(SystemExit):
+                    await _batch_generate_async(
+                        ctx=mock_ctx,
+                        prompts_file=str(prompts_file),
+                        model="hidream",
+                        size="1024x1024",
+                        save_dir=None,
+                    )
                 mock_error.assert_called()
 
     @pytest.mark.asyncio
@@ -1465,7 +1479,10 @@ class TestBatchGenerateAsync:
                 patch("venice_ai.cli.commands.image.generate.VeniceClient") as MockClient,
             ):
                 MockClient.return_value.__aenter__ = AsyncMock(side_effect=VeniceError("API Error"))
-                with patch("venice_ai.cli.commands.image.generate.print_error"):
+                with (
+                    patch("venice_ai.cli.commands.image.generate.print_error"),
+                    pytest.raises(SystemExit),
+                ):
                     await _batch_generate_async(
                         ctx=mock_ctx,
                         prompts_file=str(prompts_file),
@@ -1493,7 +1510,10 @@ class TestBatchGenerateAsync:
                 MockClient.return_value.__aenter__ = AsyncMock(
                     side_effect=RuntimeError("Unexpected")
                 )
-                with patch("venice_ai.cli.commands.image.generate.print_error"):
+                with (
+                    patch("venice_ai.cli.commands.image.generate.print_error"),
+                    pytest.raises(SystemExit),
+                ):
                     await _batch_generate_async(
                         ctx=mock_ctx,
                         prompts_file=str(prompts_file),
@@ -1608,6 +1628,7 @@ class TestEdgeCases:
             with (
                 patch("asyncio.to_thread", side_effect=mock_to_thread),
                 patch("venice_ai.cli.commands.image.wizard.print_info"),
+                pytest.raises(SystemExit),
             ):
                 await _interactive_image_generation(mock_ctx)
 
@@ -1661,6 +1682,7 @@ class TestEdgeCases:
             with (
                 patch("asyncio.to_thread", side_effect=mock_to_thread),
                 patch("venice_ai.cli.commands.image.wizard.print_info"),
+                pytest.raises(SystemExit),
             ):
                 await _interactive_image_generation(mock_ctx)
 
@@ -1714,6 +1736,7 @@ class TestEdgeCases:
             with (
                 patch("asyncio.to_thread", side_effect=mock_to_thread),
                 patch("venice_ai.cli.commands.image.wizard.print_info"),
+                pytest.raises(SystemExit),
             ):
                 await _interactive_image_generation(mock_ctx)
 
@@ -2022,16 +2045,17 @@ class TestGenerateImageAsyncPlainMode:
                     patch("click.echo"),
                 ):
                     # Should not raise despite the exception
-                    await _generate_image_async(
-                        ctx=plain_ctx,
-                        prompt="test prompt",
-                        model="hidream",
-                        size="1024x1024",
-                        num_images=1,
-                        output=None,
-                        save_dir=tmpdir,
-                        show_timing=False,
-                    )
+                    with pytest.raises(SystemExit):
+                        await _generate_image_async(
+                            ctx=plain_ctx,
+                            prompt="test prompt",
+                            model="hidream",
+                            size="1024x1024",
+                            num_images=1,
+                            output=None,
+                            save_dir=tmpdir,
+                            show_timing=False,
+                        )
                     # The outer except catches and calls print_error
                     # Either click.echo was called with failure message or print_error was called
                     assert True  # Just verify it didn't crash
@@ -2569,18 +2593,19 @@ class TestUpscaleAsync:
             MockClient.return_value = mock_cm
 
             with patch("venice_ai.cli.commands.image.upscale.print_error") as mock_err:
-                await _upscale_async(
-                    ctx=rich_ctx,
-                    input_file=str(input_file),
-                    scale=None,
-                    enhance=None,
-                    enhance_creativity=None,
-                    enhance_prompt=None,
-                    replication=None,
-                    output=None,
-                    save_dir=str(tmp_path),
-                    open_image=False,
-                )
+                with pytest.raises(SystemExit):
+                    await _upscale_async(
+                        ctx=rich_ctx,
+                        input_file=str(input_file),
+                        scale=None,
+                        enhance=None,
+                        enhance_creativity=None,
+                        enhance_prompt=None,
+                        replication=None,
+                        output=None,
+                        save_dir=str(tmp_path),
+                        open_image=False,
+                    )
                 mock_err.assert_called()
 
     @pytest.mark.asyncio
@@ -2605,18 +2630,19 @@ class TestUpscaleAsync:
                 patch("venice_ai.cli.commands.image.upscale.print_error"),
                 patch("click.echo") as mock_echo,
             ):
-                await _upscale_async(
-                    ctx=plain_ctx,
-                    input_file=str(input_file),
-                    scale=None,
-                    enhance=None,
-                    enhance_creativity=None,
-                    enhance_prompt=None,
-                    replication=None,
-                    output=None,
-                    save_dir=str(tmp_path),
-                    open_image=False,
-                )
+                with pytest.raises(SystemExit):
+                    await _upscale_async(
+                        ctx=plain_ctx,
+                        input_file=str(input_file),
+                        scale=None,
+                        enhance=None,
+                        enhance_creativity=None,
+                        enhance_prompt=None,
+                        replication=None,
+                        output=None,
+                        save_dir=str(tmp_path),
+                        open_image=False,
+                    )
                 echo_str = " ".join(str(c) for c in mock_echo.call_args_list)
                 assert "failed" in echo_str.lower() or "Upscaling" in echo_str
 
@@ -2639,18 +2665,19 @@ class TestUpscaleAsync:
             MockClient.return_value = mock_cm
 
             with patch("venice_ai.cli.commands.image.upscale.print_error") as mock_err:
-                await _upscale_async(
-                    ctx=plain_ctx,
-                    input_file=str(input_file),
-                    scale=None,
-                    enhance=None,
-                    enhance_creativity=None,
-                    enhance_prompt=None,
-                    replication=None,
-                    output=None,
-                    save_dir=str(tmp_path),
-                    open_image=False,
-                )
+                with pytest.raises(SystemExit):
+                    await _upscale_async(
+                        ctx=plain_ctx,
+                        input_file=str(input_file),
+                        scale=None,
+                        enhance=None,
+                        enhance_creativity=None,
+                        enhance_prompt=None,
+                        replication=None,
+                        output=None,
+                        save_dir=str(tmp_path),
+                        open_image=False,
+                    )
                 mock_err.assert_called()
                 assert "Venice API error" in mock_err.call_args[0][0]
 
@@ -2830,16 +2857,17 @@ class TestEditAsync:
                 patch("venice_ai.cli.commands.image.edit.print_error"),
                 patch("click.echo") as mock_echo,
             ):
-                await _edit_async(
-                    ctx=plain_ctx,
-                    input_file=str(input_file),
-                    prompt="Edit prompt",
-                    model=None,
-                    output=None,
-                    save_dir=str(tmp_path),
-                    img_format=None,
-                    open_image=False,
-                )
+                with pytest.raises(SystemExit):
+                    await _edit_async(
+                        ctx=plain_ctx,
+                        input_file=str(input_file),
+                        prompt="Edit prompt",
+                        model=None,
+                        output=None,
+                        save_dir=str(tmp_path),
+                        img_format=None,
+                        open_image=False,
+                    )
                 echo_str = " ".join(str(c) for c in mock_echo.call_args_list)
                 assert "failed" in echo_str.lower() or "Edit" in echo_str
 
@@ -2863,16 +2891,17 @@ class TestEditAsync:
             MockClient.return_value = mock_cm
 
             with patch("venice_ai.cli.commands.image.edit.print_error") as mock_err:
-                await _edit_async(
-                    ctx=rich_ctx,
-                    input_file=str(input_file),
-                    prompt="Test",
-                    model=None,
-                    output=None,
-                    save_dir=str(tmp_path),
-                    img_format=None,
-                    open_image=False,
-                )
+                with pytest.raises(SystemExit):
+                    await _edit_async(
+                        ctx=rich_ctx,
+                        input_file=str(input_file),
+                        prompt="Test",
+                        model=None,
+                        output=None,
+                        save_dir=str(tmp_path),
+                        img_format=None,
+                        open_image=False,
+                    )
                 mock_err.assert_called()
 
     @pytest.mark.asyncio
@@ -2894,16 +2923,17 @@ class TestEditAsync:
             MockClient.return_value = mock_cm
 
             with patch("venice_ai.cli.commands.image.edit.print_error") as mock_err:
-                await _edit_async(
-                    ctx=plain_ctx,
-                    input_file=str(input_file),
-                    prompt="Test",
-                    model=None,
-                    output=None,
-                    save_dir=str(tmp_path),
-                    img_format=None,
-                    open_image=False,
-                )
+                with pytest.raises(SystemExit):
+                    await _edit_async(
+                        ctx=plain_ctx,
+                        input_file=str(input_file),
+                        prompt="Test",
+                        model=None,
+                        output=None,
+                        save_dir=str(tmp_path),
+                        img_format=None,
+                        open_image=False,
+                    )
                 mock_err.assert_called()
                 assert "Venice API error" in mock_err.call_args[0][0]
 
@@ -3282,14 +3312,15 @@ class TestRemoveBgAsync:
                 patch("venice_ai.cli.commands.image.edit.print_error"),
                 patch("click.echo") as mock_echo,
             ):
-                await _remove_bg_async(
-                    ctx=plain_ctx,
-                    input_file=str(input_file),
-                    output=None,
-                    save_dir=str(tmp_path),
-                    img_format="png",
-                    open_image=False,
-                )
+                with pytest.raises(SystemExit):
+                    await _remove_bg_async(
+                        ctx=plain_ctx,
+                        input_file=str(input_file),
+                        output=None,
+                        save_dir=str(tmp_path),
+                        img_format="png",
+                        open_image=False,
+                    )
                 echo_str = " ".join(str(c) for c in mock_echo.call_args_list)
                 assert "failed" in echo_str.lower() or "removal" in echo_str.lower()
 
@@ -3313,14 +3344,15 @@ class TestRemoveBgAsync:
             MockClient.return_value = mock_cm
 
             with patch("venice_ai.cli.commands.image.edit.print_error") as mock_err:
-                await _remove_bg_async(
-                    ctx=rich_ctx,
-                    input_file=str(input_file),
-                    output=None,
-                    save_dir=str(tmp_path),
-                    img_format="png",
-                    open_image=False,
-                )
+                with pytest.raises(SystemExit):
+                    await _remove_bg_async(
+                        ctx=rich_ctx,
+                        input_file=str(input_file),
+                        output=None,
+                        save_dir=str(tmp_path),
+                        img_format="png",
+                        open_image=False,
+                    )
                 mock_err.assert_called()
 
     @pytest.mark.asyncio
@@ -3342,14 +3374,15 @@ class TestRemoveBgAsync:
             MockClient.return_value = mock_cm
 
             with patch("venice_ai.cli.commands.image.edit.print_error") as mock_err:
-                await _remove_bg_async(
-                    ctx=plain_ctx,
-                    input_file=str(input_file),
-                    output=None,
-                    save_dir=str(tmp_path),
-                    img_format="png",
-                    open_image=False,
-                )
+                with pytest.raises(SystemExit):
+                    await _remove_bg_async(
+                        ctx=plain_ctx,
+                        input_file=str(input_file),
+                        output=None,
+                        save_dir=str(tmp_path),
+                        img_format="png",
+                        open_image=False,
+                    )
                 mock_err.assert_called()
                 assert "Venice API error" in mock_err.call_args[0][0]
 
@@ -3563,16 +3596,17 @@ class TestGenerateImageParameterValidationFailure:
                 ),
                 patch("venice_ai.cli.commands.image.generate.print_error") as mock_err,
             ):
-                await _generate_image_async(
-                    ctx=mock_ctx,
-                    prompt="test",
-                    model="hidream",
-                    size="1024x1024",
-                    num_images=1,
-                    output=None,
-                    save_dir=str(tmp_path),
-                    show_timing=False,
-                )
+                with pytest.raises(SystemExit):
+                    await _generate_image_async(
+                        ctx=mock_ctx,
+                        prompt="test",
+                        model="hidream",
+                        size="1024x1024",
+                        num_images=1,
+                        output=None,
+                        save_dir=str(tmp_path),
+                        show_timing=False,
+                    )
                 mock_err.assert_called()
                 assert "Parameter validation failed" in mock_err.call_args[0][0]
 

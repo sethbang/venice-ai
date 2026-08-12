@@ -492,7 +492,7 @@ async def _chat_async(
                 model = await _select_chat_model(client)
                 if not model:
                     print_error("No model selected. Exiting.")
-                    return
+                    raise SystemExit(1)
                 model_was_explicit = True
                 print_success(f"Selected model: {model}")
             else:
@@ -611,8 +611,10 @@ async def _chat_async(
 
     except VeniceError as e:
         print_error(f"Venice API error: {e}")
+        raise SystemExit(1) from e
     except Exception as e:
         print_error(f"Unexpected error: {e}")
+        raise SystemExit(1) from e
 
 
 async def _send_single_message(
