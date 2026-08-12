@@ -99,15 +99,8 @@ def cli(ctx: click.Context, version: bool, config: str | None, plain: bool) -> N
     set_active_config_path(config_path)
     ctx.ensure_object(dict)
     ctx.obj["config"] = load_config(config_path)
-    if plain:
-        # Re-import console after enabling plain mode
-        from .utils.console import console as updated_console
-
-        ctx.obj["console"] = updated_console
-        ctx.obj["plain"] = True
-    else:
-        ctx.obj["console"] = console
-        ctx.obj["plain"] = False
+    ctx.obj["console"] = console
+    ctx.obj["plain"] = plain
 
 
 # Register command groups

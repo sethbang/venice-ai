@@ -117,8 +117,12 @@ class TestImageBatch:
 class TestImageOptions:
     """Test image command option validation"""
 
-    def test_generate_invalid_size_rejected(self, cli_runner):
+    def test_generate_invalid_size_rejected(self, cli_runner, monkeypatch):
         """Test generate rejects invalid size"""
+        # Resolve a key explicitly so the command reaches size validation.
+        # ``cli.config`` calls ``load_dotenv()`` at import, so without this the
+        # result depends on whether the working tree has a local ``.env``.
+        monkeypatch.setenv("VENICE_API_KEY", "vn_test_key_abc12345")
         result = cli_runner.invoke(
             cli,
             [

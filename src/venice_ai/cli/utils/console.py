@@ -3,12 +3,17 @@ Console utilities for Venice AI CLI
 """
 
 from rich.console import Console
+from rich.highlighter import NullHighlighter, ReprHighlighter
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.text import Text
 
-# Global console instance - can be reconfigured for plain mode
+# Global console instance, reconfigured in place for plain mode. Command modules
+# bind this object at import time (``from ...utils.console import console``), so
+# plain mode has to mutate the instance rather than rebind the name — rebinding
+# would leave every one of those bindings pointing at the original, still
+# colorized console.
 console = Console()
 
 # Track plain mode state
@@ -17,9 +22,20 @@ _plain_mode = False
 
 def enable_plain_mode() -> None:
     """Enable plain text output (no colors, no formatting, no panels)"""
-    global console, _plain_mode
+    global _plain_mode
     _plain_mode = True
-    console = Console(force_terminal=False, no_color=True, highlight=False)
+    # ``highlight`` is only consulted in ``Console.__init__`` (it selects the
+    # highlighter), so the highlighter itself must be replaced here.
+    console.no_color = True
+    console.highlighter = NullHighlighter()
+
+
+def disable_plain_mode() -> None:
+    """Restore rich output (colors, highlighting, panels)"""
+    global _plain_mode
+    _plain_mode = False
+    console.no_color = False
+    console.highlighter = ReprHighlighter()
 
 
 def is_plain_mode() -> bool:

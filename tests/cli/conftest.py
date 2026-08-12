@@ -5,8 +5,11 @@ Pytest configuration and fixtures for Venice CLI tests
 from types import SimpleNamespace
 
 import pytest
+from rich.highlighter import NullHighlighter
 
 from venice_ai.cli import config as _cli_config
+from venice_ai.cli.utils.console import console as _cli_console
+from venice_ai.cli.utils.console import disable_plain_mode
 
 
 @pytest.fixture(autouse=True)
@@ -22,6 +25,28 @@ def _reset_active_config_path():
     _cli_config.set_active_config_path(None)
     yield
     _cli_config.set_active_config_path(None)
+
+
+@pytest.fixture(autouse=True)
+def _deterministic_console():
+    """Pin the CLI console to ANSI-free output between tests.
+
+    ``venice --plain`` reconfigures the process-global console in
+    ``cli.utils.console``. Without a reset, whether a test sees colorized output
+    depends on which tests happened to run before it in the same xdist worker,
+    which makes output assertions order-dependent. CLI tests compare
+    human-readable text, so colour and highlighting are pinned off and the
+    plain-mode flag is restored around every test.
+    """
+
+    def _pin() -> None:
+        disable_plain_mode()
+        _cli_console.no_color = True
+        _cli_console.highlighter = NullHighlighter()
+
+    _pin()
+    yield
+    _pin()
 
 
 @pytest.fixture

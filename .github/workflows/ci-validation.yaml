@@ -89,29 +89,31 @@ jobs:
           path: mypy-report/
           retention-days: 30
 
-      # Per-push gate runs the DETERMINISTIC unit suite only — no live API, no
-      # cassettes, no flakiness. Cassettes are local-dev-only (gitignored), so a
-      # CI checkout has none; running the full integration/e2e suite here would
-      # force it live (slow, costly, and intermittently red on transient API
+      # Per-push gate runs every DETERMINISTIC suite — unit, cli, property,
+      # provider and presets. All of them are offline: no live API, no API key,
+      # no cassettes, no flakiness. Cassettes are local-dev-only (gitignored), so
+      # a CI checkout has none; running integration/e2e here would force them
+      # live (slow, costly, and intermittently red on transient API
       # 500s/timeouts) — which is exactly what we don't want gating merges. Full
       # live coverage runs on demand via `make test-ci` and the manual-trigger
-      # `e2e.yml` workflow (which now hits the live API thanks to the `--disable-vcr`
-      # live-passthrough in conftest). Unit tests + the static jobs (build, mypy,
-      # pyright, vulture, install-matrix) gate every PR deterministically.
-      - name: Run unit tests with coverage
+      # `e2e.yml` workflow (which hits the live API thanks to the `--disable-vcr`
+      # live-passthrough in conftest). These suites + the static jobs (build,
+      # mypy, pyright, vulture, install-matrix) gate every PR deterministically.
+      - name: Run deterministic tests with coverage
         env:
           VENICE_TEST_REDIS_URL: "redis://localhost:6379"
         run: |
-          poetry run pytest tests/unit/ \
+          poetry run pytest \
+            tests/unit/ tests/cli/ tests/property/ tests/provider/ tests/presets/ \
             --cov=src/venice_ai \
             --cov-report=xml:tests/reports/coverage/coverage.xml \
             --cov-report=term-missing \
             --cov-fail-under=0 \
             -n 6 --tb=short -q
-        # Coverage is reported to codecov but NOT hard-gated here: the unit suite
-        # alone can't reach the 90% floor (that needs the integration/e2e paths).
-        # The 90% gate stays enforced in the full `make test-ci` run (local +
-        # on-demand), which reaches ~94%.
+        # Coverage is reported to codecov but NOT hard-gated here: the
+        # deterministic suites reach ~92%, with the remainder living in the
+        # integration/e2e paths. The 90% gate stays enforced in the full
+        # `make test-ci` run (local + on-demand), which reaches ~94%.
 
       - name: Upload coverage report
         if: github.repository != 'sethbang/venice-ai-rc'
