@@ -261,7 +261,7 @@ async def _generate_image_async(
 
             if not is_valid:
                 print_error(f"Parameter validation failed: {error_message}")
-                return
+                raise SystemExit(1)
 
             # Show generation info
             if plain:
@@ -411,8 +411,10 @@ async def _generate_image_async(
 
     except VeniceError as e:
         print_error(f"Venice API error: {e}")
+        raise SystemExit(1) from e
     except Exception as e:
         print_error(f"Unexpected error: {e}")
+        raise SystemExit(1) from e
 
 
 @click.command(name="batch")
@@ -503,7 +505,7 @@ async def _batch_generate_async(
 
     if not prompts:
         print_error("No prompts found in file")
-        return
+        raise SystemExit(1)
 
     print_info(f"Found {len(prompts)} prompt(s) to process")
 
@@ -657,5 +659,7 @@ async def _batch_generate_async(
 
     except VeniceError as e:
         print_error(f"Venice API error: {e}")
+        raise SystemExit(1) from e
     except Exception as e:
         print_error(f"Unexpected error: {e}")
+        raise SystemExit(1) from e

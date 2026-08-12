@@ -896,7 +896,8 @@ class TestConfigureCli:
                     ):
                         mock_save.side_effect = Exception("Permission denied")
                         with patch("venice_ai.cli.commands.configure.print_error") as mock_error:
-                            configure_cli({})
+                            with pytest.raises(SystemExit):
+                                configure_cli({})
                             mock_error.assert_called()
 
     def test_configure_cli_save_to_custom_path_success(self):
@@ -996,7 +997,8 @@ class TestConfigureCli:
                     ):
                         mock_save.side_effect = Exception("Permission denied")
                         with patch("venice_ai.cli.commands.configure.print_error") as mock_error:
-                            configure_cli({})
+                            with pytest.raises(SystemExit):
+                                configure_cli({})
                             mock_error.assert_called()
 
     def test_configure_cli_skip_save(self):

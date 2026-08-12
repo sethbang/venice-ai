@@ -34,7 +34,7 @@ async def _list_styles_async(ctx: click.Context):
 
             if not response or not response.data:
                 print_error("No styles available")
-                return
+                raise SystemExit(1)
 
             table = Table(
                 title="Available Style Presets",
@@ -53,3 +53,4 @@ async def _list_styles_async(ctx: click.Context):
 
         except Exception as e:
             print_error(f"Failed to fetch styles: {e}")
+            raise SystemExit(1) from e

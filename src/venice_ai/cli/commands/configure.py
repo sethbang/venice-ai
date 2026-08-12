@@ -206,6 +206,7 @@ def configure_cli(ctx: dict[str, Any]) -> None:
                 print_success(f"Configuration saved to {save_path}")
             except Exception as e:
                 print_error(f"Failed to save configuration: {e}")
+                raise SystemExit(1) from e
         else:
             custom_path = questionary.path(
                 "Enter configuration file path:", default=str(DEFAULT_CONFIG_PATH)
@@ -217,6 +218,7 @@ def configure_cli(ctx: dict[str, Any]) -> None:
                     print_success(f"Configuration saved to {custom_path}")
                 except Exception as e:
                     print_error(f"Failed to save configuration: {e}")
+                    raise SystemExit(1) from e
 
     # Final message
     console.print("\n[bold green]Configuration complete![/bold green]")

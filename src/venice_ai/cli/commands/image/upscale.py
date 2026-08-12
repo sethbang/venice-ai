@@ -168,5 +168,7 @@ async def _upscale_async(
 
     except VeniceError as e:
         print_error(f"Venice API error: {e}")
+        raise SystemExit(1) from e
     except Exception as e:
         print_error(f"Unexpected error: {e}")
+        raise SystemExit(1) from e

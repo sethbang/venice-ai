@@ -76,7 +76,7 @@ async def _interactive_image_generation(ctx: click.Context) -> None:
 
             if not prompt:
                 print_error("Prompt is required!")
-                return
+                raise SystemExit(1)
 
             # Model selection
             available = available_models or []
@@ -404,3 +404,4 @@ async def _interactive_image_generation(ctx: click.Context) -> None:
 
     except Exception as e:
         print_error(f"Unexpected error: {e}")
+        raise SystemExit(1) from e

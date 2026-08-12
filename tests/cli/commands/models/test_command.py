@@ -438,10 +438,11 @@ class TestComparisonMode:
         ):
             MockVeniceClient.return_value.__aenter__.return_value = mock_client
 
-            await list_models(
-                mock_context,
-                compare_ids="test-text-model,nonexistent-model",
-            )
+            with pytest.raises(SystemExit):
+                await list_models(
+                    mock_context,
+                    compare_ids="test-text-model,nonexistent-model",
+                )
 
             # Should print error for missing model
             mock_print_error.assert_any_call("Model not found: nonexistent-model")
@@ -471,10 +472,11 @@ class TestComparisonMode:
         ):
             MockVeniceClient.return_value.__aenter__.return_value = mock_client
 
-            await list_models(
-                mock_context,
-                compare_ids="test-text-model,missing-model",
-            )
+            with pytest.raises(SystemExit):
+                await list_models(
+                    mock_context,
+                    compare_ids="test-text-model,missing-model",
+                )
 
             # Should print error about needing 2 models
             mock_print_error.assert_any_call("Need at least 2 models to compare")
@@ -580,10 +582,11 @@ class TestDetailMode:
         ):
             MockVeniceClient.return_value.__aenter__.return_value = mock_client
 
-            await list_models(
-                mock_context,
-                detail_id="nonexistent-model",
-            )
+            with pytest.raises(SystemExit):
+                await list_models(
+                    mock_context,
+                    detail_id="nonexistent-model",
+                )
 
             # Should print error for missing model
             mock_print_error.assert_any_call("Model not found: nonexistent-model")
@@ -1763,7 +1766,8 @@ class TestErrorHandling:
         ):
             MockVeniceClient.return_value.__aenter__.return_value = mock_client
 
-            await list_models(mock_context)
+            with pytest.raises(SystemExit):
+                await list_models(mock_context)
 
             # Should print Venice API error
             mock_print_error.assert_called()
@@ -1800,7 +1804,8 @@ class TestErrorHandling:
         ):
             MockVeniceClient.return_value.__aenter__.return_value = mock_client
 
-            await list_models(mock_context)
+            with pytest.raises(SystemExit):
+                await list_models(mock_context)
 
             # Should print unexpected error
             mock_print_error.assert_called()
