@@ -1,0 +1,72 @@
+# Default configuration for Venice AI Rate Limiter
+# This file contains the default settings that can be overridden by:
+# 1. User-provided YAML file
+# 2. Environment variables (highest precedence)
+
+# Scheduler configuration
+scheduler:
+  # Scheduling strategy: weighted_round_robin, deficit_round_robin, or priority
+  strategy: weighted_round_robin
+  
+  # Maximum number of concurrent API requests
+  max_concurrent: 100
+  
+  # Maximum size of each model's request queue
+  max_queue_size: 1000
+  
+  # Policy when queue is full: reject or drop_oldest
+  overflow_policy: reject
+  
+  # Interval between scheduler loops (seconds)
+  scheduler_interval: 0.01
+  
+  # Cache TTL for state information (seconds)
+  state_cache_ttl: 0.1
+
+# State manager configuration
+state_manager:
+  # Backend for state storage: memory or shared_memory
+  backend: memory
+
+    
+  # Shared memory configuration (only used if backend is shared_memory)
+  shared_memory:
+    namespace: venice_rate_limiter
+
+# Logging configuration
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: INFO
+  
+  # Enable detailed rate limit debugging
+  debug_rate_limits: false
+
+# Feature flags
+features:
+  # Enable/disable rate limiting entirely
+  enabled: true
+  
+  # Enable metrics collection
+  enable_metrics: false
+  
+  # Metrics port (if metrics enabled)
+  metrics_port: 9090
+
+# Test mode configuration
+test_mode:
+  # Rate limit multiplier for tests (higher = more lenient limits)
+  rate_multiplier: 10.0
+  
+  # Automatically detect test environment
+  auto_detect: true
+
+# Default rate limits for models without specific configuration
+default:
+  # Default requests per minute limit
+  rpm_limit: 10
+  
+  # Default requests per day limit
+  rpd_limit: 1000
+  
+  # Default tokens per minute limit
+  tpm_limit: 10000

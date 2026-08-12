@@ -1,0 +1,56 @@
+name: Examples Validation
+
+# Gate on examples/ so the swallow-to-exit-0 anti-pattern (and lint/format/
+# syntax drift) cannot regress: nothing else in CI checks examples/.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "examples/**"
+      - "tools/examples/**"
+      - ".github/workflows/examples.yml"
+  pull_request:
+    paths:
+      - "examples/**"
+      - "tools/examples/**"
+      - ".github/workflows/examples.yml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1  # not pinned — see ci-validation.yaml header
+
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+        with:
+          path: ~/.cache/pypoetry
+          key: examples-poetry-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
+
+      # ruff is a dev-group dependency; the checker + py_compile are stdlib-only.
+      - name: Install dependencies
+        run: poetry install --no-interaction --with dev
+
+      - name: Ruff lint (examples/)
+        run: poetry run ruff check examples/
+
+      - name: Ruff format check (examples/)
+        run: poetry run ruff format --check examples/
+
+      - name: Compile-smoke every example (syntax / indentation)
+        run: poetry run python -m compileall -q examples/
+
+      - name: Swallow-to-exit-0 gate (Rules A + C)
+        run: poetry run python tools/examples/check_no_swallow.py

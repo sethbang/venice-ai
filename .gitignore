@@ -51,6 +51,10 @@ coverage.xml
 .pytest_cache/
 cov.xml
 
+# Mutation testing
+.mutmut-cache
+html/
+
 # Translations
 *.mo
 *.pot
@@ -111,6 +115,9 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
+# ruff
+.ruff_cache/
+
 # Pyre type checker
 .pyre/
 
@@ -136,25 +143,61 @@ Thumbs.db
 logs/
 *log
 
-# Custom Ignores from your project
-run_tests.sh
-.github/
-.venv_gradio_test
-dev-docs
-venice-ai/.venv/
-CHANGELOG_RESPONSE_PLAN.md
-arch/
-e2e_tests/output/
-/arch/
-.env
-.env
-/build/
-examples/factcheck-bench/factm-answers.json
-examples/factcheck-bench/factm.json
-api.xml
-local/
-venice-ai-streamlit-demo/
-venice_ai_test_runs/
-temp/
-benchmark_data/
+# Project-specific ignores
+.kilocodeignore
+.rooignore
+.claude
+.roomodes
 .roo/
+.kilocode/
+.archive/
+.avr_state.json
+.metadata
+
+# Test artifacts
+tests/.model_cache.json
+tests/reports
+tests/cassettes
+tests/integration/cassettes
+tests/e2e/cassettes
+tests/e2e/audio_helper_outputs
+tests/benchmarks/vcr_cassettes
+tests/profiling/.baselines.json
+test_output
+examples/results
+examples/*.log
+.claude/settings.local.json
+
+# Profiling
+*.prof
+*.pstats
+.benchmarks/
+mypy-report/
+
+# Project artifacts
+_dev
+md
+*.zip
+adaptive-rate-limiter-docs
+.kilo
+
+# Docusaurus site (generated / build artifacts)
+website/node_modules/
+website/build/
+website/.docusaurus/
+website/docs/api/
+
+# Repo-internal brainstorming / specs / plans (not for the public repo)
+docs/superpowers/
+
+# Local v2.0.0 release working checklist (not committed)
+RELEASE_CHECKLIST_v2.0.0.md
+
+# Local agent instructions and audit/scratch output (not for the public repo)
+CLAUDE.md
+out/
+.playwright-mcp/
+tmp/
+
+# Local brand-reference material (Venice marks and guidelines are not ours to redistribute)
+venice-branding/

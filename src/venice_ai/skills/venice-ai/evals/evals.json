@@ -1,0 +1,69 @@
+{
+  "skill_name": "venice-ai",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm building an internal HR chatbot for Acme Corp called `hr_assistant.py`. It needs to stream replies token-by-token to a CLI so users see them as they're typed, and after streaming finishes I need to log the final token usage to our metrics pipeline. Please write a single async function `answer_question(question: str)` that opens a Venice client, picks an appropriate chat model dynamically, streams the assistant reply to stdout as it arrives, and after streaming completes prints a line `[usage] prompt=X completion=Y total=Z` using the actual usage numbers from the stream. Include a system prompt that establishes the assistant as Acme's HR helper. Include `if __name__ == '__main__':` and run a sample question. Don't catch exceptions — let them propagate. Pure async; one file at `outputs/hr_assistant.py`.",
+      "expected_output": "Python source file at outputs/hr_assistant.py implementing async streaming chat with usage logging, using Venice v2 idioms throughout.",
+      "files": [],
+      "expectations": [
+        "Code uses `async with VeniceClient() as client:` (not `client = VeniceClient()` without context manager).",
+        "Code calls `await client.models.resolve_chat()` (or another `resolve_*` variant) — no hardcoded model string is passed to the `model=` kwarg.",
+        "Code uses `await client.chat.completions.stream(...)` and wraps the result in `async with stream:` (not `client.chat.completions.create(stream=True)` and not bare `async for chunk in stream`).",
+        "Code iterates via `stream.text_deltas()` or `stream.collect_with_deltas()`, not a raw `async for chunk in stream`.",
+        "Code passes `stream_options=StreamOptions(include_usage=True)` (or equivalent) so that `final_response.usage` is populated.",
+        "After streaming completes, code reads usage from `stream.final_response.usage` and prints `[usage] prompt=X completion=Y total=Z` with the actual numbers.",
+        "Code uses `max_completion_tokens=` if any token-budget kwarg is set; never `max_tokens=`.",
+        "System message uses `SystemMessage(content=...)` (or similar typed helper), not a raw `{\"role\": \"system\", ...}` dict.",
+        "File parses with `ast.parse` and imports resolve cleanly under `pyflakes` (no syntax errors, no undefined names from the Venice API surface)."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I'm prototyping a customer-support agent in `support_agent.py` that needs two tools: `lookup_order(order_id: str) -> dict` and `issue_refund(order_id: str, reason: str) -> str`. Wire them up with Venice's tool-calling support so the model can call them, and let Venice drive the agent loop end-to-end (don't hand-roll the loop). The implementations can be stubs that return fake data — I just need the wiring correct. Cap the agent loop at 5 iterations and surface (don't swallow) any exception raised inside `issue_refund` so we can debug bad refund logic. After the loop, print the final assistant message and the iteration count. Pure async; output one file at `outputs/support_agent.py`.",
+      "expected_output": "Python source file at outputs/support_agent.py demonstrating the v2 idiomatic tool-loop pattern with proper error surfacing.",
+      "files": [],
+      "expectations": [
+        "Code imports `tool_from_function` from `venice_ai` (or hands `run_with_tools` bare callables, which it auto-wraps).",
+        "Code calls `await client.chat.completions.run_with_tools(...)` to drive the agent loop; it does not hand-roll a `while`/`for` loop calling `create()` repeatedly.",
+        "`run_with_tools(...)` is called with `max_iterations` set to a finite number (5 per the prompt).",
+        "Code resolves a function-calling-capable chat model via `client.models.resolve_chat(require_function_calling=True)` (or equivalent) — no hardcoded model string.",
+        "Code does not wrap the call to `issue_refund` in a try/except that swallows exceptions silently — exceptions from tool functions surface to the caller.",
+        "To surface (not swallow) tool exceptions per the prompt, code passes a custom `on_tool_error=` to `run_with_tools` that re-raises the exception. Relying on the default `on_tool_error` (which logs + formats the error for the model to self-correct) does NOT satisfy the prompt's requirement.",
+        "After the call, code reads `result.response` (or `.text`) for the final assistant message AND `result.iterations` (or `.messages`) for the loop count.",
+        "`async with VeniceClient() as client:` is used.",
+        "File parses with `ast.parse` and `pyflakes` is clean."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Write `extract_invoice.py`. The script reads a hardcoded raw email blob from a top-level `RAW_EMAIL` string variable and uses Venice's structured-output feature to extract an `Invoice` from it. The `Invoice` model should be a Pydantic `BaseModel` with `vendor: str`, `line_items: list[LineItem]`, and `total_usd: float`, where `LineItem` has `description: str` and `amount_usd: float`. Don't hand-write a JSON schema — pass the Pydantic class directly to Venice and use Venice's parsed accessor on the response. Print the parsed invoice as a dict. Pure async; output to `outputs/extract_invoice.py`.",
+      "expected_output": "Python source file at outputs/extract_invoice.py extracting a typed Invoice via response_format=BaseModel and response.parsed.",
+      "files": [],
+      "expectations": [
+        "Code defines `Invoice` and `LineItem` as `pydantic.BaseModel` subclasses with the specified field types.",
+        "Code passes the `Invoice` class (or instance reference) directly to the `response_format=` kwarg on `client.chat.completions.create(...)` — not a manually-written JSON schema dict.",
+        "Code reads the parsed result from `response.parsed` (or `response.parse_as(Invoice)`); it does NOT manually `json.loads(response.text)`.",
+        "Code resolves a chat model via `client.models.resolve_chat(...)` — no hardcoded model string.",
+        "Code uses `async with VeniceClient() as client:`.",
+        "If a token-budget kwarg is set, it uses `max_completion_tokens=`, never `max_tokens=`.",
+        "File parses with `ast.parse` and `pyflakes` is clean."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "[HELD-OUT TEST SET — do not use during iteration; only for periodic calibration] Write `multi_turn_thread.py`. It runs a 3-turn conversation with the Venice chat API: turn 1 asks 'Tell me about Venice in three sentences.', turn 2 asks 'Now translate that to French.', turn 3 asks 'And one more time in Japanese.'. Each turn should print the assistant's reply, the response's `request_id` from `response.headers` (or `None` if not present), and any `deprecation_info.warning` if the model is deprecated. Build the message list as you go using typed message helpers — don't append raw dicts. Pure async; one file at `outputs/multi_turn_thread.py`.",
+      "expected_output": "Python source file at outputs/multi_turn_thread.py running a 3-turn conversation, surfacing per-response headers and deprecation info.",
+      "files": [],
+      "expectations": [
+        "Code uses typed message helpers (e.g., `UserMessage(content=...)`, `AssistantMessage(content=...)`, optionally `SystemMessage`) when constructing the message list — not raw dicts.",
+        "Code resolves the chat model dynamically via `client.models.resolve_chat()`; no hardcoded model string.",
+        "Code reads `response.headers` (the dict-like accessor) and pulls `request_id` (case-insensitive lookup is fine).",
+        "Code reads `response.deprecation_info` and surfaces `.warning` if `is_deprecated` is true.",
+        "Code maintains conversation context across all 3 turns (i.e., builds a single growing messages list, not 3 isolated calls).",
+        "`async with VeniceClient() as client:` is used.",
+        "File parses with `ast.parse` and `pyflakes` is clean."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "include": ["src"],
+  "pythonVersion": "3.13",
+  "reportMissingImports": "error",
+  "reportMissingTypeStubs": "none",
+  "useLibraryCodeForTypes": true,
+  "ignore": [
+    "src/venice_ai/cli/commands/models/resolve.py"
+  ]
+}

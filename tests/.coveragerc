@@ -1,0 +1,162 @@
+# Coverage.py configuration file for Venice AI test suite
+# This file configures coverage measurement across unit, integration, and e2e tests
+# Format: INI file (not YAML) - see https://coverage.readthedocs.io/
+
+[run]
+# Source code to measure
+source = src/venice_ai
+
+# Enable branch coverage
+branch = True
+
+# Parallel mode for concurrent test execution
+parallel = True
+
+# Data file location
+data_file = tests/reports/coverage/.coverage
+
+# Omit files from coverage
+omit =
+    # Test files themselves
+    */tests/*
+    */test_*.py
+    *_test.py
+    
+    # Setup and configuration
+    */setup.py
+    */conf.py
+    */__main__.py
+    
+    # Virtual environments
+    */venv/*
+    */virtualenv/*
+    */.venv/*
+    */env/*
+    
+    # Third-party packages
+    */site-packages/*
+    */dist-packages/*
+    
+    # Generated files
+    */generated/*
+    *_pb2.py
+    *_pb2_grpc.py
+    
+    # Examples and demos
+    */examples/*
+    */demos/*
+
+# Include only files matching these patterns
+include =
+    src/venice_ai/*
+
+[paths]
+# Paths that should be considered equivalent
+source =
+    src/venice_ai
+    */site-packages/venice_ai
+
+[report]
+# Reporting options
+precision = 2
+show_missing = True
+skip_covered = False
+skip_empty = True
+
+# Fail if coverage is below this threshold
+fail_under = 80
+
+# Exclude lines from coverage
+exclude_lines =
+    # Standard pragmas
+    pragma: no cover
+    pragma: no coverage
+    
+    # Debug code
+    def __repr__
+    def __str__
+    if self.debug:
+    if settings.DEBUG
+    if DEBUG
+    
+    # Defensive programming
+    raise AssertionError
+    raise NotImplementedError
+    raise NotImplementedError()
+    raise RuntimeError
+    
+    # Type checking
+    if TYPE_CHECKING:
+    if typing.TYPE_CHECKING:
+    @typing.overload
+    @overload
+    
+    # Abstract methods
+    @abstractmethod
+    @abc.abstractmethod
+    
+    # Property setters/deleters (often not used)
+    @property
+    @(.*).setter
+    @(.*).deleter
+    
+    # Main execution
+    if __name__ == .__main__.:
+    if __name__ == "__main__":
+    
+    # Pass statements
+    pass
+    \.\.\.
+    
+    # System exit
+    sys.exit\(
+    
+    # Unimplemented code
+    # TODO
+    # FIXME
+    # XXX
+    
+    # Platform-specific code
+    if sys.platform
+    if os.name
+
+# Exclude entire files matching these patterns
+exclude_also =
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+
+# Ignore errors if source code can't be found
+ignore_errors = False
+
+[html]
+# HTML report configuration
+directory = tests/reports/coverage/html
+title = Venice AI Test Coverage Report
+show_contexts = True
+
+[xml]
+# XML report configuration (for CI/CD integration)
+output = tests/reports/coverage/coverage.xml
+
+[json]
+# JSON report configuration
+output = tests/reports/coverage/coverage.json
+pretty_print = True
+show_contexts = True
+
+[lcov]
+# LCOV report configuration (for external tools)
+output = tests/reports/coverage/coverage.lcov
+
+[contexts]
+# Context configuration for understanding test types
+dynamic = test_function
+
+[coverage:run:dynamic_context]
+# Dynamic contexts for distinguishing test types
+test_function = True
+
+[tool:coverage]
+# Additional tool-specific settings
+timid = False

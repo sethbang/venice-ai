@@ -1,0 +1,5 @@
+A simple red circle on white background
+A blue square with rounded corners
+A green triangle pointing upward
+A yellow star with five points
+A purple hexagon

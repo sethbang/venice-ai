@@ -1,0 +1,64 @@
+{
+  "model": "e2ee-gemma-3-27b-p",
+  "upstream_model": "google/gemma-3-27b-it",
+  "verified": true,
+  "signing_public_key": "041978320ac2396640cc00f05313f920c34fce8e684daec4d4932feb1f2f51d42fa06fe9a1dfd0113089165acdb573115fb93fc87af11d58eb14431cd6dc82df1d",
+  "signing_address": "0xa6df16ebBc510D97A32b99B4DFD33793acC90e2b",
+  "signing_algo": "ecdsa",
+  "nonce": "a044fb0d995bc6a3d12c376695661fb1a0fe00032a5c01f99d6c95bcfdeb825b",
+  "request_nonce": "a044fb0d995bc6a3d12c376695661fb1a0fe00032a5c01f99d6c95bcfdeb825b",
+  "nonce_source": "client",
+  "tee_provider": "phala",
+  "tee_hardware": "intel-tdx",
+  "intel_quote": "040002008100000000000000939a7233f79c4ca9940a0db3957f06073eeea0ce673bd084f26d3e8c7b4efa6b000000000b010400000000000000000000000000",
+  "nvidia_payload": "{\"nonce\": \"a044fb0d995bc6a3d12c376695661fb1a0fe00032a5c01f99d6c95bcfdeb825b\", \"evidence_list\": [{\"certificate\": \"LS0tLS1CRUdJTiB",
+  "server_verification": {
+    "tdx": {
+      "valid": true,
+      "signatureValid": true,
+      "certificateChainValid": true,
+      "rootCaPinned": true,
+      "attestationKeyMatch": true,
+      "reportData": "a6df16ebbc510d97a32b99b4dfd33793acc90e2b000000000000000000000000a044fb0d995bc6a3d12c376695661fb1a0fe00032a5c01f99d6c95bcfdeb825b",
+      "measurements": {
+        "mrtd": "b24d3b24e9e3c16012376b52362ca09856c4adecb709d5fac33addf1c47e193da075b125b6c364115771390a5461e217",
+        "mrconfigid": "01cd5af14107fda0782665a90a48507ddfc99f37d3e6a22ce3df8802881c0b1a1a000000000000000000000000000000",
+        "mrowner": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "mrownerconfig": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "rtmr0": "6ffe4a2c12f07eccb857f70f370a5af848a7062905cd95adc43abb1f62c39e330aa3c8aeb8f162656c025f3f527600f1",
+        "rtmr1": "b598fde9491427341bc4683b75d10d3e36770af3a36a6954d8b6b7b22aa66358f13e1f172e51b7d6e6710d99a8d8532f",
+        "rtmr2": "976bc2e546f2e12ce900f476641e7bc6c7244a84a7b722a8ac58eb3a70e9493c24e80bf5e78662cb48df9b26de3d9f33",
+        "rtmr3": "bb3903919b511de9542858731648b6e3cb16d387a3bfc59a2a58fc8d76cae6490b91fc46a698470ae7b0be565b91618f",
+        "tdAttributes": "0000001000000000",
+        "xfam": "e702060000000000"
+      },
+      "crlCheck": {
+        "checked": true,
+        "revoked": false
+      }
+    },
+    "nvidia": {
+      "valid": true,
+      "signatureVerified": true,
+      "certificateChainStatus": {
+        "valid": true,
+        "intermediatePinned": true,
+        "leafCertExpiry": "2026-06-06T06:13:20.000Z"
+      }
+    },
+    "signingAddressBinding": {
+      "bound": true,
+      "reportDataAddress": "0xa6df16ebbc510d97a32b99b4dfd33793acc90e2b"
+    },
+    "nonceBinding": {
+      "bound": true,
+      "method": "raw"
+    },
+    "nvidiaNonceBinding": {
+      "bound": true,
+      "method": "nvidia_payload"
+    },
+    "verifiedAt": "2026-06-04T16:40:37.438Z",
+    "verificationDurationMs": 304
+  }
+}

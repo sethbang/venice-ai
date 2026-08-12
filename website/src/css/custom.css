@@ -1,0 +1,59 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ *
+ * Palette: the Venice brand system — Venetian Blue accent over Deep Blue /
+ * Midnight Blue / Off White foundations. Accent shades are assigned by measured
+ * contrast against each mode's background, not by the brand sheet's mode labels
+ * (light mode wants the deeper #125DA3 on Off White; dark mode wants the
+ * brighter #3C8FDD on Midnight).
+ */
+
+/* ---------- Light mode ---------- */
+:root {
+  /* Venetian Blue accent — #125DA3 reads 6.17:1 on Off White */
+  --ifm-color-primary: #125da3;
+  --ifm-color-primary-dark: #105493;
+  --ifm-color-primary-darker: #0f4f8b;
+  --ifm-color-primary-darkest: #0d4172;
+  --ifm-color-primary-light: #2a6dac;
+  --ifm-color-primary-lighter: #3675b1;
+  --ifm-color-primary-lightest: #598ebf;
+
+  /* Foundations */
+  --ifm-background-color: #f7f5ed;          /* Off White */
+  --ifm-background-surface-color: #fffefa;  /* Neutral Light — cards, code */
+  --ifm-font-color-base: #0e2942;           /* Deep Blue text */
+  --ifm-heading-color: #0e2942;
+  --ifm-navbar-background-color: #f7f5ed;
+  --ifm-footer-background-color: #0a121a;   /* Midnight Blue */
+
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(14, 41, 66, 0.1);
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  /* Venetian Blue accent — #3C8FDD reads 5.53:1 on Midnight */
+  --ifm-color-primary: #3c8fdd;
+  --ifm-color-primary-dark: #3681c7;
+  --ifm-color-primary-darker: #337abc;
+  --ifm-color-primary-darkest: #2a649b;
+  --ifm-color-primary-light: #509ae0;
+  --ifm-color-primary-lighter: #59a0e2;
+  --ifm-color-primary-lightest: #76b1e7;
+
+  /* Foundations */
+  --ifm-background-color: #0a121a;          /* Midnight Blue */
+  --ifm-background-surface-color: #151f28;  /* Neutral Dark — cards, code */
+  --ifm-font-color-base: #f7f5ed;           /* Off White text */
+  --ifm-heading-color: #f7f5ed;
+  --ifm-navbar-background-color: #0a121a;
+  --ifm-footer-background-color: #080f16;   /* Sea Dark */
+
+  /* Prism's Dracula theme ships its own #282a36 code background — pin it to the
+     brand surface so code blocks don't read as an off-palette purple slab. */
+  --prism-background-color: #151f28;
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.08);
+}

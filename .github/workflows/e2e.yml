@@ -1,0 +1,300 @@
+# .github/workflows/e2e.yml
+# End-to-end tests for Venice AI SDK.
+# Manual-trigger only (workflow_dispatch) to validate live API integration
+# and Redis Cluster behavior on demand.
+#
+# Deliberately NOT scheduled: the live-API job spends real credit against the
+# Venice API, and this is an unofficial SDK — a daily paid run isn't worth it.
+# Run it from the Actions tab when you want the live signal (e.g. before a
+# release, or after a suspected upstream API change). The same coverage is
+# available locally via `make test-ci`.
+
+name: E2E Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_cluster_tests:
+        description: 'Run Redis Cluster tests'
+        required: false
+        default: true
+        type: boolean
+      run_live_api_tests:
+        description: 'Run Live API tests'
+        required: false
+        default: true
+        type: boolean
+
+# Prevent parallel runs to avoid artifact race conditions and API budget conflicts
+concurrency:
+  group: e2e-tests-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: '3.13'
+
+jobs:
+  # Job 1: Live API E2E Tests
+  live-api-e2e:
+    name: Live API E2E Tests
+    runs-on: ubuntu-latest
+    if: github.event.inputs.run_live_api_tests != 'false'
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+      
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+        with:
+          path: .venv
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+      
+      - name: Install dependencies
+        run: poetry install --with dev
+      
+      # Download budget state from previous run
+      - name: Download Budget State
+        uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151  # v21
+        with:
+          name: e2e-budget-state
+          path: .
+          if_no_artifact_found: ignore
+          workflow: e2e.yml
+          branch: main
+      
+      - name: Check Budget Available
+        run: |
+          if [ -f .e2e_budget_state.json ]; then
+            cat .e2e_budget_state.json
+            echo "Budget state found"
+          else
+            echo "No budget state found, starting fresh"
+          fi
+      
+      # NOTE: Model discovery step removed — scripts/discover_e2e_test_model.py
+      # does not exist. Re-add this step once the script is created.
+      # - name: Discover Test Model (optional)
+      #   run: |
+      #     poetry run python scripts/discover_e2e_test_model.py || echo "Discovery failed, using fallback models"
+      #   env:
+      #     VENICE_API_KEY: ${{ secrets.VENICE_E2E_API_KEY }}
+      #   continue-on-error: true
+      
+      - name: Run Live API E2E Tests
+        env:
+          VENICE_API_KEY: ${{ secrets.VENICE_E2E_API_KEY }}
+          VENICE_REDIS_URL: redis://localhost:6379/0
+        run: |
+          poetry run pytest tests/e2e/test_live_api.py tests/integration/test_tee_live_schema.py \
+            -v \
+            --tb=short \
+            --timeout=300 \
+            --no-cov \
+            --disable-vcr \
+            --junit-xml=test-results/live-api-e2e-junit.xml
+      
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: live-api-e2e-results
+          path: test-results/
+          retention-days: 30
+      
+      # Upload budget state for next run
+      - name: Upload Budget State
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: e2e-budget-state
+          path: .e2e_budget_state.json
+          retention-days: 90
+          if-no-files-found: ignore
+
+  # Job 2: Redis Cluster E2E Tests
+  cluster-e2e:
+    name: Redis Cluster E2E Tests
+    runs-on: ubuntu-latest
+    if: github.event.inputs.run_cluster_tests != 'false'
+    
+    # Prevent parallel cluster tests
+    concurrency:
+      group: cluster-e2e-tests
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+      
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+        with:
+          path: .venv
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+      
+      - name: Install dependencies
+        run: poetry install --with dev
+      
+      - name: Start Redis Cluster
+        run: |
+          docker compose -f docker-compose.redis-cluster.yml up -d
+          
+          # Wait for all nodes to be ready
+          echo "Waiting for Redis nodes to be healthy..."
+          for i in {1..30}; do
+            HEALTHY=$(docker compose -f docker-compose.redis-cluster.yml ps --services --filter "status=running" | wc -l)
+            if [ "$HEALTHY" -ge 6 ]; then
+              echo "All 6 nodes are running"
+              break
+            fi
+            echo "Waiting for nodes... ($i/30)"
+            sleep 2
+          done
+          
+          # Wait for cluster to be fully formed (all 16384 slots assigned)
+          echo "Waiting for cluster formation..."
+          for i in {1..20}; do
+            SLOTS=$(docker exec venice-ai-redis-node-1-1 redis-cli cluster info 2>/dev/null | grep cluster_slots_ok | cut -d: -f2 | tr -d '\r' || echo "0")
+            if [ "$SLOTS" = "16384" ]; then
+              echo "Cluster is ready - all 16384 slots assigned"
+              break
+            fi
+            echo "Slots assigned: $SLOTS/16384 ($i/20)"
+            sleep 3
+          done
+          
+          # Final verification
+          docker exec venice-ai-redis-node-1-1 redis-cli --cluster check 127.0.0.1:6379 || true
+      
+      # NOTE: Cluster verification step removed — tools/verify_redis_cluster.py
+      # does not exist. Re-add this step once the script is created.
+      # - name: Run Redis Cluster Verification
+      #   run: |
+      #     poetry run python tools/verify_redis_cluster.py --redis-url redis://localhost:6379
+      
+      - name: Run Redis Cluster E2E Tests
+        env:
+          VENICE_REDIS_URL: redis://localhost:6379
+          REDIS_CLUSTER_MODE: "true"
+        run: |
+          poetry run pytest tests/e2e/test_redis_cluster.py \
+            -v \
+            --tb=short \
+            --timeout=300 \
+            --no-cov \
+            --disable-vcr \
+            --junit-xml=test-results/cluster-e2e-junit.xml
+      
+      - name: Cluster Failover Test
+        run: |
+          echo "Simulating primary node failure..."
+          
+          # Get the container name for node 1
+          NODE1_CONTAINER=$(docker compose -f docker-compose.redis-cluster.yml ps -q redis-node-1)
+          
+          # Stop a primary node
+          docker stop $NODE1_CONTAINER
+          echo "Stopped redis-node-1"
+          
+          # Wait for failover
+          sleep 10
+          
+          # Check cluster state from another node
+          echo "Checking cluster state after failover..."
+          docker exec venice-ai-redis-node-2-1 redis-cli cluster info | head -5
+          
+          # Verify cluster is still functional
+          SLOTS=$(docker exec venice-ai-redis-node-2-1 redis-cli cluster info 2>/dev/null | grep cluster_slots_ok | cut -d: -f2 | tr -d '\r' || echo "0")
+          if [ "$SLOTS" = "16384" ]; then
+            echo "Cluster recovered - all slots still covered"
+          else
+            echo "WARNING: Cluster has degraded slot coverage: $SLOTS/16384"
+          fi
+          
+          # Restart the node
+          docker start $NODE1_CONTAINER
+          echo "Restarted redis-node-1"
+          
+          # Wait for rejoin
+          sleep 5
+          
+          echo "Final cluster state:"
+          docker exec venice-ai-redis-node-2-1 redis-cli --cluster check 127.0.0.1:6380 || true
+        continue-on-error: true
+      
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: cluster-e2e-results
+          path: test-results/
+          retention-days: 30
+      
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.redis-cluster.yml down -v
+
+  # Job 3: Test Summary
+  test-summary:
+    name: E2E Test Summary
+    runs-on: ubuntu-latest
+    needs: [live-api-e2e, cluster-e2e]
+    if: always()
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+      
+      - name: Download all test results
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        with:
+          path: all-test-results/
+          pattern: '*-e2e-results'
+      
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040  # v2.23.0
+        if: always()
+        with:
+          files: |
+            all-test-results/**/*junit.xml
+          check_name: E2E Test Results
+          comment_title: E2E Test Results Summary
+          hide_comments: orphaned

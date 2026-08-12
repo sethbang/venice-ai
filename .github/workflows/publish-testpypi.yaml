@@ -1,0 +1,95 @@
+# .github/workflows/publish-testpypi.yaml
+#
+# Manual TestPyPI publish for v2.0.0 RC dry-runs (Phase 6 of the
+# pre-release audit). Triggered via the GitHub UI's "Run workflow"
+# button on this file in the Actions tab.
+#
+# Trusted Publisher setup (one-time, on test.pypi.org):
+#   1. Log into https://test.pypi.org/manage/account/publishing/
+#   2. Add a new pending publisher with:
+#        - PyPI Project Name:    venice-ai
+#        - Owner:                sethbang
+#        - Repository name:      venice-ai
+#        - Workflow name:        publish-testpypi.yaml
+#        - Environment name:     testpypi
+#   3. Save. The first successful run from this workflow against an
+#      `rc`-suffixed version (e.g. 2.0.0rc1) will materialize the
+#      pending publisher into a real one.
+#
+# Why a separate environment from `pypi`:
+#   - Lets the GitHub repo restrict who can manually trigger TestPyPI
+#     publishes (environment-protection rules).
+#   - Keeps the TestPyPI Trusted Publisher config disjoint from the
+#     production PyPI Trusted Publisher used by release.yaml.
+
+name: Publish to TestPyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "publish-rc" to confirm this is a release-candidate dry-run'
+        required: true
+        default: ''
+
+permissions:
+  contents: read
+  id-token: write   # Required for Trusted Publishing (no API token in repo)
+
+jobs:
+  build-and-publish-testpypi:
+    name: Build wheel + sdist and publish to TestPyPI
+    runs-on: ubuntu-latest
+    if: github.repository == 'sethbang/venice-ai' && github.event.inputs.confirm == 'publish-rc'
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/venice-ai
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: '3.13'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - name: Verify version is an RC
+        run: |
+          v=$(grep -E '^version' pyproject.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          echo "pyproject version: $v"
+          case "$v" in
+            *rc*|*a*|*b*) echo "OK — pre-release version, safe to publish to TestPyPI" ;;
+            *) echo "::error::Refusing to publish '$v' to TestPyPI — must be an rc/a/b pre-release."; exit 1 ;;
+          esac
+
+      - name: Build the package (wheel + sdist)
+        run: poetry build
+
+      - name: Validate distribution metadata with twine
+        run: |
+          poetry run pip install --quiet twine
+          poetry run twine check dist/*
+
+      - name: Publish distribution to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: dist/
+          # No `password:` line — Trusted Publishing uses OIDC instead.
+
+      - name: Print install command for clean-room verification
+        run: |
+          v=$(grep -E '^version' pyproject.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          echo ""
+          echo "Published. Verify with:"
+          echo ""
+          echo "  python -m venv /tmp/venice-rc"
+          echo "  /tmp/venice-rc/bin/pip install \\"
+          echo "    -i https://test.pypi.org/simple/ \\"
+          echo "    --extra-index-url https://pypi.org/simple/ \\"
+          echo "    \"venice-ai[all]==$v\""
+          echo "  /tmp/venice-rc/bin/python -c \"from venice_ai import __version__; print(__version__)\""

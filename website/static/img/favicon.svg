@@ -1,0 +1,7 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Venice AI Python SDK">
+  <!-- Self-authored generic lettermark in the Venice palette (Deep Blue tile,
+       two-tone "V"). Not the official Venice keys/wordmark. -->
+  <rect width="32" height="32" rx="7" fill="#0e2942"/>
+  <path d="M9 9.5 L16 22.5" stroke="#f7f5ed" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M23 9.5 L16 22.5" stroke="#3c8fdd" stroke-width="3.2" stroke-linecap="round"/>
+</svg>

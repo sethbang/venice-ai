@@ -1,0 +1,83 @@
+# .github/workflows/release.yaml
+# This workflow triggers on the creation of a GitHub release.
+# It builds the package and publishes it to PyPI using trusted publishing.
+#
+# Action SHA pinning: every third-party action below is pinned to a 40-char
+# commit SHA with the matching version tag in a trailing comment.
+# snok/install-poetry stays on @v1 because that org does not ship release SHAs
+# reliably, and pypa/gh-action-pypi-publish stays on @release/v1 because that branch tracks
+# the latest release-v1.x patch — pinning it to a commit SHA would break
+# Trusted Publishing's audit trail.
+
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write # Required for trusted publishing
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # version-check (audit Phase 5D-9) — assert pyproject.version matches the
+  # GitHub release tag (with optional leading 'v' stripped) before building.
+  # Fails fast with ::error:: if they diverge so we never publish a mismatched
+  # artifact to PyPI.
+  # ---------------------------------------------------------------------------
+  version-check:
+    name: Verify pyproject.version matches release tag
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+
+      - name: Compare pyproject.version against release tag
+        run: |
+          set -euo pipefail
+          py_version=$(grep -E '^version' pyproject.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          tag_raw="${{ github.event.release.tag_name }}"
+          tag_version="${tag_raw#v}"
+          echo "pyproject.version: ${py_version}"
+          echo "release tag (stripped): ${tag_version}"
+          if [ "${py_version}" != "${tag_version}" ]; then
+            echo "::error::pyproject.version (${py_version}) does not match release tag (${tag_version}). Refusing to publish."
+            exit 1
+          fi
+          echo "OK — versions match."
+
+  build-and-publish:
+    runs-on: ubuntu-latest
+    needs: version-check
+    # Fail-safe: only the canonical repo may publish to PyPI, never a fork.
+    if: github.repository == 'sethbang/venice-ai'
+    environment:
+      name: pypi
+      url: https://pypi.org/p/venice-ai # Update with your project name
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: "3.13" # Use a specific, stable version for builds
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1  # not pinned — see workflow header
+
+      - name: Build the package
+        run: poetry build
+
+      - name: Validate distribution metadata with twine
+        run: |
+          poetry run pip install --quiet twine
+          poetry run twine check dist/*
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1  # not pinned — see workflow header
+        with:
+          packages-dir: dist/

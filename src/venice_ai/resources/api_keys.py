@@ -1,865 +1,592 @@
 """
-Resource module for interacting with the Venice API keys endpoints.
+Venice AI API Keys Resource Module.
 
-This module provides both synchronous and asynchronous resource classes for managing API keys.
-API keys are used for authentication and authorization when making requests to the Venice API.
-They control access to various Venice API features and endpoints, and are subject to rate limits
-that govern the number of requests that can be made within a specific time period.
+This module provides comprehensive API key management functionality for the Venice AI platform.
+API keys serve as the primary authentication mechanism for accessing Venice AI services and are
+essential for controlling access to various endpoints, managing usage quotas, and enforcing
+rate limits across different model types and services.
+
+The module supports both traditional API key creation and Web3-based authentication workflows,
+allowing users to manage their credentials through either conventional means or blockchain-based
+identity verification.
+
+Main Features:
+    - Create, list, retrieve, and delete API keys
+    - Manage rate limits and usage monitoring
+    - Web3 authentication and key generation
+    - Usage analytics and billing integration
 
 Classes:
-    ApiKeys: Synchronous client for API key management
-    AsyncApiKeys: Asynchronous client for API key management
+    ApiKeys: Asynchronous resource client for comprehensive API key management operations
 """
 
-from typing import Optional, Dict, Any, Union, cast, TYPE_CHECKING, List
-from collections.abc import Mapping # Added for isinstance(Mapping) check
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, Literal
 
-from .._resource import APIResource, AsyncAPIResource
+from .._pagination import DEFAULT_PAGE_SIZE, Paginator, _PageResult
+from .._resource import APIResource
 from ..exceptions import APIResponseProcessingError
-from ..types.api_keys import (
-    ApiKey, ApiKeyList, ApiKeyCreateRequest, ApiKeyCreateResponse,
-    RateLimitInfo, RateLimitLog, RateLimitLogList, # Added RateLimitLog
-    ApiKeyGenerateWeb3KeyGetResponse, ApiKeyGenerateWeb3KeyCreateRequest,
-    ApiKeyGenerateWeb3KeyCreateResponse
+from ..types.api import (
+    ApiKey,
+    ApiKeyDetailsResponse,
+    # Request models
+    CreateApiKeyRequest,
+    CreatedApiKey,
+    DeleteApiKeyResponse,
+    RateLimitLogsResponse,
+    RateLimitsResponse,
+    Web3ApiKeyResponse,
+    Web3CreateApiKeyRequest,
+    Web3TokenResponse,
 )
+from ..types.api.requests.api_keys import UpdateApiKeyRequest
 
 if TYPE_CHECKING:
-    from .._client import VeniceClient
-    from .._async_client import AsyncVeniceClient
+    from .._client import VeniceClient  # noqa: F401
 
 
-class ApiKeys(APIResource):
+class ApiKeys(APIResource["VeniceClient"]):
     """
-    Provides access to API key management operations.
-    
-    This class implements the synchronous interface for API key management,
-    including creating, listing, deleting API keys, and managing rate limits.
-    It inherits from :class:`~venice_ai._resource.APIResource` which handles
-    the underlying HTTP requests.
-    
-    :param _client: The Venice client instance used for making API requests.
-    :type _client: :class:`~venice_ai._client.VeniceClient`
-    
+    Asynchronous resource for comprehensive API key management operations.
+
+    This class provides a complete interface for managing Venice AI API keys, including
+    creation, deletion, retrieval, and monitoring capabilities. It supports both standard
+    API key workflows and Web3-based authentication mechanisms.
+
+    All operations are asynchronous and return awaitable coroutines. The class automatically
+    handles request formatting, response parsing, and error handling for all API key operations.
+
+    Key Features:
+        - Create and manage API keys with custom configurations
+        - List and retrieve existing keys with pagination support
+        - Delete keys with proper cleanup
+        - Monitor rate limits and usage patterns
+        - Web3 authentication and blockchain-based key generation
+        - Real-time usage analytics and billing integration
+
+    Args:
+        _client: The VeniceClient instance for making API requests.
+
     Example:
+        Basic API key management:
+
         .. code-block:: python
-        
-            from venice_ai import VeniceClient
-            from venice_ai.types.api_keys import ApiKeyCreateRequest
-            
-            client = VeniceClient()
-            
-            # List existing API keys
-            keys = client.api_keys.list(limit=10)
-            for key in keys:
-                print(f"Key ID: {key.id}, Description: {key.description}")
-            
-            # Create a new API key
-            create_request = ApiKeyCreateRequest(
-                description="My Test Key",
-                apiKeyType="INFERENCE"
-            )
-            new_key = client.api_keys.create(api_key_request=create_request)
-            print(f"Created key: {new_key.apiKey}")  # Only shown on creation
-    """
-    
-    def list(self, *, page: Optional[int] = None, limit: Optional[int] = None) -> List[ApiKey]:
-        """
-        Lists API keys for the authenticated account, with optional pagination.
-        
-        Retrieves a list of API keys associated with the current account.
-        This includes active and inactive API keys. Supports pagination for
-        managing large numbers of API keys.
-        
-        :param page: Page number to retrieve (1-based indexing). If not provided,
-            returns the first page.
-        :type page: Optional[int]
-        :param limit: Maximum number of API keys to return per page. If not provided,
-            uses the server's default limit.
-        :type limit: Optional[int]
 
-        :return: A list of API key objects containing metadata such as ID, description,
-            creation date, and status. Note that the actual API key values are not
-            included in the response for security reasons.
-        :rtype: List[:class:`~venice_ai.types.api_keys.ApiKey`]
-
-        :raises venice_ai.exceptions.AuthenticationError: If authentication fails.
-        :raises venice_ai.exceptions.APIError: If the API returns an error.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        
-        Example:
-            .. code-block:: python
-            
-                # List all API keys
-                all_keys = client.api_keys.list()
-                
-                # List with pagination
-                page_keys = client.api_keys.list(page=1, limit=5)
-                for key in page_keys:
-                    print(f"Key ID: {key.id}, Description: {key.description}")
-        """
-        params: Dict[str, Any] = {}
-        if page is not None:
-            params["page"] = page
-        if limit is not None:
-            params["limit"] = limit
-        
-        response_data = self._client.get("api_keys", params=params if params else None)
-
-        # Case 1: API returns a list of ApiKey objects directly
-        if isinstance(response_data, list):
-            return cast(List[ApiKey], response_data)
-
-        # Case 2: API returns a dictionary with a 'data' key containing the list
-        elif isinstance(response_data, dict) and "data" in response_data and isinstance(response_data["data"], list):
-            return cast(List[ApiKey], response_data["data"])
-
-        # Case 3: Unexpected response format
-        else:
-            return []
-    
-    def create(
-        self,
-        *,
-        api_key_request: ApiKeyCreateRequest
-    ) -> ApiKey:
-        """
-        Creates a new API key.
-        
-        Creates a new API key with the specified parameters. The created API key
-        will be returned only once in the response and cannot be retrieved later,
-        so it should be securely stored immediately.
-        
-        :param api_key_request: Request object containing API key configuration.
-            Must include at minimum a description and apiKeyType. The request can contain:
-            
-            - ``description`` (str): Human-readable description of the API key
-            - ``apiKeyType`` (str): Type of API key (e.g., "INFERENCE", "ADMIN")
-            - ``expiresAt`` (Optional[str]): ISO 8601 timestamp when key expires
-            - ``consumptionLimit`` (Optional[int]): Maximum usage limit for the key
-            
-        :type api_key_request: :class:`~venice_ai.types.api_keys.ApiKeyCreateRequest`
-
-        :return: Response containing the newly created API key details, including
-            the secret key value (only returned once), key ID, creation timestamp,
-            and other metadata.
-        :rtype: :class:`~venice_ai.types.api_keys.ApiKey`
-
-        :raises venice_ai.exceptions.AuthenticationError: If authentication fails.
-        :raises venice_ai.exceptions.APIError: If the API returns an error, such as when
-            maximum API key limit is reached or invalid parameters are provided.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        
-        Example:
-            .. code-block:: python
-            
-                from venice_ai.types.api_keys import ApiKeyCreateRequest
-                
-                # Create a basic API key
-                create_request = ApiKeyCreateRequest(
-                    description="My Test Key",
-                    apiKeyType="INFERENCE"
-                )
-                new_key = client.api_keys.create(api_key_request=create_request)
-                print(f"Created key ID: {new_key.id}")
-                print(f"API Key: {new_key.apiKey}")  # Store this securely!
-                
-                # Create a key with expiration and limits
-                advanced_request = ApiKeyCreateRequest(
-                    description="Limited Production Key",
-                    apiKeyType="INFERENCE",
-                    expiresAt="2024-12-31T23:59:59Z",
-                    consumptionLimit=10000
-                )
-                limited_key = client.api_keys.create(api_key_request=advanced_request)
-        """
-        # Convert the request object to a dictionary for JSON serialization
-        # Robustly convert the request object to a dictionary for JSON serialization
-        if hasattr(api_key_request, '__dict__'): # for simple objects
-            data = vars(api_key_request)
-        # Check for Mapping (dict-like) first, as TypedDict objects are Mapping instances
-        elif isinstance(api_key_request, Mapping): # for dict/TypedDict/Pydantic models
-            data = dict(api_key_request.items())
-        # Handle NamedTuple objects that have _asdict method
-        elif hasattr(api_key_request, '_asdict'):
-            data = api_key_request._asdict()
-        else:
-            # Fallback for unexpected types, may raise TypeError
-            data = dict(api_key_request)
-             # Refine conversion to filter None values
-        data = {k: v for k, v in data.items() if v is not None}
-        
-        response = self._client.post("api_keys", json_data=data)
-        if isinstance(response, dict) and "data" in response:
-            api_key_data = response["data"]
-            if isinstance(api_key_data, dict):
-                api_key_data = dict(api_key_data)  # Make a copy to avoid modifying original
-                # Handle field name mapping: consumptionLimit -> consumptionLimits
-                if "consumptionLimit" in api_key_data and "consumptionLimits" not in api_key_data:
-                    api_key_data["consumptionLimits"] = api_key_data.pop("consumptionLimit")
-                # Handle missing consumptionLimits field by providing default
-                elif "consumptionLimits" not in api_key_data:
-                    api_key_data["consumptionLimits"] = {}
-                # Filter to only include valid ApiKey fields
-                valid_fields = {"apiKey", "apiKeyType", "consumptionLimits", "createdAt", "description", "expiresAt", "id", "last6Chars", "lastUsedAt", "usage"}
-                api_key_data = {k: v for k, v in api_key_data.items() if k in valid_fields}
-            return cast(ApiKey, api_key_data)
-        elif isinstance(response, dict):
-            # Handle response without 'data' key - return response directly without processing
-            return cast(ApiKey, response)
-        raise APIResponseProcessingError("Unexpected response format from API key creation endpoint. Expected a 'data' field.")
-    
-    def delete(
-        self,
-        *,
-        api_key_id: str
-    ) -> Dict[str, Any]:
-        """
-        Deletes an API key.
-        
-        Permanently deletes the specified API key. Once deleted, the API key
-        can no longer be used to authenticate requests and this action cannot be undone.
-        Use with caution in production environments.
-        
-        :param api_key_id: Unique identifier of the API key to delete. This is the key's
-            ID (not the secret key value) as returned by the create or list operations.
-        :type api_key_id: str
-
-        :return: Response indicating the result of the deletion operation,
-            typically containing a success flag and deletion confirmation message.
-        :rtype: Dict[str, Any]
-
-        :raises venice_ai.exceptions.AuthenticationError: If authentication fails.
-        :raises venice_ai.exceptions.APIError: If the API returns an error, such as when
-            the API key ID does not exist or belongs to another account.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        
-        Example:
-            .. code-block:: python
-            
-                # Delete an API key (use with caution)
-                result = client.api_keys.delete(api_key_id="key_123456789")
-                print(f"Deletion result: {result}")
-                
-                # Safe deletion pattern
-                keys = client.api_keys.list()
-                test_keys = [k for k in keys if "test" in k.description.lower()]
-                for test_key in test_keys:
-                    client.api_keys.delete(api_key_id=test_key.id)
-                    print(f"Deleted test key: {test_key.id}")
-        """
-        # Construct the URL with the API key ID as a query parameter
-        path = "api_keys"
-        params = {"id": api_key_id}
-        return cast(Dict[str, Any], self._client.delete(path, params=params))
-
-    def retrieve(
-        self,
-        *,
-        api_key_id: str
-    ) -> Dict[str, Any]:
-        """
-        Retrieves a specific API key by ID.
-        
-        Fetches the details of a specific API key using its unique identifier.
-        Note that the actual API key value is not included in the response for security reasons.
-        
-        :param api_key_id: Unique identifier of the API key to retrieve. This is the key's
-            ID (not the secret key value) as returned by the create or list operations.
-        :type api_key_id: str
-
-        :return: API key details including metadata such as description, creation date,
-            expiration, usage statistics, and other configuration information.
-        :rtype: Dict[str, Any]
-
-        :raises venice_ai.exceptions.AuthenticationError: If authentication fails.
-        :raises venice_ai.exceptions.NotFoundError: If the API key ID does not exist.
-        :raises venice_ai.exceptions.APIError: If the API returns an error.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        
-        Example:
-            .. code-block:: python
-            
-                # Retrieve a specific API key
-                key_details = client.api_keys.retrieve(api_key_id="key_123456789")
-                print(f"Key description: {key_details['description']}")
-                print(f"Created at: {key_details['createdAt']}")
-        """
-        path = "api_keys"
-        params = {"id": api_key_id}
-        response = self._client.get(path, params=params)
-        if isinstance(response, dict) and "data" in response and isinstance(response["data"], list) and len(response["data"]) > 0:
-            return cast(Dict[str, Any], response["data"][0])
-        # If the structure is not as expected, or data is empty,
-        # this will either raise an error in _client.get or return an unexpected structure.
-        # For now, we assume _client.get handles 404s by raising NotFoundError.
-        # If data is empty, it implies not found or an issue.
-        # Consider raising NotFoundError explicitly if response["data"] is empty.
-        return cast(Dict[str, Any], response) # Fallback, though ideally an error or specific handling.
-        return cast(Dict[str, Any], self._client.get(path, params=params))
-        return cast(Dict[str, Any], self._client.get(path, params=params))
-
-    def get_web3_token(self) -> ApiKeyGenerateWeb3KeyGetResponse:
-        """
-        Retrieves a token for Web3 API key generation.
-
-        This token is required for the subsequent POST request to create a Web3 API key.
-
-        :return: Response containing the token required for Web3 key generation.
-        :rtype: :class:`~venice_ai.types.api_keys.ApiKeyGenerateWeb3KeyGetResponse`
-
-        :raises venice_ai.exceptions.APIError: If the API returns an error.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        """
-        return cast(ApiKeyGenerateWeb3KeyGetResponse, self._client.get("api_keys/generate_web3_key"))
-
-    def create_web3_key(
-        self,
-        *,
-        web3_key_request: ApiKeyGenerateWeb3KeyCreateRequest
-    ) -> ApiKeyGenerateWeb3KeyCreateResponse:
-        """
-        Creates a new Web3 API key.
-
-        Creates a new API key authenticated via a Web3 signature.
-
-        :param web3_key_request: Request body containing Web3 authentication details
-            (such as ``web3_network_id``, ``web3_address``, and signature) and API key parameters.
-        :type web3_key_request: :class:`~venice_ai.types.api_keys.ApiKeyGenerateWeb3KeyCreateRequest`
-
-        :return: Response containing the newly created API key details.
-        :rtype: :class:`~venice_ai.types.api_keys.ApiKeyGenerateWeb3KeyCreateResponse`
-
-        :raises venice_ai.exceptions.APIError: If the API returns an error.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        """
-        # Convert the request object to a dictionary for JSON serialization
-        # Robustly convert the request object to a dictionary for JSON serialization
-        if hasattr(web3_key_request, '__dict__'): # for simple objects
-            data = vars(web3_key_request)
-        # Check for Mapping (dict-like) first, as TypedDict objects are Mapping instances
-        elif isinstance(web3_key_request, Mapping): # for dict/TypedDict/Pydantic models
-            data = dict(web3_key_request.items())
-        # Handle NamedTuple objects that have _asdict method
-        elif hasattr(web3_key_request, '_asdict'):
-            data = web3_key_request._asdict()
-        else:
-            # Fallback for unexpected types, may raise TypeError
-            data = dict(web3_key_request)
-            # Refine conversion to filter None values
-        data = {k: v for k, v in data.items() if v is not None}
-        
-        response = self._client.post("api_keys/generate_web3_key", json_data=data)
-        if isinstance(response, dict) and "data" in response:
-            return cast(ApiKeyGenerateWeb3KeyCreateResponse, response)
-        return cast(ApiKeyGenerateWeb3KeyCreateResponse, response) # Fallback if no 'data' key
-
-    def get_rate_limits(self) -> RateLimitInfo:
-        """
-        Retrieves rate limit information for the current API key.
-        
-        Returns information about the rate limits applied to the current API key,
-        including the limits per minute, hour, day, and month, as well as the
-        current usage against those limits.
-        
-        :return: Rate limit information, including limits and current usage.
-        :rtype: :class:`~venice_ai.types.api_keys.RateLimitInfo`
-
-        :raises venice_ai.exceptions.AuthenticationError: If authentication fails.
-        :raises venice_ai.exceptions.APIError: If the API returns an error.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        """
-        response = self._client.get("api_keys/rate_limits")
-        if isinstance(response, dict) and "data" in response:
-            return cast(RateLimitInfo, response["data"])
-        return cast(RateLimitInfo, response) # Fallback
-    
-    def get_rate_limit_logs(
-        self,
-        *,
-        api_key_id: Optional[str] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        limit: Optional[int] = None,
-        page: Optional[int] = None
-    ) -> RateLimitLogList:
-        """
-        Retrieves rate limit logs for API keys.
-        
-        Returns a history of rate limit events, such as when rate limits were
-        reset, exceeded, or modified. This can be useful for understanding API usage
-        patterns, diagnosing rate limit issues, and optimizing request timing.
-        
-        :param api_key_id: Specific API key ID to get logs for. If not provided,
-            returns logs for the current API key.
-        :type api_key_id: Optional[str]
-        :param start_date: Start date for log retrieval in ISO 8601 format
-            (e.g., "2024-01-01T00:00:00Z"). If not provided, uses a default lookback period.
-        :type start_date: Optional[str]
-        :param end_date: End date for log retrieval in ISO 8601 format
-            (e.g., "2024-01-31T23:59:59Z"). If not provided, uses current time.
-        :type end_date: Optional[str]
-        :param limit: Maximum number of log entries to return per page.
-        :type limit: Optional[int]
-        :param page: Page number for pagination (1-based indexing).
-        :type page: Optional[int]
-        
-        :return: A list of rate limit log entries with timestamps, event types,
-            and related metadata.
-        :rtype: :class:`~venice_ai.types.api_keys.RateLimitLogList`
-
-        :raises venice_ai.exceptions.AuthenticationError: If authentication fails.
-        :raises venice_ai.exceptions.APIError: If the API returns an error.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        
-        Example:
-            .. code-block:: python
-            
-                # Get recent rate limit logs
-                logs = client.api_keys.get_rate_limit_logs(limit=10)
-                for log_entry in logs:
-                    print(f"Event: {log_entry.event_type} at {log_entry.timestamp}")
-                
-                # Get logs for a specific date range
-                logs = client.api_keys.get_rate_limit_logs(
-                    start_date="2024-01-01T00:00:00Z",
-                    end_date="2024-01-31T23:59:59Z",
-                    limit=50
-                )
-        """
-        params: Dict[str, Any] = {}
-        if api_key_id is not None:
-            params["api_key_id"] = api_key_id
-        if start_date is not None:
-            params["start_date"] = start_date
-        if end_date is not None:
-            params["end_date"] = end_date
-        if limit is not None:
-            params["limit"] = limit
-        if page is not None:
-            params["page"] = page
-            
-        response = self._client.get("api_keys/rate_limits/log", params=params if params else None)
-        if isinstance(response, dict) and "data" in response:
-            if isinstance(response["data"], list):
-                return cast(RateLimitLogList, response)
-            else:
-                # If 'data' exists but is not a list, as per test expectation, return empty list
-                return cast(RateLimitLogList, [])
-        elif isinstance(response, list): # If API directly returns a list
-            return cast(RateLimitLogList, response)
-        # Fallback for any other unexpected response format
-        return cast(RateLimitLogList, [])
-
-
-class AsyncApiKeys(AsyncAPIResource):
-    """
-    Provides access to API key management operations asynchronously.
-    
-    This class implements the asynchronous interface for API key management,
-    including creating, listing, deleting API keys, and managing rate limits.
-    It inherits from :class:`~venice_ai._resource.AsyncAPIResource` which handles
-    the underlying HTTP requests. All methods return awaitable coroutines that
-    should be awaited by the caller.
-    
-    :param _client: The AsyncVeniceClient instance used for making asynchronous API requests.
-    :type _client: :class:`~venice_ai._async_client.AsyncVeniceClient`
-    
-    Example:
-        .. code-block:: python
-        
             import asyncio
-            from venice_ai import AsyncVeniceClient
-            from venice_ai.types.api_keys import ApiKeyCreateRequest
-            
+            from venice_ai import VeniceClient
+            from venice_ai.types.api import CreateApiKeyRequest
+
             async def manage_api_keys():
-                client = AsyncVeniceClient()
-                
-                # List existing API keys
-                keys = await client.api_keys.list(limit=10)
-                for key in keys:
-                    print(f"Key ID: {key.id}, Description: {key.description}")
-                
-                # Create a new API key
-                create_request = ApiKeyCreateRequest(
-                    description="My Async Test Key",
-                    apiKeyType="INFERENCE"
-                )
-                new_key = await client.api_keys.create(api_key_request=create_request)
-                print(f"Created key: {new_key.apiKey}")  # Only shown on creation
-            
+                async with VeniceClient() as client:
+                    # List existing keys
+                    keys = await client.api_keys.list(limit=10)
+
+                    # Create a new key
+                    request = CreateApiKeyRequest(
+                        description="Production API Key",
+                        apiKeyType="INFERENCE"
+                    )
+                    new_key = await client.api_keys.create(api_key_request=request)
+
+                    # Monitor usage
+                    rate_limits = await client.api_keys.get_rate_limits()
+
             asyncio.run(manage_api_keys())
     """
-    
-    async def list(self, *, page: Optional[int] = None, limit: Optional[int] = None) -> List[ApiKey]:
+
+    def _normalize_response(
+        self,
+        response_data: Any,
+        operation: str,
+        *,
+        unwrap_data_key: bool = True,
+        allow_empty: bool = False,
+    ) -> Any:
         """
-        Lists API keys for the authenticated account asynchronously, with optional pagination.
-        
-        Retrieves a list of API keys associated with the current account.
-        This includes active and inactive API keys. Supports pagination.
+        Normalize API response by unwrapping data structures.
 
-        :param page: Page number to retrieve (1-based indexing). If not provided,
-            returns the first page.
-        :type page: Optional[int]
-        :param limit: Maximum number of API keys to return per page. If not provided,
-            uses the server's default limit.
-        :type limit: Optional[int]
+        This helper provides consistent response unwrapping across all API key operations,
+        handling various response formats (wrapped/unwrapped) with uniform error handling.
 
-        :return: A list of API key objects containing metadata such as ID, description,
-            creation date, and status. Note that the actual API key values are not
-            included in the response for security reasons.
-        :rtype: List[:class:`~venice_ai.types.api_keys.ApiKey`]
+        Args:
+            response_data: Raw response from API (dict, list, or other)
+            operation: Description of operation for error messages (e.g., "list API keys")
+            unwrap_data_key: If True, check for and unwrap {"data": ...} wrapper
+            allow_empty: If True, return None for missing data instead of error
 
-        :raises venice_ai.exceptions.AuthenticationError: If authentication fails.
-        :raises venice_ai.exceptions.APIError: If the API returns an error.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        
+        Returns:
+            Unwrapped response data ready for model validation
+
+        Raises:
+            APIResponseProcessingError: If response format is unexpected
+        """
+        # Handle None response
+        if response_data is None:
+            if allow_empty:
+                return None
+            raise APIResponseProcessingError(f"Unexpected None response when trying to {operation}")
+
+        # Try to unwrap 'data' key if requested
+        if unwrap_data_key and isinstance(response_data, dict) and "data" in response_data:
+            return response_data["data"]
+
+        return response_data
+
+    def _validate_list_response(
+        self,
+        response_data: Any,
+        operation: str,
+    ) -> list[ApiKey]:
+        """
+        Validate and parse a list of API keys from response data.
+
+        Args:
+            response_data: Unwrapped response data (list or dict with 'data' key)
+            operation: Description of operation for error messages
+
+        Returns:
+            List of validated ApiKey objects, or empty list for unexpected formats
+
+        Note:
+            This method returns an empty list for unexpected formats to maintain
+            backward compatibility with existing tests and behavior.
+        """
+        # Unwrap if needed
+        data = self._normalize_response(
+            response_data, operation, unwrap_data_key=True, allow_empty=True
+        )
+
+        # Handle empty response
+        if data is None or (isinstance(data, list) and len(data) == 0):
+            return []
+
+        # Handle unexpected format - return empty list for backward compatibility
+        if not isinstance(data, list):
+            return []
+
+        # Validate each item
+        try:
+            return [ApiKey.model_validate(item) for item in data]
+        except Exception as e:
+            raise APIResponseProcessingError(
+                f"Failed to validate API key list when trying to {operation}: {str(e)}"
+            ) from e
+
+    async def list(self, *, page: int | None = None, limit: int | None = None) -> list[ApiKey]:
+        """
+        Retrieve a paginated list of API keys for the authenticated account.
+
+        Returns metadata for all API keys associated with the current account, including
+        both active and inactive keys. The actual secret key values are excluded from
+        responses for security purposes.
+
+        Args:
+            page: Page number for pagination (1-based). Defaults to first page.
+            limit: Maximum number of keys per page. Uses server default if not specified.
+
+        Returns:
+            List of API key objects containing metadata including ID, description,
+            creation timestamp, expiration, and usage statistics.
+
+        Raises:
+            AuthenticationError: If the API key is invalid or expired.
+            APIError: If the request fails or returns an error response.
+            APIConnectionError: If unable to connect to the API.
+
         Example:
             .. code-block:: python
-            
-                # List all API keys asynchronously
-                all_keys = await client.api_keys.list()
-                
-                # List with pagination
-                page_keys = await client.api_keys.list(page=1, limit=5)
+
+                # List all keys
+                keys = await client.api_keys.list()
+
+                # Paginated listing
+                page_keys = await client.api_keys.list(page=1, limit=10)
                 for key in page_keys:
-                    print(f"Key ID: {key.id}, Description: {key.description}")
+                    print(f"Key: {key.id} - {key.description}")
         """
-        params: Dict[str, Any] = {}
+        params: dict[str, Any] = {}
         if page is not None:
             params["page"] = page
         if limit is not None:
             params["limit"] = limit
-            
+
         response_data = await self._client.get("api_keys", params=params if params else None)
 
-        # Case 1: API returns a list of ApiKey objects directly
-        if isinstance(response_data, list):
-            return cast(List[ApiKey], response_data)
+        # Use normalized validation for consistent handling
+        return self._validate_list_response(response_data, "list API keys")
 
-        # Case 2: API returns a dictionary with a 'data' key containing the list
-        elif isinstance(response_data, dict) and "data" in response_data and isinstance(response_data["data"], list):
-            return cast(List[ApiKey], response_data["data"])
-
-        # Case 3: Unexpected response format
-        else:
-            return []
-    
-    async def create(
+    def iter_all(
         self,
         *,
-        api_key_request: ApiKeyCreateRequest
-    ) -> ApiKey:
+        page_size: int = DEFAULT_PAGE_SIZE,
+        max_items: int | None = None,
+    ) -> Paginator[ApiKey]:
+        """Lazily iterate every API key, paging through the server as needed.
+
+        Wraps :meth:`list` for unbounded enumeration. Termination: there's
+        no pagination envelope on this endpoint, so the iterator stops on
+        the first short page (``len(items) < page_size``).
+
+        :param page_size: Server page size (default 100).
+        :param max_items: Optional cap on total items yielded.
+
+        Example::
+
+            async for key in client.api_keys.iter_all():
+                print(key.id, key.description)
         """
-        Creates a new API key asynchronously.
-        
-        Creates a new API key with the specified parameters. The created API key
-        will be returned only once in the response and cannot be retrieved later,
-        so it should be securely stored immediately.
-        
-        :param api_key_request: Request object containing API key configuration.
-            Must include at minimum a description and apiKeyType. The request can contain:
-            
-            - ``description`` (str): Human-readable description of the API key
-            - ``apiKeyType`` (str): Type of API key (e.g., "INFERENCE", "ADMIN")
-            - ``expiresAt`` (Optional[str]): ISO 8601 timestamp when key expires
-            - ``consumptionLimit`` (Optional[ConsumptionLimit]): Usage limits for the key
-            
-        :type api_key_request: :class:`~venice_ai.types.api_keys.ApiKeyCreateRequest`
 
-        :return: Response containing the newly created API key details, including
-            the secret key value (only returned once), key ID, creation timestamp,
-            and other metadata.
-        :rtype: :class:`~venice_ai.types.api_keys.ApiKey`
+        async def _fetch_page(page_index: int) -> _PageResult[ApiKey]:
+            # API uses 1-based pages; convert from zero-based iteration index.
+            items = await self.list(page=page_index + 1, limit=page_size)
+            return _PageResult(items=items, has_more=len(items) == page_size)
 
-        :raises venice_ai.exceptions.AuthenticationError: If authentication fails.
-        :raises venice_ai.exceptions.APIError: If the API returns an error, such as when
-            maximum API key limit is reached or invalid parameters are provided.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        
+        return Paginator(_fetch_page, page_size=page_size, max_items=max_items)
+
+    async def create(self, *, api_key_request: CreateApiKeyRequest) -> CreatedApiKey:
+        """
+        Create a new API key with the specified configuration.
+
+        Generates a new API key based on the provided parameters. The secret key value
+        is returned only once in this response and cannot be retrieved later, so it
+        must be stored securely immediately upon creation.
+
+        Args:
+            api_key_request: Configuration for the new API key including:
+                - description: Human-readable description for identification
+                - apiKeyType: Key type ("INFERENCE", "ADMIN", etc.)
+                - expiresAt: Optional ISO 8601 expiration timestamp
+                - consumptionLimit: Optional usage quotas and restrictions
+
+        Returns:
+            Complete API key object including the secret key value, metadata,
+            and configuration details.
+
+        Raises:
+            AuthenticationError: If the current credentials are invalid.
+            APIError: If the request is invalid or account limits are exceeded.
+            APIConnectionError: If unable to connect to the API.
+
+        Warning:
+            The secret key value is only returned once. Store it securely immediately.
+
         Example:
             .. code-block:: python
-            
-                from venice_ai.types.api_keys import ApiKeyCreateRequest
-                
-                # Create a basic API key asynchronously
-                create_request = ApiKeyCreateRequest(
-                    description="My Async Test Key",
+
+                from venice_ai.types.api import CreateApiKeyRequest
+
+                # Create a production API key
+                request = CreateApiKeyRequest(
+                    description="Production Service Key",
                     apiKeyType="INFERENCE"
                 )
-                new_key = await client.api_keys.create(api_key_request=create_request)
-                print(f"Created key ID: {new_key.id}")
-                print(f"API Key: {new_key.apiKey}")  # Store this securely!
+                new_key = await client.api_keys.create(api_key_request=request)
+
+                # Store the secret key securely
+                secret_key = new_key.apiKey  # Only available now!
         """
-        # Convert the request object to a dictionary for JSON serialization
-        # Robustly convert the request object to a dictionary for JSON serialization
-        if hasattr(api_key_request, '__dict__'): # for simple objects
-            data = vars(api_key_request)
-        # Check for Mapping (dict-like) first, as TypedDict objects are Mapping instances
-        elif isinstance(api_key_request, Mapping): # for dict/TypedDict/Pydantic models
-            data = dict(api_key_request.items())
-        # Handle NamedTuple objects that have _asdict method
-        elif hasattr(api_key_request, '_asdict'):
-            data = api_key_request._asdict()
-        else:
-            # Fallback for unexpected types, may raise TypeError
-            data = dict(api_key_request)
-            # Refine conversion to filter None values
-        data = {k: v for k, v in data.items() if v is not None}
-        
+        data = self._serialize_request(api_key_request)
+
         response = await self._client.post("api_keys", json_data=data)
-        if isinstance(response, dict) and "data" in response:
-            api_key_data = response["data"]
-            if isinstance(api_key_data, dict):
-                api_key_data = dict(api_key_data)  # Make a copy to avoid modifying original
-                # Handle field name mapping: consumptionLimit -> consumptionLimits
-                if "consumptionLimit" in api_key_data and "consumptionLimits" not in api_key_data:
-                    api_key_data["consumptionLimits"] = api_key_data.pop("consumptionLimit")
-                # Handle missing consumptionLimits field by providing default
-                elif "consumptionLimits" not in api_key_data:
-                    api_key_data["consumptionLimits"] = {}
-                # Filter to only include valid ApiKey fields
-                valid_fields = {"apiKey", "apiKeyType", "consumptionLimits", "createdAt", "description", "expiresAt", "id", "last6Chars", "lastUsedAt", "usage"}
-                api_key_data = {k: v for k, v in api_key_data.items() if k in valid_fields}
-            return cast(ApiKey, api_key_data)
-        elif isinstance(response, dict):
-            # Handle response without 'data' key - return response directly without processing
-            return cast(ApiKey, response)
-        raise APIResponseProcessingError("Unexpected response format from API key creation endpoint. Expected a 'data' field.")
-    
-    async def delete(
-        self,
-        *,
-        api_key_id: str
-    ) -> Dict[str, Any]:
+
+        # Unwrap data key if present
+        api_key_data = self._normalize_response(response, "create API key", unwrap_data_key=True)
+
+        # Validate that we got a dict (not string or other unexpected type)
+        if not isinstance(api_key_data, dict):
+            raise APIResponseProcessingError(
+                f"Unexpected response format from API key creation endpoint. Expected dict, got {type(api_key_data).__name__}"
+            )
+
+        # Make a copy to avoid modifying original data
+        api_key_data = dict(api_key_data)
+
+        # Normalizes legacy field name variant from older API versions.
+        if "consumptionLimits" in api_key_data and "consumptionLimit" not in api_key_data:
+            api_key_data["consumptionLimit"] = api_key_data.pop("consumptionLimits")
+        # Provide default empty object if field is missing entirely
+        elif "consumptionLimit" not in api_key_data:
+            api_key_data["consumptionLimit"] = {}
+
+        # Validate and return
+        try:
+            return CreatedApiKey.model_validate(api_key_data)
+        except Exception as e:
+            raise APIResponseProcessingError(
+                f"Failed to validate created API key response: {str(e)}"
+            ) from e
+
+    async def delete(self, *, api_key_id: str) -> DeleteApiKeyResponse:
         """
-        Deletes an API key asynchronously.
-        
-        Permanently deletes the specified API key. Once deleted, the API key
-        can no longer be used to authenticate requests and this action cannot be undone.
-        
-        :param api_key_id: ID of the API key to delete. This is the key's
-            unique identifier, not the secret key value.
-        :type api_key_id: str
+        Permanently delete an API key.
 
-        :return: Response indicating the result of the operation,
-            typically containing a success flag and deletion confirmation.
-        :rtype: Dict[str, Any]
+        Removes the specified API key from the account, immediately invalidating it
+        for all future requests. This operation cannot be undone.
 
-        :raises venice_ai.exceptions.AuthenticationError: If authentication fails.
-        :raises venice_ai.exceptions.APIError: If the API returns an error, such as when
-            the API key ID does not exist or belongs to another account.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        
+        Args:
+            api_key_id: Unique identifier of the API key to delete. This is the
+                key's ID (not the secret value) as returned by create or list operations.
+
+        Returns:
+            Deletion confirmation response with operation status.
+
+        Raises:
+            AuthenticationError: If the current credentials are invalid.
+            APIError: If the key ID doesn't exist or belongs to another account.
+            APIConnectionError: If unable to connect to the API.
+
+        Warning:
+            This operation is irreversible. The deleted key cannot be recovered.
+
         Example:
             .. code-block:: python
-            
-                # Delete an API key asynchronously (use with caution)
+
+                # Delete a specific key
                 result = await client.api_keys.delete(api_key_id="key_123456789")
-                print(f"Deletion result: {result}")
-                
-                # Safe deletion pattern
+
+                # Batch delete test keys
                 keys = await client.api_keys.list()
-                test_keys = [k for k in keys if "test" in k.description.lower()]
-                for test_key in test_keys:
-                    await client.api_keys.delete(api_key_id=test_key.id)
-                    print(f"Deleted test key: {test_key.id}")
+                for key in keys:
+                    if "test" in key.description.lower():
+                        await client.api_keys.delete(api_key_id=key.id)
         """
         # Construct the URL with the API key ID as a query parameter
         path = "api_keys"
         params = {"id": api_key_id}
-        return cast(Dict[str, Any], await self._client.delete(path, params=params))
+        response = await self._client.delete(path, params=params)
+        return DeleteApiKeyResponse.model_validate(response)
 
-    async def retrieve(
+    async def update(
         self,
         *,
-        api_key_id: str
-    ) -> Dict[str, Any]:
-        """
-        Retrieves a specific API key by ID asynchronously.
-        
-        Fetches the details of a specific API key using its unique identifier.
-        Note that the actual API key value is not included in the response for security reasons.
-        
-        :param api_key_id: Unique identifier of the API key to retrieve. This is the key's
-            ID (not the secret key value) as returned by the create or list operations.
-        :type api_key_id: str
+        id: str,
+        description: str | None = None,
+        expires_at: str | None = None,
+        consumption_limit: dict[str, Any] | None = None,
+        limit_period: Literal["EPOCH", "MONTH", "LIFETIME"] | None = None,
+    ) -> ApiKey:
+        """Update an existing API key (PATCH /api_keys).
 
-        :return: API key details including metadata such as description, creation date,
-            expiration, usage statistics, and other configuration information.
-        :rtype: Dict[str, Any]
+        Args:
+            id: ID of the API key to update.
+            description: New description for the key.
+            expires_at: New expiration date (ISO 8601 format).
+            consumption_limit: Epoch consumption limits (e.g., ``{'diem': 1, 'usd': 10}``).
+            limit_period: Period over which the consumption limit resets
+                (``EPOCH``, ``MONTH``, or ``LIFETIME``).
 
-        :raises venice_ai.exceptions.AuthenticationError: If authentication fails.
-        :raises venice_ai.exceptions.NotFoundError: If the API key ID does not exist.
-        :raises venice_ai.exceptions.APIError: If the API returns an error.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        
+        Returns:
+            Updated :class:`ApiKey` object.
+
+        Raises:
+            AuthenticationError: If the API key is invalid or expired.
+            APIError: If the request fails or returns an error response.
+            APIConnectionError: If unable to connect to the API.
+
         Example:
             .. code-block:: python
-            
-                # Retrieve a specific API key asynchronously
-                key_details = await client.api_keys.retrieve(api_key_id="key_123456789")
-                print(f"Key description: {key_details['description']}")
-                print(f"Created at: {key_details['createdAt']}")
-        """
-        path = "api_keys"
-        params = {"id": api_key_id}
-        response = await self._client.get(path, params=params)
-        if isinstance(response, dict) and "data" in response and isinstance(response["data"], list) and len(response["data"]) > 0:
-            return cast(Dict[str, Any], response["data"][0])
-        # Similar to sync: handle cases where data might be empty or response malformed.
-        return cast(Dict[str, Any], response) # Fallback
-        path = "api_keys"
-        params = {"id": api_key_id}
-        return cast(Dict[str, Any], await self._client.get(path, params=params))
 
-    async def get_web3_token(self) -> ApiKeyGenerateWeb3KeyGetResponse:
-        """
-        Retrieves a token for Web3 API key generation asynchronously.
-
-        This token is required for the subsequent POST request to create a Web3 API key.
-
-        :return: Response containing the token required for Web3 key generation.
-        :rtype: :class:`~venice_ai.types.api_keys.ApiKeyGenerateWeb3KeyGetResponse`
-
-        :raises venice_ai.exceptions.APIError: If the API returns an error.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        """
-        return cast(ApiKeyGenerateWeb3KeyGetResponse, await self._client.get("api_keys/generate_web3_key"))
-
-    async def create_web3_key(
-        self,
-        *,
-        web3_key_request: ApiKeyGenerateWeb3KeyCreateRequest
-    ) -> ApiKeyGenerateWeb3KeyCreateResponse:
-        """
-        Creates a new Web3 API key asynchronously.
-
-        Creates a new API key authenticated via a Web3 signature.
-
-        :param web3_key_request: Request body containing Web3 authentication details
-            (such as ``web3_network_id``, ``web3_address``, and signature) and API key parameters.
-        :type web3_key_request: :class:`~venice_ai.types.api_keys.ApiKeyGenerateWeb3KeyCreateRequest`
-
-        :return: Response containing the newly created API key details.
-        :rtype: :class:`~venice_ai.types.api_keys.ApiKeyGenerateWeb3KeyCreateResponse`
-
-        :raises venice_ai.exceptions.APIError: If the API returns an error.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        """
-        # Convert the request object to a dictionary for JSON serialization
-        # Robustly convert the request object to a dictionary for JSON serialization
-        if hasattr(web3_key_request, '__dict__'): # for simple objects
-            data = vars(web3_key_request)
-        # Check for Mapping (dict-like) first, as TypedDict objects are Mapping instances
-        elif isinstance(web3_key_request, Mapping): # for dict/TypedDict/Pydantic models
-            data = dict(web3_key_request.items())
-        # Handle NamedTuple objects that have _asdict method
-        elif hasattr(web3_key_request, '_asdict'):
-            data = web3_key_request._asdict()
-        else:
-            # Fallback for unexpected types, may raise TypeError
-            data = dict(web3_key_request)
-            # Refine conversion to filter None values
-        data = {k: v for k, v in data.items() if v is not None}
-        
-        response = await self._client.post("api_keys/generate_web3_key", json_data=data)
-        if isinstance(response, dict) and "data" in response:
-            return cast(ApiKeyGenerateWeb3KeyCreateResponse, response)
-        return cast(ApiKeyGenerateWeb3KeyCreateResponse, response) # Fallback if no 'data' key
-
-    async def get_rate_limits(self) -> RateLimitInfo:
-        """
-        Retrieves rate limit information for the current API key asynchronously.
-        
-        Returns information about the rate limits applied to the current API key,
-        including the limits per minute, hour, day, and month, as well as the
-        current usage against those limits.
-        
-        :return: Rate limit information, including limits and current usage.
-        :rtype: :class:`~venice_ai.types.api_keys.RateLimitInfo`
-
-        :raises venice_ai.exceptions.AuthenticationError: If authentication fails.
-        :raises venice_ai.exceptions.APIError: If the API returns an error.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        """
-        response = await self._client.get("api_keys/rate_limits")
-        if isinstance(response, dict) and "data" in response:
-            return cast(RateLimitInfo, response["data"])
-        return cast(RateLimitInfo, response) # Fallback
-    
-    async def get_rate_limit_logs(
-        self,
-        *,
-        api_key_id: Optional[str] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        limit: Optional[int] = None,
-        page: Optional[int] = None
-    ) -> RateLimitLogList:
-        """
-        Retrieves rate limit logs for API keys asynchronously.
-        
-        Returns a history of rate limit events, such as when rate limits were
-        reset, exceeded, or modified. This can be useful for understanding API usage
-        patterns, diagnosing rate limit issues, and optimizing request timing.
-        
-        :param api_key_id: Specific API key ID to get logs for. If not provided,
-            returns logs for the current API key.
-        :type api_key_id: Optional[str]
-        :param start_date: Start date for log retrieval in ISO 8601 format
-            (e.g., "2024-01-01T00:00:00Z"). If not provided, uses a default lookback period.
-        :type start_date: Optional[str]
-        :param end_date: End date for log retrieval in ISO 8601 format
-            (e.g., "2024-01-31T23:59:59Z"). If not provided, uses current time.
-        :type end_date: Optional[str]
-        :param limit: Maximum number of log entries to return per page.
-        :type limit: Optional[int]
-        :param page: Page number for pagination (1-based indexing).
-        :type page: Optional[int]
-        
-        :return: A list of rate limit log entries with timestamps, event types,
-            and related metadata.
-        :rtype: :class:`~venice_ai.types.api_keys.RateLimitLogList`
-
-        :raises venice_ai.exceptions.AuthenticationError: If authentication fails.
-        :raises venice_ai.exceptions.APIError: If the API returns an error.
-        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
-        
-        Example:
-            .. code-block:: python
-            
-                # Get recent rate limit logs asynchronously
-                logs = await client.api_keys.get_rate_limit_logs(limit=10)
-                for log_entry in logs:
-                    print(f"Event: {log_entry.event_type} at {log_entry.timestamp}")
-                
-                # Get logs for a specific date range
-                logs = await client.api_keys.get_rate_limit_logs(
-                    start_date="2024-01-01T00:00:00Z",
-                    end_date="2024-01-31T23:59:59Z",
-                    limit=50
+                updated = await client.api_keys.update(
+                    id="key_123",
+                    description="Updated description",
+                    consumption_limit={"diem": 5, "usd": 50},
                 )
         """
-        params: Dict[str, Any] = {}
-        if api_key_id is not None:
-            params["api_key_id"] = api_key_id
-        if start_date is not None:
-            params["start_date"] = start_date
-        if end_date is not None:
-            params["end_date"] = end_date
-        if limit is not None:
-            params["limit"] = limit
-        if page is not None:
-            params["page"] = page
-            
-        response = await self._client.get("api_keys/rate_limits/log", params=params if params else None)
-        if isinstance(response, dict) and "data" in response:
-            if isinstance(response["data"], list):
-                return cast(RateLimitLogList, response)
-            else:
-                # If 'data' exists but is not a list, as per test expectation, return empty list
-                return cast(RateLimitLogList, [])
-        elif isinstance(response, list): # If API directly returns a list
-            return cast(RateLimitLogList, response)
-        # Fallback for any other unexpected response format
-        return cast(RateLimitLogList, [])
+        # Build the request body manually to support both dict and ConsumptionLimit
+        request = UpdateApiKeyRequest(
+            id=id,
+            description=description,
+            expiresAt=expires_at,
+            consumptionLimit=consumption_limit,  # type: ignore[arg-type]  # Pydantic coerces dict to ConsumptionLimit at validate time
+            limitPeriod=limit_period,
+        )
+        body = request.model_dump(exclude_none=True, by_alias=True)
+        # Per the docs (api-reference/endpoint/api_keys/update), the response is
+        # wrapped: ``{"data": {<ApiKey fields>}, "success": true}``. Cast to
+        # the wrapper, then unwrap so callers get an ``ApiKey`` directly.
+        response = await self._client.patch(
+            "api_keys", json_data=body, cast_to=ApiKeyDetailsResponse
+        )
+        return response.data
+
+    async def retrieve(self, *, api_key_id: str) -> ApiKey:
+        """
+        Retrieve detailed information about a specific API key.
+
+        Fetches comprehensive metadata for the specified API key, including usage
+        statistics, configuration details, and current status. The secret key value
+        is never included in responses for security purposes.
+
+        Args:
+            api_key_id: Unique identifier of the API key to retrieve.
+
+        Returns:
+            :class:`ApiKey` with metadata, usage statistics, and configuration
+            parameters. The wire response is ``{"data": {<ApiKey fields>}}``;
+            the wrapper is unwrapped so callers receive the bare object,
+            consistent with :meth:`update`.
+
+        Raises:
+            AuthenticationError: If the current credentials are invalid.
+            NotFoundError: If the specified key ID doesn't exist.
+            APIError: If the request fails or returns an error response.
+            APIConnectionError: If unable to connect to the API.
+
+        Example:
+            .. code-block:: python
+
+                # Get detailed key information
+                api_key = await client.api_keys.retrieve(api_key_id="key_123456789")
+                print(f"Description: {api_key.description}")
+                print(f"Created: {api_key.createdAt}")
+                print(f"Usage: {api_key.usage}")
+        """
+        # Per the docs (api-reference/endpoint/api_keys/get), the response is
+        # wrapped: ``{"data": {<ApiKey fields>}}``. Cast to the wrapper, then
+        # unwrap so callers get an ``ApiKey`` directly — matching ``update()``.
+        response = await self._client.get(f"api_keys/{api_key_id}", cast_to=ApiKeyDetailsResponse)
+        return response.data
+
+    async def get_web3_token(self) -> Web3TokenResponse:
+        """
+        Retrieve a temporary token for Web3 API key generation.
+
+        Generates a time-limited authentication token required for creating API keys
+        through Web3 blockchain authentication. This token must be used in the
+        subsequent Web3 key creation request.
+
+        Returns:
+            Response containing the temporary token and any associated metadata
+            required for Web3 authentication.
+
+        Raises:
+            APIError: If token generation fails or service is unavailable.
+            APIConnectionError: If unable to connect to the API.
+
+        Note:
+            The returned token has a limited lifespan and should be used immediately
+            in the Web3 key creation process.
+        """
+        response = await self._client.get("api_keys/generate_web3_key")
+        return Web3TokenResponse.model_validate(response)
+
+    async def create_web3_key(
+        self, *, web3_key_request: Web3CreateApiKeyRequest
+    ) -> Web3ApiKeyResponse:
+        """
+        Create a new API key using Web3 blockchain authentication.
+
+        Generates an API key authenticated through blockchain signature verification,
+        enabling decentralized identity management for Venice AI access.
+
+        Args:
+            web3_key_request: Web3 authentication request containing:
+                - apiKeyType: API key type (``"INFERENCE"`` or ``"ADMIN"``)
+                - address: Wallet address for authentication
+                - signature: Signed token for verification
+                - token: Token from get_web3_token()
+                - description (optional): API key description
+                - consumptionLimit (optional): Spending limits
+                - limitPeriod (optional): Consumption-limit reset period
+                  (``"EPOCH"``/``"MONTH"``/``"LIFETIME"``)
+                - expiresAt (optional): Expiration date
+
+        Returns:
+            Response containing the newly created API key and associated metadata.
+
+        Raises:
+            APIError: If Web3 verification fails or key creation is rejected.
+            APIConnectionError: If unable to connect to the API.
+
+        Note:
+            Requires a valid Web3 token from get_web3_token() and proper signature
+            verification against the specified blockchain network.
+        """
+        data = self._serialize_request(web3_key_request)
+
+        response = await self._client.post("api_keys/generate_web3_key", json_data=data)
+        return Web3ApiKeyResponse.model_validate(response)
+
+    def _serialize_request(self, request_obj: Any) -> dict[str, Any]:
+        """
+        Serialize a request object to a dictionary for JSON serialization.
+
+        Handles Pydantic models, Mapping objects, and objects with __dict__.
+
+        Args:
+            request_obj: The request object to serialize
+
+        Returns:
+            Dictionary with None values excluded
+        """
+        data: dict[str, Any]
+        # Pydantic models use model_dump()
+        if hasattr(request_obj, "model_dump"):
+            data = request_obj.model_dump(exclude_none=True)
+        # Check for Mapping (dict-like) - covers dict/TypedDict
+        elif isinstance(request_obj, Mapping):
+            data = {k: v for k, v in request_obj.items() if v is not None}
+        # Fallback for objects with __dict__
+        elif hasattr(request_obj, "__dict__"):
+            data = {k: v for k, v in vars(request_obj).items() if v is not None}
+        else:
+            # Last resort
+            data = dict(request_obj)
+            data = {k: v for k, v in data.items() if v is not None}
+        return data
+
+    async def get_rate_limits(self) -> RateLimitsResponse:
+        """
+        Retrieve current rate limit information and usage statistics.
+
+        Returns comprehensive rate limiting data for the authenticated API key, including
+        configured limits across different time periods and current usage levels.
+
+        Returns:
+            Rate limit configuration and current usage statistics including:
+            - Limits per minute, hour, day, and month
+            - Current usage counts for each period
+            - Remaining capacity and reset times
+
+        Raises:
+            AuthenticationError: If the API key is invalid or expired.
+            APIError: If the request fails or returns an error response.
+            APIConnectionError: If unable to connect to the API.
+
+        Example:
+            .. code-block:: python
+
+                # Check current rate limits
+                limits = await client.api_keys.get_rate_limits()
+                print(f"Requests per minute: {limits.data.requests_per_minute}")
+                print(f"Current usage: {limits.data.current_usage}")
+        """
+        response = await self._client.get("api_keys/rate_limits")
+        return RateLimitsResponse.model_validate(response)
+
+    async def get_rate_limit_logs(self) -> RateLimitLogsResponse:
+        """
+        Retrieves the last 50 rate limit violations for the account asynchronously.
+
+        Returns the last 50 rate limits that the account exceeded. This endpoint
+        helps monitor and troubleshoot rate limiting issues by providing a history
+        of when limits were hit.
+
+        :return: List of the last 50 rate limit violations with timestamps, models,
+            and violation types.
+
+
+        :raises venice_ai.exceptions.AuthenticationError: If authentication fails.
+        :raises venice_ai.exceptions.APIError: If the API returns an error.
+        :raises venice_ai.exceptions.APIConnectionError: If there's an issue connecting to the API.
+
+        Example:
+            .. code-block:: python
+
+                # Get recent rate limit logs asynchronously
+                logs_response = await client.api_keys.get_rate_limit_logs()
+                for log_entry in logs_response.data:
+                    print(f"Model: {log_entry.modelId}, Type: {log_entry.rateLimitType}, Time: {log_entry.timestamp}")
+        """
+        response = await self._client.get("api_keys/rate_limits/log")
+        return RateLimitLogsResponse.model_validate(response)

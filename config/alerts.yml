@@ -1,0 +1,235 @@
+# Alerting rules for the Venice AI Rate Limiter
+# Phase 4d: Observability - Alert Configuration
+#
+# This file defines Prometheus alerting rules for the distributed rate limiting system.
+# See docs/design/phase4_production_and_e2e_plan.md Section 6.3 for full specification.
+
+groups:
+  # ============================================================================
+  # LEGACY ALERTS (Pre-Phase 4)
+  # These are preserved for backward compatibility with existing scheduler monitoring
+  # ============================================================================
+  - name: venice-scheduler-legacy
+    rules:
+      - alert: HighQueueDepth
+        expr: venice_ai_scheduler_queue_depth > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High queue depth detected"
+          description: "The scheduler queue depth is over 100, indicating potential system overload."
+
+      - alert: CircuitBreakerOpenLegacy
+        expr: venice_ai_circuit_breaker_state == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Circuit breaker is open (legacy metric)"
+          description: "A circuit breaker has opened, indicating a downstream service may be failing."
+
+      - alert: HighRejectedRequests
+        expr: rate(venice_ai_requests_rejected_total[5m]) > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate of rejected requests"
+          description: "The system is rejecting requests at a high rate, likely due to queue limits."
+
+      - alert: HighErrorRate
+        expr: sum(rate(venice_ai_api_errors_total{code=~"5.."}[5m])) / sum(rate(venice_ai_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High API error rate"
+          description: "More than 5% of requests are resulting in 5xx errors."
+
+  # ============================================================================
+  # PHASE 4 ALERTS: Distributed Rate Limiter
+  # These are the production alerting rules for the Redis-backed rate limiter
+  # ============================================================================
+  - name: venice-rate-limiter
+    rules:
+      # --------------------------------------------------------------------------
+      # Redis Availability Alerts
+      # --------------------------------------------------------------------------
+      - alert: VeniceRedisUnreachable
+        expr: venice_circuit_breaker_state == 2
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis circuit breaker is OPEN"
+          description: "Distributed rate limiting has fallen back to local mode. Redis connection failures have exceeded threshold."
+          runbook_url: "docs/operations/runbooks/redis_outage.md"
+
+      - alert: VeniceExtendedFallbackMode
+        expr: venice_fallback_mode_active == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Operating in fallback mode for >5 minutes"
+          description: "The rate limiter has been in fallback mode for over 5 minutes. Redis may be experiencing extended outage."
+          runbook_url: "docs/operations/runbooks/redis_outage.md"
+
+      # --------------------------------------------------------------------------
+      # State Drift Detection
+      # Multi-condition alert to avoid false positives
+      # --------------------------------------------------------------------------
+      - alert: VeniceHighDriftRate
+        # Multi-condition alert to avoid false positives:
+        # 1. Requires meaningful traffic volume (>100 requests in 5 min)
+        # 2. Requires significant 429 rate (not just noise)
+        # 3. Requires high ratio OR zero local hits (local hits = 0 means we're not blocking anything)
+        expr: |
+          (
+            # Significant traffic volume
+            increase(venice_requests_total[5m]) > 100
+          )
+          and
+          (
+            # Either: High 429 rate with non-zero local hits
+            (
+              rate(venice_api_429_total[5m]) > 0.01
+              and
+              rate(venice_api_429_total[5m]) > 1.5 * rate(venice_ratelimit_hits_total[5m])
+            )
+            or
+            # Or: Any 429s when local hits are zero (total drift)
+            (
+              rate(venice_api_429_total[5m]) > 0.01
+              and
+              rate(venice_ratelimit_hits_total[5m]) == 0
+            )
+          )
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Rate limit state drift detected"
+          description: "API 429s significantly exceed local rate limit predictions. This indicates Redis state is drifting from API truth."
+          runbook_url: "docs/operations/runbooks/state_drift.md"
+
+      # --------------------------------------------------------------------------
+      # Redis Performance Alerts
+      # --------------------------------------------------------------------------
+      - alert: VeniceRedisLatencyHigh
+        expr: histogram_quantile(0.99, rate(venice_redis_latency_seconds_bucket[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis latency P99 > 100ms"
+          description: "Redis script execution latency has exceeded 100ms at P99 for 5 minutes. Check Redis performance."
+          runbook_url: "docs/operations/runbooks/redis_outage.md"
+
+      - alert: VeniceConnectionPoolExhausted
+        expr: venice_connection_pool_size{state="waiting"} > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis connection pool has waiting requests"
+          description: "Requests are waiting for available Redis connections. Consider increasing max_connections configuration."
+          runbook_url: "docs/operations/runbooks/pool_exhaustion.md"
+
+      # --------------------------------------------------------------------------
+      # Rate Limit Health Alerts
+      # --------------------------------------------------------------------------
+      - alert: VeniceHighApiRateLimitRate
+        expr: rate(venice_api_429_total[5m]) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API 429 rate (>0.5/s)"
+          description: "The API is returning 429 responses at a high rate. Check capacity and rate limit configuration."
+
+      - alert: VeniceCapacityNearExhaustion
+        expr: |
+          (venice_ratelimit_remaining / venice_ratelimit_limit) < 0.1 
+          and venice_ratelimit_limit > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Rate limit capacity below 10%"
+          description: "Model {{ $labels.model }} (tier: {{ $labels.tier }}) has less than 10% rate limit capacity remaining."
+
+      # --------------------------------------------------------------------------
+      # Orphan Recovery Alerts
+      # --------------------------------------------------------------------------
+      - alert: VeniceHighOrphanRecoveryRate
+        expr: rate(venice_orphan_recoveries_total[10m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High orphan recovery rate"
+          description: "Orphan recovery is running frequently, indicating potential client crashes or network issues."
+
+      # --------------------------------------------------------------------------
+      # Streaming Alerts
+      # --------------------------------------------------------------------------
+      - alert: VeniceHighTokenWaste
+        expr: |
+          rate(venice_reservation_waste_tokens[5m]) > 10000
+          and rate(venice_tokens_reserved_total[5m]) > 0
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "High token reservation waste"
+          description: "More than 10K tokens/sec are being wasted due to over-reservation. Consider tuning max_tokens estimates."
+
+      - alert: VeniceStreamingExtractionFailures
+        expr: rate(venice_streaming_extraction_failures_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Streaming token extraction failures"
+          description: "Token extraction from streaming responses is failing. This may indicate API response format changes."
+          runbook_url: "docs/operations/runbooks/api_header_change.md"
+
+      # --------------------------------------------------------------------------
+      # Redis Error Alerts
+      # --------------------------------------------------------------------------
+      - alert: VeniceRedisErrorsHigh
+        expr: rate(venice_redis_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Redis error rate"
+          description: "Redis operations are experiencing errors ({{ $value | humanize }}/s). Check Redis connectivity and configuration."
+          runbook_url: "docs/operations/runbooks/redis_outage.md"
+
+      # --------------------------------------------------------------------------
+      # Fallback Mode Alerts with Backoff Monitoring
+      # --------------------------------------------------------------------------
+      - alert: VeniceFallbackHighBackoff
+        expr: |
+          histogram_quantile(0.99, rate(venice_fallback_backoff_seconds_bucket{reason="429_received"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Fallback mode experiencing high backoff"
+          description: "Fallback mode is applying >2s backoff delays due to 429 responses. This indicates capacity pressure."
+
+      # --------------------------------------------------------------------------
+      # Stale Cleanup Alerts
+      # --------------------------------------------------------------------------
+      - alert: VeniceHighStaleCleanupRate
+        expr: rate(venice_streaming_stale_cleanups_total[10m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High stale streaming cleanup rate"
+          description: "Stale streaming entries are being cleaned up frequently, indicating streams not completing properly."

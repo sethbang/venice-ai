@@ -1,0 +1,14 @@
+[
+  {
+    "scenario": "SharedState",
+    "duration": 9,
+    "total_requests": 32,
+    "successful": 32,
+    "failed": 0,
+    "rate_limited": 0,
+    "throughput_rpm": 213.33333333333331,
+    "avg_latency_ms": 140.15886187553406,
+    "p95_latency_ms": 611.2274527549744,
+    "efficiency_percent": 100.0
+  }
+]

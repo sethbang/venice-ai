@@ -1,733 +1,606 @@
-# Venice AI Python Client
-
-[![PyPI version](https://img.shields.io/pypi/v/venice-ai.svg)](https://pypi.org/project/venice-ai/)
-[![CI Status](https://github.com/sethbang/venice-ai/actions/workflows/python-publish.yaml/badge.svg)](https://github.com/sethbang/venice-ai/actions/workflows/python-publish.yaml)
-[![Coverage Status](https://img.shields.io/codecov/c/github/sethbang/venice-ai.svg)](https://codecov.io/gh/sethbang/venice-ai)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python Versions](https://img.shields.io/pypi/pyversions/venice-ai.svg)](https://pypi.org/project/venice-ai/)
-
-Developed to benchmark and explore the full capabilities of the Venice.ai API, the venice-ai Python package has evolved into a comprehensive client library for developers. This library provides convenient access to Venice.ai's powerful features, including chat completions, image generation, audio synthesis, embeddings, model management, API key management, billing information, and more, with support for both synchronous and asynchronous operations.
-
-## Powered by
+# Venice AI Python SDK
 
 <div align="center">
-  <a href="https://venice.ai/chat?ref=6sxLV1">
-    <img src="./venice-logo-lockup-red.svg" alt="Venice.ai" width="250">
-  </a>
-  <sub><em>*This is a referral link</em></sub>
+
+<a href="https://venice-docs.sbang.dev/"><img src="https://raw.githubusercontent.com/sethbang/venice-ai/main/website/static/img/venice-ai-banner.png" alt="Venice AI Python SDK — unofficial, community-maintained" width="720"></a>
+
+[![PyPI version](https://img.shields.io/pypi/v/venice-ai.svg)](https://pypi.org/project/venice-ai/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/venice-ai.svg)](https://pypi.org/project/venice-ai/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-125da3.svg)](https://opensource.org/licenses/MIT)
+[![CI Status](https://github.com/sethbang/venice-ai/actions/workflows/ci-validation.yaml/badge.svg)](https://github.com/sethbang/venice-ai/actions/workflows/ci-validation.yaml)
+[![Coverage Status](https://img.shields.io/codecov/c/github/sethbang/venice-ai.svg)](https://codecov.io/gh/sethbang/venice-ai)
+[![Security Scan](https://github.com/sethbang/venice-ai/actions/workflows/security-scan.yml/badge.svg)](https://github.com/sethbang/venice-ai/actions/workflows/security-scan.yml)
+[![Docs](https://img.shields.io/badge/docs-venice--docs.sbang.dev-3c8fdd)](https://venice-docs.sbang.dev/)
+
+**Production-ready Python SDK for Venice.ai with enterprise-grade rate limiting, intelligent scheduling, and comprehensive error handling**
+
+[Documentation](https://venice-docs.sbang.dev/) | [Examples](https://github.com/sethbang/venice-ai/tree/main/examples/) | [Changelog](https://github.com/sethbang/venice-ai/blob/main/CHANGELOG.md) | [API Reference](https://venice-docs.sbang.dev/docs/api-reference/)
+
 </div>
 
-## Table of Contents
+---
 
-- [Features](#features)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [API Key Setup](#api-key-setup)
-- [Quick Start](#quick-start)
-- [Usage](#usage)
-  - [Client Initialization](#client-initialization)
-  - [Chat Completions](#chat-completions)
-  - [Image Generation](#image-generation)
-  - [Audio Synthesis (Text-to-Speech)](#audio-synthesis-text-to-speech)
-  - [Embeddings Creation](#embeddings-creation)
-  - [Model Management](#model-management)
-  - [API Key Management](#api-key-management)
-  - [Billing Information](#billing-information)
-- [Error Handling](#error-handling)
-- [Advanced Usage](#advanced-usage)
-  - [Advanced HTTP Client Configuration](#advanced-http-client-configuration)
-  - [Understanding Streaming](#understanding-streaming)
-  - [Token Estimation](#token-estimation)
-- [Showcase Application](#showcase-application)
-- [Testing](#testing)
-- [Documentation](#documentation)
-- [Contributing](#contributing)
-- [License](#license)
+> **This is an unofficial, community-maintained SDK for Venice.ai.**
+> Not affiliated with or endorsed by Venice AI. For official resources visit [Venice.ai](https://venice.ai/).
 
-## Features
+> **v2.0.0** — fully breaking rewrite over v1.3.x with enterprise-grade features. Review the [CHANGELOG](https://github.com/sethbang/venice-ai/blob/main/CHANGELOG.md) and the [Migration Guide](https://venice-docs.sbang.dev/docs/guides/migration/) before upgrading.
 
-- Intuitive Pythonic interface for all Venice.ai API endpoints.
-- Support for both synchronous and asynchronous operations.
-- Access to all major Venice AI model families including text generation, image synthesis, audio processing, and embedding models.
-- Streaming capabilities for chat completions and audio.
-- Built-in utilities for tasks like token estimation and chat message validation.
-- Robust error handling with a custom exception hierarchy.
-- Type-hinted for a better developer experience and static analysis.
-- Resource-oriented client design (e.g., `client.chat`, `client.image`).
-- Automatic request retries for transient errors and configurable HTTP status codes.
-- Comprehensive testing suite with `test_runner.py` for easy execution.
-- Detailed API documentation generated with Sphinx.
-- Support for `logprobs` and `top_logprobs` in chat completions to retrieve token likelihoods.
-
-## Getting Started
-
-### Prerequisites
-
-Python 3.11 or higher.
-
-### Installation
-
-You can install the Venice AI client library from PyPI:
-
-```bash
-pip install venice-ai
-```
-
-To include optional dependencies for token estimation:
-
-```bash
-pip install venice-ai[tokenizers]
-```
-
-Alternatively, to install the latest development version from source (recommended if you want to contribute or need the absolute latest changes not yet released on PyPI):
-
-```bash
-git clone https://github.com/sethbang/venice-ai.git # Or your fork
-cd venice-ai
-poetry install
-```
-
-Note: `poetry install` installs main dependencies. For development or running all tests, install with dev dependencies: `poetry install --with dev`. To include optional tokenizers support: `poetry install --extras "tokenizers"`.
-
-### API Key Setup
-
-To use the Venice AI API, you need an API key. You can obtain your API key from your Venice AI dashboard.
-
-The client library expects the API key to be available as an environment variable (recommended):
-
-```bash
-export VENICE_API_KEY="your_api_key_here"
-```
-
-Alternatively, you can pass the API key directly when initializing the client:
-`client = VeniceClient(api_key="your_api_key_here")`
+---
 
 ## Quick Start
 
-Get up and running in seconds!
-
-**Synchronous Chat Completion:**
+```bash
+pip install venice-ai
+export VENICE_API_KEY="your-api-key-here"
+```
 
 ```python
-from venice_ai import VeniceClient
+import asyncio
+from venice_ai import VeniceClient, UserMessage
 
-# Assumes VENICE_API_KEY is set in your environment
-# Recommended: use as a context manager
-with VeniceClient(default_timeout=60.0) as client: # Added default_timeout
-    try:
-        response = client.chat.completions.create(
-            model="llama-3.2-3b", # Or your preferred model
-            messages=[{"role": "user", "content": "Hello, Venice AI!"}]
+async def main():
+    async with VeniceClient() as client:  # reads VENICE_API_KEY from env
+        model = await client.models.resolve_chat()
+        response = await client.chat.completions.create(
+            model=model,
+            messages=[UserMessage(content="Hello!")],
         )
         print(response.choices[0].message.content)
-    except Exception as e:
-        print(f"An error occurred: {e}")
+
+asyncio.run(main())
 ```
 
-**Asynchronous Chat Completion:**
+Migrating from v1.x? See the [Migration Guide](https://venice-docs.sbang.dev/docs/guides/migration/).
 
-```python
-import asyncio
-from venice_ai import AsyncVeniceClient
+## Command Line Interface
 
-async def main():
-    # Assumes VENICE_API_KEY is set in your environment
-    # Recommended: use as an async context manager
-    async with AsyncVeniceClient(default_timeout=60.0) as async_client: # Added default_timeout
-        try:
-            response = await async_client.chat.completions.create(
-                model="llama-3.2-3b", # Or your preferred model
-                messages=[{"role": "user", "content": "Hello asynchronously, Venice AI!"}]
-            )
-            print(response.choices[0].message.content)
-        except Exception as e:
-            print(f"An error occurred: {e}")
+```bash
+pip install venice-ai[cli]
 
-if __name__ == "__main__":
-    asyncio.run(main())
+venice chat start                  # Interactive chat
+venice image generate "..."        # Image generation
+venice image multi-edit -p "..."   # Multi-image edit
+venice models                      # Browse models
+venice characters reviews <slug>   # Character reviews
+venice account keys rate-limits    # Per-model RPM/TPM limits
+venice configure                   # Setup wizard
 ```
 
-## Usage
+Features: streaming chat with 6 animation modes, image generation with 11+ parameters, model discovery, rich terminal UI. See the [CLI Reference](https://venice-docs.sbang.dev/docs/guides/cli/) for full CLI documentation.
 
-### Client Initialization
+---
 
-**Synchronous Client:**
+## Build with Claude Code
 
-```python
-from venice_ai import VeniceClient
+Four [Claude Code skills](https://docs.claude.com/en/docs/claude-code/skills) ship with the SDK. Install them into the current project with `venice skills install` (or `venice skills install --global` for `~/.claude/skills/`); list them with `venice skills list`. They auto-load when their trigger contexts match — `venice chat`, `venice image`, `venice rate limit`, `venice x402` — and steer Claude toward idiomatic v2 code (dynamic model resolution, `async with stream:`, `run_with_tools`, `client.gather(max_concurrency=N)`, `top_up_with`, etc.) instead of OpenAI-style or v1 patterns.
 
-# Option 1: API key from environment variable VENICE_API_KEY, with default timeout
-client = VeniceClient(default_timeout=30.0) # Added default_timeout
-
-# Option 2: Pass API key directly and custom timeout
-# client = VeniceClient(api_key="your_api_key_here", default_timeout=45.0)
-
-# Using as a context manager (recommended for proper resource cleanup):
-with VeniceClient(api_key="your_api_key_here", default_timeout=30.0) as client: # Added default_timeout
-    # Use the client for API calls
-    models_list = client.models.list()
-    print(f"Found {len(models_list.data)} models.")
-
-# If not using a context manager, remember to close the client:
-# client.close()
+```bash
+venice skills install            # → ./.claude/skills/
+venice skills install --global   # → ~/.claude/skills/
+venice skills list               # show bundled skills + install state
 ```
 
-**Asynchronous Client:**
+Catalog: `venice-ai` (chat / streaming / tools / structured output), `venice-ai-multimodal` (image / audio / video / music), `venice-ai-production` (retries / rate limits / cost tracking / observability), `venice-ai-x402` (wallet auth / SIWE / on-chain top-up). See [`tools/skills/README.md`](https://github.com/sethbang/venice-ai/blob/main/tools/skills/README.md) for the full catalog and validation tooling.
 
-```python
-import asyncio
-from venice_ai import AsyncVeniceClient
+---
 
-async def main():
-    # Option 1: API key from environment variable VENICE_API_KEY, with default timeout
-    async_client = AsyncVeniceClient(default_timeout=30.0) # Added default_timeout
-
-    # Option 2: Pass API key directly and custom timeout
-    # async_client = AsyncVeniceClient(api_key="your_api_key_here", default_timeout=45.0)
-
-    # Using as an async context manager (recommended):
-    async with AsyncVeniceClient(api_key="your_api_key_here", default_timeout=30.0) as async_client: # Added default_timeout
-        # Use the client for API calls
-        models_list = await async_client.models.list()
-        print(f"Found {len(models_list.data)} models.")
-
-    # If not using an async context manager, remember to close the client:
-    # await async_client.close()
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-It's important to `close()` (for `VeniceClient`) or `await async_client.close()` (for `AsyncVeniceClient`) when you're finished, if not using context managers. This ensures that underlying HTTP resources and connections are properly released.
+## Core Features
 
 ### Chat Completions
 
-The response objects (`response`, `chunk`) are Pydantic models. You can explore their structure for more details (see `src/venice_ai/types/chat.py` or the Sphinx-generated API documentation).
-
-**Model Context Windows:**
-
-Different models support different context window sizes. For example, the "Venice Large" model supports up to 128k tokens, allowing for extensive conversations or document processing. Use the `max_completion_tokens` parameter to control response length within the model's context limits.
-
-**Parameters:**
-
-:param logit_bias: Modify the likelihood of specified tokens appearing in the completion. Accepts a JSON object that maps tokens (specified by their token ID in the tokenizer) to an associated bias value from -100 to 100.
-:type logit_bias: Optional[Dict[str, int]]
-
-:param logprobs: Whether to return log probabilities of the output tokens. If `True`, the `logprobs` field will be populated in the `choices` of the response. Defaults to `False`.
-:type logprobs: Optional[bool]
-
-:param parallel_tool_calls: Whether to enable parallel function calling during tool use.
-:type parallel_tool_calls: Optional[bool]
-
-:param top_logprobs: An integer between 0 and 5 specifying the number of most likely tokens to return at each token position, each with an associated log probability. Requires `logprobs` to be `True`.
-:type top_logprobs: Optional[int]
-
-**Non-streaming example:**
-
 ```python
-from venice_ai import VeniceClient
+from venice_ai import UserMessage, SystemMessage
 
-with VeniceClient() as client:
-    response = client.chat.completions.create(
-        model="llama-3.2-3b", # Or your preferred model
+async with VeniceClient() as client:
+    model = await client.models.resolve_chat()
+    response = await client.chat.completions.create(
+        model=model,
         messages=[
-            {"role": "user", "content": "Hello, how are you?"}
-        ]
+            SystemMessage(content="You are a helpful assistant."),
+            UserMessage(content="Explain quantum computing simply"),
+        ],
+        temperature=0.7,
+        max_completion_tokens=500,
     )
     print(response.choices[0].message.content)
 ```
 
-**Example with Venice Large (128k context window):**
+[-> `examples/chat/simple_chat.py`](https://github.com/sethbang/venice-ai/blob/main/examples/chat/simple_chat.py)
+
+### Streaming
 
 ```python
-from venice_ai import VeniceClient
+model = await client.models.resolve_chat()
+async with await client.chat.completions.stream(
+    model=model,
+    messages=[UserMessage(content="Tell me a story")],
+    max_completion_tokens=200,
+) as stream:
+    async for text in stream.text_deltas():
+        print(text, end="", flush=True)
+```
 
-with VeniceClient() as client:
-    # Venice Large supports up to 128k tokens, ideal for long documents or conversations
+For the assembled response: `response = await stream.collect()`.
+
+[-> `examples/chat/streaming_chat.py`](https://github.com/sethbang/venice-ai/blob/main/examples/chat/streaming_chat.py)
+
+### Synchronous Usage
+
+```python
+from venice_ai import SyncVeniceClient, UserMessage
+
+with SyncVeniceClient() as client:
+    model = client.models.resolve_chat()
     response = client.chat.completions.create(
-        model="venice-large",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant that can analyze long documents."},
-            {"role": "user", "content": "Please analyze this extensive document..."}  # Can include very long content
-        ],
-        max_completion_tokens=4000  # Can use higher values with Venice Large's 128k context
+        model=model,
+        messages=[UserMessage(content="Hello!")],
     )
     print(response.choices[0].message.content)
 ```
 
-**Example with `logprobs` and `top_logprobs`:**
+Streams returned by `SyncVeniceClient` iterate synchronously (`for chunk in stream:`).
+
+### Function Calling
 
 ```python
-from venice_ai import VeniceClient
+from venice_ai import tool_from_function
 
-with VeniceClient() as client:
-    response = client.chat.completions.create(
-        model="llama-3.2-3b", # Or your preferred model
-        messages=[
-            {"role": "user", "content": "What is the color of the sky?"}
-        ],
-        logprobs=True,
-        top_logprobs=2 # Request the top 2 most likely tokens at each position
-    )
+def get_weather(location: str) -> str:
+    """Get current weather for a location."""
+    ...
 
-    # Example of accessing logprobs data
-    if response.choices and response.choices[0].logprobs:
-        print("Logprobs received.")
-        first_choice_logprobs = response.choices[0].logprobs
-        if first_choice_logprobs.content:
-            for i, token_logprob in enumerate(first_choice_logprobs.content[:2]): # Display for first 2 generated tokens
-                print(f"Token {i+1}: '{token_logprob.token}' (logprob: {token_logprob.logprob:.4f})")
-                if token_logprob.top_logprobs:
-                    print(f"  Top {len(token_logprob.top_logprobs)} alternative tokens:")
-                    for alt_token_logprob in token_logprob.top_logprobs:
-                        print(f"    - '{alt_token_logprob.token}' (logprob: {alt_token_logprob.logprob:.4f})")
-    else:
-        print("No logprobs data in response or choices.")
-
-    print(f"\nMain response content: {response.choices[0].message.content}")
+model = await client.models.resolve_chat(require_function_calling=True)
+response = await client.chat.completions.create(
+    model=model,
+    messages=[UserMessage(content="What's the weather in NYC?")],
+    tools=[tool_from_function(get_weather)],
+    tool_choice="auto",
+)
 ```
 
-**Streaming example:**
+`tool_from_model(MyPydanticModel)` is also available for richer schemas.
 
-```python
-from venice_ai import VeniceClient
-
-with VeniceClient() as client:
-    stream = client.chat.completions.create(
-        model="llama-3.2-3b",
-        messages=[
-            {"role": "user", "content": "Tell me a short story."}
-        ],
-        stream=True
-    )
-    for chunk in stream:
-        if chunk.choices and chunk.choices[0].delta.content:
-            print(chunk.choices[0].delta.content, end="")
-    print()
-```
-
-**Tool Calling Example:**
-(Ensure the selected model supports tool calling)
-
-```python
-from venice_ai import VeniceClient
-
-with VeniceClient() as client:
-    response = client.chat.completions.create(
-        model="llama-3.2-3b", # Choose a model that supports tool calls
-        messages=[{"role": "user", "content": "What's the weather in London?"}],
-        tools=[{
-            "type": "function",
-            "function": {
-                "name": "get_current_weather",
-                "description": "Get the current weather in a given location",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "location": {"type": "string", "description": "The city and state, e.g., San Francisco, CA"},
-                        "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]}
-                    },
-                    "required": ["location"]
-                }
-            }
-        }],
-        tool_choice="auto" # Can be "auto", "none", or a specific tool
-    )
-    if response.choices[0].message.tool_calls:
-        tool_call = response.choices[0].message.tool_calls[0]
-        print(f"Tool call requested: {tool_call.function.name}")
-        print(f"Arguments: {tool_call.function.arguments}")
-    else:
-        print(response.choices[0].message.content)
-```
+[-> `examples/chat/tool_calling.py`](https://github.com/sethbang/venice-ai/blob/main/examples/chat/tool_calling.py)
 
 ### Image Generation
 
-**Basic Generation:**
-
 ```python
-from venice_ai import VeniceClient
-import base64
-from PIL import Image
-import io
-
-with VeniceClient() as client:
-    response = client.image.generate(
-        model="venice-sd35", # Or your preferred image model
-        prompt="A futuristic cityscape at sunset",
-        width=1024,
-        height=1024,
-        steps=25, # Example of another parameter
-        # negative_prompt="blurry, low quality", # Example
-        # style_preset="cinematic" # Example
-    )
-    if response.images:
-        img_b64 = response.images[0]
-        img_bytes = base64.b64decode(img_b64)
-        # pil_image = Image.open(io.BytesIO(img_bytes))
-        # pil_image.show()
-        # pil_image.save("generated_image.png")
-        print("Image generated successfully (first image data received).")
+image_model = await client.models.resolve_image()
+response = await client.image.create(
+    model=image_model,
+    prompt="A serene mountain landscape at sunset",
+    width=512, height=512,
+    enable_web_search=True,  # optional; supported models pull in recent web context
+)
+response.save("generated.png")          # single image
+# response.save_all("output_dir")        # all images
 ```
 
-**Simple Generation (OpenAI-compatible):**
+Pass-through fields on `image.multi_edit()` now include `model=...`, which the
+SDK forwards to the API as `modelId` (previously dropped silently).
+
+[-> `examples/image/text_to_image.py`](https://github.com/sethbang/venice-ai/blob/main/examples/image/text_to_image.py) | [-> `examples/image/web_search.py`](https://github.com/sethbang/venice-ai/blob/main/examples/image/web_search.py)
+
+### Text-to-Speech
 
 ```python
-with VeniceClient() as client:
-    response = client.image.simple_generate(
-        model="venice-sd35",
-        prompt="A cute cat wearing a small hat",
-        size="512x512"
-    )
-    # Process response.data[0].b64_json or response.data[0].url
+from venice_ai.types.enums import Voice, ResponseFormat
+
+tts_model = await client.models.resolve_tts()
+response = await client.audio.create_speech(
+    model=tts_model,
+    input="Hello! Welcome to Venice AI.",
+    voice=Voice.AF_ALLOY,
+    response_format=ResponseFormat.MP3,
+)
+response.save("speech.mp3")
 ```
 
-**Image Upscaling:**
+[-> `examples/audio/text_to_speech.py`](https://github.com/sethbang/venice-ai/blob/main/examples/audio/text_to_speech.py)
+
+### Embeddings
 
 ```python
-with VeniceClient() as client:
-    with open("path/to/your/image.png", "rb") as img_file:
-        upscaled_image_bytes = client.image.upscale(
-            image=img_file, # Can be path, bytes, or file-like object
-            scale=2.0 # Example: 2x upscale
-        )
-    with open("upscaled_image.png", "wb") as f:
-        f.write(upscaled_image_bytes)
+embedding_model = await client.models.resolve_embedding()
+response = await client.embeddings.create(
+    model=embedding_model,
+    input=["Text 1", "Text 2", "Text 3"],
+)
+embedding = response.data[0].embedding
 ```
 
-**Listing Image Styles:**
+[-> `examples/embeddings/basic_embeddings.py`](https://github.com/sethbang/venice-ai/blob/main/examples/embeddings/basic_embeddings.py)
+
+### Video Generation
 
 ```python
-with VeniceClient() as client:
-    styles_response = client.image.list_styles()
-    for style in styles_response.data:
-        print(f"Available style: {style}")
+video_model = await client.models.resolve_video()
+job = await client.video.run(
+    model=video_model,
+    prompt="A drone shot of the Venice canals at sunrise",
+    duration_seconds=5,
+    aspect_ratio="16:9",
+    resolution="1080p",
+)
+async with job:
+    status = await job.wait()
+    await job.download("canals.mp4", status)
 ```
 
-### Audio Synthesis (Text-to-Speech)
+Advanced body fields on `submit()` (all optional):
+`upscale_factor`, `end_image_url`, `audio_url`, `video_url`,
+`reference_image_urls` (up to 9), `elements` (up to 4 Kling-O3 structured
+characters), `scene_image_urls` (up to 4). For the dedicated
+`topaz-video-upscale` model, pass `video_url` + `upscale_factor` (1/2/4)
+instead of `resolution`. `quote()` accepts only the pricing-relevant
+subset (`model`, `duration_seconds`, `aspect_ratio`, `resolution`, `upscale_factor`,
+`audio`, `video_url`) per the API spec — prompt text and reference images
+don't affect price.
 
-Generate speech from text.
+[-> `examples/video/text_to_video.py`](https://github.com/sethbang/venice-ai/blob/main/examples/video/text_to_video.py) | [-> `examples/video/advanced_fields.py`](https://github.com/sethbang/venice-ai/blob/main/examples/video/advanced_fields.py) | [-> `examples/video/upscale.py`](https://github.com/sethbang/venice-ai/blob/main/examples/video/upscale.py)
 
-**Synchronous Example:**
+### Model Selection
 
 ```python
-from venice_ai import VeniceClient
-from venice_ai.types.audio import Voice
+chat_model = await client.models.resolve_chat(
+    preferred_models=["llama-3.3-70b", "qwen-2.5-72b"],
+    require_function_calling=True,
+)
+image_model = await client.models.resolve_image()
+embedding_model = await client.models.resolve_embedding()
 
-with VeniceClient() as client:
-    audio_bytes = client.audio.create_speech(
-        model="tts-kokoro", # Or your preferred TTS model
-        input="Hello from Venice AI audio!",
-        voice=Voice.KOKORO_DEFAULT # Or other voice options like "kokoro-style-energetic"
-    )
-    with open("output.mp3", "wb") as f:
-        f.write(audio_bytes)
-    print("Audio saved to output.mp3")
+# Capability filters via the unified entry point:
+vision_model = await client.models.resolve(type="chat", require_vision=True)
 ```
 
-**Streaming Example (Conceptual):**
+---
+
+## Venice-Specific Features
+
+### Character Personalities
 
 ```python
-# with VeniceClient() as client: # or AsyncVeniceClient
-#     audio_stream = client.audio.create_speech(
-#         model="tts-kokoro",
-#         input="This is a streamed audio example.",
-#         voice=Voice.KOKORO_DEFAULT,
-#         stream=True
-#     )
-#     with open("streamed_output.mp3", "wb") as f:
-#         for chunk in audio_stream:
-#             f.write(chunk)
-#     print("Streamed audio saved.")
+from venice_ai import VeniceParameters
+
+model = await client.models.resolve_chat()
+response = await client.chat.completions.create(
+    model=model,
+    messages=[UserMessage(content="What is wisdom?")],
+    venice_parameters=VeniceParameters(character_slug="socrates"),
+)
 ```
 
-### Embeddings Creation
-
-The embeddings endpoint now supports `base64` encoding and accepts a `user` parameter for improved OpenAI compatibility (though the `user` parameter is discarded by the Venice API).
+### Web Search
 
 ```python
-from venice_ai import VeniceClient
-
-with VeniceClient() as client:
-    response = client.embeddings.create(
-        model="text-embedding-bge-m3", # Or your preferred embeddings model
-        input="The Venice AI Python client makes API interaction seamless.",
-        # input=["Batch sentence 1", "Batch sentence 2"] # For batching
-        encoding_format="float", # Can be "float" or "base64"
-        user="user-123" # Accepted for OpenAI compatibility, but has no effect
-    )
-    if response.data and response.data[0].embedding:
-        first_embedding_vector = response.data[0].embedding
-        print(f"Generated embedding vector (first 5 dimensions): {first_embedding_vector[:5]}")
-        print(f"Total dimensions of the vector: {len(first_embedding_vector)}")
-    else:
-        print("No embedding data received.")
+model = await client.models.resolve_chat()
+response = await client.chat.completions.create(
+    model=model,
+    messages=[UserMessage(content="Latest AI news?")],
+    venice_parameters=VeniceParameters(enable_web_search="on", enable_web_citations=True),
+)
 ```
 
-### Model Management
+### Web Scrape, Search & Text Parsing (Augment)
 
 ```python
-from venice_ai import VeniceClient
+# Scrape a URL and get markdown back
+page = await client.augment.scrape(url="https://example.com")
+print(page.content)
 
-with VeniceClient() as client:
-    # List all models
-    models_list = client.models.list()
-    print(f"Total models available: {len(models_list.data)}")
-    if models_list.data:
-        print(f"First model: {models_list.data[0].id}")
+# Structured web search (Brave default; Google also supported)
+hits = await client.augment.search(query="latest AI news", limit=5)
+for r in hits.results:
+    print(r.title, r.url)
 
-    # List text models
-    text_models = client.models.list(type="text")
-    print(f"Text models: {[m.id for m in text_models.data]}")
+# Parse a document (PDF / DOCX / XLSX / TXT, ≤ 25 MB)
+parsed = await client.augment.parse_text(file="report.pdf")
+print(parsed.text, parsed.tokens)
 ```
 
-**Note:** Different models have varying capabilities and context window sizes. The SDK now exposes new model capabilities like `supportsVision`, `supportsReasoning`, and `quantization`. You can use the `get_filtered_models` utility to select models based on these capabilities. For example, "Venice Large" supports up to 128k tokens, making it ideal for processing extensive documents or maintaining long conversations. Refer to the official Venice AI documentation for detailed specifications of each model.
+[-> `examples/augment/scrape.py`](https://github.com/sethbang/venice-ai/blob/main/examples/augment/scrape.py) | [-> `examples/augment/search.py`](https://github.com/sethbang/venice-ai/blob/main/examples/augment/search.py) | [-> `examples/augment/text_parser.py`](https://github.com/sethbang/venice-ai/blob/main/examples/augment/text_parser.py)
 
-### API Key Management
+### x402 Wallet Billing (optional)
 
-```python
-from venice_ai import VeniceClient
-
-# Ensure your client is initialized with an ADMIN API key for these operations
-# with VeniceClient(api_key="YOUR_ADMIN_API_KEY") as client:
-    # List API Keys
-    # api_keys_list = client.api_keys.list()
-    # print(f"Found {len(api_keys_list.data)} API keys.")
-
-    # Create an API Key (handle the returned key securely - it's shown only once!)
-    # new_key_response = client.api_keys.create(
-    #     description="My new inference key",
-    #     apiKeyType="INFERENCE"
-    # )
-    # print(f"Created new API key (prefix): {new_key_response.data.last6Chars}")
-    # print(f"IMPORTANT: Full API Key: {new_key_response.data.apiKey} - Store it securely NOW!")
-```
-
-**Warning:** API Key management operations typically require admin privileges. The API key used to initialize the client must have sufficient permissions.
-
-### Billing Information
-
-```python
-from venice_ai import VeniceClient
-
-# with VeniceClient() as client:
-    # usage_data = client.billing.get_usage()
-    # print(f"Total VCU used: {usage_data.total_vcu_consumed}")
-    # print(f"Total USD used: {usage_data.total_usd_consumed}")
-```
-
-For more detailed examples of other functionalities (Characters, specific parameters for each endpoint), please refer to the [Showcase Application](#showcase-application) and the official [API Documentation](#documentation).
-
-## Error Handling
-
-The Venice AI client library uses a custom hierarchy of exceptions to help you handle API errors gracefully. All library-specific errors inherit from `venice_ai.exceptions.VeniceError`.
-
-Common exceptions include:
-
-- `venice_ai.exceptions.APIError`: Base class for errors returned by the API (e.g., HTTP 4xx, 5xx).
-- `venice_ai.exceptions.AuthenticationError`: For API key issues (HTTP 401).
-- `venice_ai.exceptions.InvalidRequestError`: For bad request parameters (HTTP 400).
-- `venice_ai.exceptions.RateLimitError`: When API rate limits are exceeded (HTTP 429).
-- `venice_ai.exceptions.PaymentRequiredError`: When payment is required (HTTP 402).
-- `venice_ai.exceptions.ServiceUnavailableError`: When the service is temporarily unavailable (HTTP 503).
-- `venice_ai.exceptions.NotFoundError`: For non-existent resources (HTTP 404).
-- `venice_ai.exceptions.APIConnectionError`: For network connectivity issues.
-- `venice_ai.exceptions.APITimeoutError`: For request timeouts.
-
-Example:
-
-```python
-from venice_ai import VeniceClient, exceptions
-
-try:
-    with VeniceClient() as client:
-        response = client.chat.completions.create(
-            model="non_existent_model",
-            messages=[{"role": "user", "content": "Test"}]
-        )
-except exceptions.NotFoundError as e:
-    print(f"Model not found: {e}")
-except exceptions.AuthenticationError as e:
-    print(f"Authentication failed. Check your API key: {e}")
-except exceptions.APIError as e:
-    print(f"An API error occurred: {e.status_code} - {e}")
-except exceptions.VeniceError as e:
-    print(f"A Venice AI client error occurred: {e}")
-```
-
-Always check the specific exception type and its attributes (like `e.status_code`, `e.request`, `e.response`) for more details.
-
-## Advanced Usage
-
-### Advanced HTTP Client Configuration
-
-The SDK allows for advanced configuration of the underlying `httpx` client, enabling scenarios like custom mTLS, specific proxy setups, or detailed transport logging. There are now three main ways to achieve this:
-
-1.  **Passing a Pre-configured `httpx.Client` / `httpx.AsyncClient`**:
-    You can provide your own `httpx.Client` or `httpx.AsyncClient` instance. The SDK will use it directly but will still manage `base_url`, `timeout` (if not more specific on your client), and authentication. **You are responsible for closing your client instance.**
-
-    ```python
-    import httpx
-    from venice_ai import VeniceClient # or AsyncVeniceClient
-
-    # Synchronous example
-    my_custom_httpx_client = httpx.Client(proxies={"all://": "http://localhost:8080"}, timeout=60.0)
-    try:
-        client = VeniceClient(api_key="YOUR_API_KEY", http_client=my_custom_httpx_client)
-        # Use the client...
-        models = client.models.list()
-        print(f"Found {len(models.data)} models.")
-    finally:
-        # Important: Close your custom client if it's not managed elsewhere (e.g., as a context manager)
-        if not my_custom_httpx_client.is_closed:
-            my_custom_httpx_client.close()
-
-    # For AsyncVeniceClient, use httpx.AsyncClient and await its aclose() method.
-    ```
-
-2.  **Passing Common `httpx` Settings Directly**:
-    If you don't provide an `http_client` instance, you can pass `httpx.Client` / `httpx.AsyncClient` constructor arguments (e.g., `proxy`, `transport`, `limits`, `verify`) directly to the SDK client. The SDK will create and manage its internal `httpx` client with these settings.
-
-    ```python
-    from venice_ai import VeniceClient # or AsyncVeniceClient
-    import httpx # For httpx.Limits, httpx.HTTPTransport
-
-    # Synchronous example
-    client = VeniceClient(
-        api_key="YOUR_API_KEY",
-        proxies={"all://": "http://localhost:8080"}, # Example proxy
-        transport=httpx.HTTPTransport(retries=3),    # Example custom transport
-        limits=httpx.Limits(max_connections=50),     # Example connection limits
-        verify=False,                                # Example: disable SSL verification (use with caution)
-        default_timeout=30.0                         # Global default timeout for requests
-    )
-    with client: # SDK manages the internal httpx client's lifecycle
-        models = client.models.list()
-        print(f"Found {len(models.data)} models.")
-
-    # AsyncVeniceClient works similarly with corresponding async httpx types.
-    ```
-
-3.  **Configuring Automatic Retries**:
-    The SDK automatically retries requests on transient network errors and specific HTTP status codes (e.g., 429, 500, 502, 503, 504) by leveraging `httpx-retries`. This behavior is configurable through the following parameters in the `VeniceClient` and `AsyncVeniceClient` constructors:
-
-    - `max_retries` (int, default: 2): Maximum number of retries.
-    - `retry_backoff_factor` (float, default: 0.1): Backoff factor for calculating delay between retries.
-    - `retry_status_forcelist` (list[int], default: `[429, 500, 502, 503, 504]`): HTTP status codes to retry on.
-    - `retry_respect_retry_after_header` (bool, default: True): Whether to respect `Retry-After` headers.
-
-    ```python
-    from venice_ai import VeniceClient # or AsyncVeniceClient
-
-    # Example: Customize retry behavior
-    client = VeniceClient(
-        api_key="YOUR_API_KEY",
-        max_retries=5,
-        retry_backoff_factor=0.5,
-        retry_status_forcelist=[429, 500, 502, 503, 504, 520], # Adding 520 to the list
-        retry_respect_retry_after_header=True, # Explicitly setting
-        default_timeout=30.0 # Global default timeout for requests
-    )
-    with client:
-        # Use the client...
-        try:
-            models = client.models.list()
-            print(f"Found {len(models.data)} models with custom retry settings.")
-        except Exception as e:
-            print(f"An error occurred: {e}")
-
-    # AsyncVeniceClient works similarly.
-    ```
-
-For a detailed explanation of all supported parameters and more advanced use cases, please refer to the "Advanced HTTP Client Configuration" section in our [API Reference documentation](docs/api.rst).
-
-### Understanding Streaming
-
-When `stream=True` is used (e.g., in `chat.completions.create`), the method returns an iterator (`Stream` or `AsyncStream` object from `venice_ai.streaming`). These objects wrap the raw data chunks from the API.
-
-```python
-from venice_ai import VeniceClient
-from venice_ai.streaming import Stream # For type hinting or direct use if needed
-
-with VeniceClient() as client:
-    stream_response: Stream = client.chat.completions.create( # type: ignore
-        model="llama-3.2-3b",
-        messages=[{"role": "user", "content": "Tell me a very long story about a brave knight."}],
-        stream=True,
-        max_completion_tokens=50 # Example: limit stream length
-    )
-    full_story = []
-    for chunk in stream_response:
-        # chunk is a dict representing ChatCompletionChunk
-        if chunk.choices and chunk.choices[0].delta.content:
-            # print(chunk.choices[0].delta.content, end="") # For live printing
-            full_story.append(chunk.choices[0].delta.content)
-    # print("\n--- End of Story ---")
-    # final_text = "".join(full_story)
-    # print(f"\nFull story assembled: {final_text[:100]}...")
-```
-
-The `Stream` and `AsyncStream` wrappers handle resource management and provide a consistent iteration interface.
-
-### Token Estimation
-
-The library includes a utility for estimating token counts:
-
-```python
-from venice_ai.utils import estimate_token_count
-
-text = "This is some sample text to estimate tokens for."
-# By default, uses cl100k_base encoding (common for many OpenAI models)
-# and falls back to a heuristic if tiktoken is not installed.
-count = estimate_token_count(text)
-print(f"Estimated tokens: {count}")
-```
-
-**Note:** For accurate token counting, install the optional `tiktoken` dependency:
+The x402 billing endpoints use Ethereum wallet auth (SIWE / EIP-4361 on
+Base) instead of Bearer tokens. Install the optional extra to pick up
+`eth-account` + `siwe`:
 
 ```bash
-pip install venice-ai[tokenizers]
-# or with poetry:
-poetry install --extras "tokenizers"
+pip install 'venice-ai[x402]'
 ```
 
-Without `tiktoken`, the library will use a simple heuristic estimation method.
+```python
+from venice_ai.auth.x402 import X402Auth
 
-## Showcase Application
+auth = X402Auth(private_key=os.environ["X402_WALLET_PRIVATE_KEY"])
 
-This project focuses on the core Venice AI Python SDK. For an interactive demonstration of the library's capabilities, check out our separate [Venice AI Streamlit Demo](https://github.com/venice-ai/streamlit-demo) repository, which provides a comprehensive UI for chat, image generation, audio synthesis, model listing, and more.
+async with VeniceClient() as client:
+    balance = await client.x402.balance(auth=auth)
+    print(f"${balance.data.balanceUsd} on {auth.wallet_address}")
 
-The demo is now available as a separate repository for easier deployment and to keep this package's dependencies minimal.
+    txns = await client.x402.transactions(auth=auth)
+    for t in txns.data.transactions[:5]:
+        print(t.createdAt, t.type, t.amount)
+
+    # Empty POST discovers x402 payment requirements; the response surfaces
+    # as a 402 APIError whose body carries the accept spec.
+    await client.x402.top_up()  # or top_up(payment_header=<signed b64>)
+```
+
+Prefer one-call top-ups? `client.x402.top_up_with(auth=auth, amount_usdc=5.0)` runs the
+full EVM probe → sign → submit flow for you. To settle from a **Solana** wallet instead,
+install `venice-ai[x402-solana]` and use `SolanaX402Auth` with `top_up_with_solana`:
+
+```python
+from venice_ai.auth.x402_solana import SolanaX402Auth
+
+auth = SolanaX402Auth(private_key=os.environ["X402_SOLANA_SECRET"])  # base58 secret
+async with VeniceClient() as client:
+    await client.x402.top_up_with_solana(auth=auth, amount_usdc=5.0)
+```
+
+[-> `examples/x402/balance.py`](https://github.com/sethbang/venice-ai/blob/main/examples/x402/balance.py) | [-> `examples/x402/transactions.py`](https://github.com/sethbang/venice-ai/blob/main/examples/x402/transactions.py) | [-> `examples/x402/top_up.py`](https://github.com/sethbang/venice-ai/blob/main/examples/x402/top_up.py)
+
+### Confidential Compute (TEE / E2EE, optional)
+
+Venice's `e2ee-*` models run in a Trusted Execution Environment with
+client-side end-to-end encryption: attest the enclave, then encrypt each
+message under a key only the enclave can derive (secp256k1 ECDH -> HKDF-SHA256
+-> AES-256-GCM). Install the optional extra (`cryptography`):
+
+```bash
+pip install 'venice-ai[e2ee]'
+```
+
+```python
+# One-shot: just turn on E2EE for an e2ee-* model. The SDK attests the enclave,
+# opens a session, and encrypts/decrypts transparently.
+model = await client.models.resolve_chat()  # pick an e2ee-* model
+response = await client.chat.completions.create(
+    model=model,
+    messages=[UserMessage(content="Confidential question")],
+    e2ee=True,  # equivalent: venice_parameters=VeniceParameters(enable_e2ee=True)
+)
+
+# Or drive the lifecycle yourself for low-level control:
+attestation = await client.tee.get_attestation(model=model)  # fail-closed verify
+with await client.tee.open_session(model=model) as session:
+    headers = session.request_headers()
+    blob = session.encrypt_message("Hello, confidential world.")
+    # ... POST the encrypted content with `headers`; decrypt streamed deltas via
+    #     session.decrypt_chunk(delta_hex)
+```
+
+#### Full client-side TDX verification (`[e2ee-verify]`)
+
+The default path is **baseline**: it trusts Venice's server-side `verified`
+claim and does not independently verify the Intel TDX quote. For threat models
+that include a malicious Venice operator, install the `[e2ee-verify]` extra and
+pass a `DcapTdxVerifier`, which verifies the raw quote's ECDSA signature and PCK
+certificate chain to a pinned Intel SGX Root CA, the TCB status, the non-debug
+flag, the REPORTDATA key binding, the RTMR event-log replay, and the dstack
+compose-hash — all offline:
+
+```bash
+pip install 'venice-ai[e2ee-verify]'   # dcap-qvl (+ cryptography)
+```
+
+```python
+from venice_ai.tee import DcapTdxVerifier, TeeOptions
+
+model = await client.models.resolve_chat()  # pick an e2ee-* model
+
+# Fetch Intel-signed collateral once (the only network touch); verify() is offline.
+verifier = await DcapTdxVerifier.with_fetched_collateral(
+    probe_quote=(await client.tee.get_attestation(model=model)).intel_quote,
+)
+
+# Run the full verifier as part of attestation / session open:
+session = await client.tee.open_session(model=model, verifier=verifier)
+
+# Or engage it through chat E2EE:
+response = await client.chat.completions.create(
+    model=model,
+    messages=[UserMessage(content="Confidential question")],
+    e2ee=TeeOptions(verifier=verifier),
+)
+```
+
+> **What it proves (Tier B).** By default `DcapTdxVerifier` proves the model
+> runs on a *genuine, non-debug Intel TDX enclave* running a *self-consistent
+> dstack workload*. It does **not** by itself prove this is the legitimate
+> Venice workload — there are no published reference measurements today. Supply
+> `expected_measurements` / `expected_compose_hash` from an independent source to
+> pin workload identity (Tier A). TCB status is fail-closed reject-by-default
+> (`tcb_policy="advisory"` to accept hardening-needed statuses with advisories).
+> NVIDIA GPU attestation is not yet shipped.
+
+### Reasoning Controls & Cost Tracking
+
+```python
+# Reasoning effort tier — top-level parameter on chat.completions.create().
+# Seven tiers (per-model support): none / minimal / low / medium / high / xhigh / max.
+response = await client.chat.completions.create(
+    model=await client.models.resolve_chat(require_reasoning=True),
+    messages=[UserMessage(content="Prove √2 is irrational.")],
+    reasoning_effort="max",
+)
+
+# Nested form with summary verbosity. Top-level reasoning_effort takes
+# precedence over reasoning.effort when both are set.
+from venice_ai import ReasoningConfig
+response = await client.chat.completions.create(
+    model=reasoning_model,
+    messages=[UserMessage(content="Explain quantum entanglement.")],
+    reasoning=ReasoningConfig(effort="high", summary="concise"),
+)
+
+# Show/hide raw thinking blocks via venice_parameters
+venice_params = VeniceParameters(strip_thinking_response=False, disable_thinking=False)
+
+# Cost tracking
+from venice_ai import calculate_completion_cost
+cost = calculate_completion_cost(response, model_pricing=None)
+print(f"Cost: ${cost['usd']:.4f}")
+```
+
+---
+
+## Configuration
+
+### Installation Options
+
+```bash
+pip install venice-ai            # Core
+pip install venice-ai[cli]       # CLI tools
+pip install venice-ai[redis]     # Redis backend
+pip install venice-ai[enterprise] # Enterprise (redis + prometheus + otel)
+pip install venice-ai[adaptive]  # Adaptive rate limiting
+pip install venice-ai[x402]      # x402 wallet auth (eth-account + siwe)
+pip install venice-ai[x402-solana] # x402 Solana USDC top-up (solders)
+pip install venice-ai[e2ee]      # TEE client-side E2EE (cryptography)
+pip install venice-ai[e2ee-verify] # Full client-side TDX quote verification (dcap-qvl)
+pip install venice-ai[all]       # Everything
+```
+
+### Client Setup
+
+```python
+# Minimal (reads VENICE_API_KEY from environment)
+async with VeniceClient() as client: ...
+
+# Explicit
+async with VeniceClient(api_key="your-key") as client: ...
+
+# Factory with full configuration
+from venice_ai import VeniceClientFactory, VeniceAIConfig
+from venice_ai.core.config import BackendConfig, BackendType, HttpClientConfig, SchedulerConfig, SchedulerMode
+
+config = VeniceAIConfig(
+    backend=BackendConfig(backend_type=BackendType.MEMORY),
+    http_client=HttpClientConfig(timeout=60.0, max_connections=50),
+    scheduler=SchedulerConfig(mode=SchedulerMode.BASIC)
+)
+client = VeniceClientFactory.create_client(config=config, api_key=os.getenv("VENICE_API_KEY"))
+```
+
+### Environment Variables
+
+Configure with `VENICE_` prefix (double underscores for nesting):
+
+```bash
+export VENICE_SCHEDULER__MODE=intelligent
+export VENICE_BACKEND__REDIS__REDIS_URL=redis://localhost:6379
+export VENICE_HTTP_CLIENT__TIMEOUT=60.0
+```
+
+> **Note:** Env var auto-loading requires `pydantic-settings`: `pip install venice-ai[enterprise]`
+
+---
+
+## Advanced Features
+
+Rate limiting, distributed state, monitoring, observability, and performance tuning are covered in **[Advanced Features](https://venice-docs.sbang.dev/docs/guides/advanced/)**.
+
+---
+
+## API Resources
+
+| Resource | Purpose | Key Methods | Example |
+|----------|---------|-------------|---------|
+| `chat.completions` | Chat & text generation | `create()` | [simple_chat.py](https://github.com/sethbang/venice-ai/blob/main/examples/chat/simple_chat.py) |
+| `responses` | Stateless multi-modal generation (Alpha) | `create()` | — |
+| `image` | Image generation | `create()`, `background_remove()` | [text_to_image.py](https://github.com/sethbang/venice-ai/blob/main/examples/image/text_to_image.py) |
+| `video` | Async video generation | `run()` → `VideoJob`, low-level `submit()` / `quote()` / `retrieve()` / `cancel()` | [text_to_video.py](https://github.com/sethbang/venice-ai/blob/main/examples/video/text_to_video.py) |
+| `audio` | TTS / ASR | `create_speech()`, `transcribe()` | [text_to_speech.py](https://github.com/sethbang/venice-ai/blob/main/examples/audio/text_to_speech.py) |
+| `music` | Async music generation | `run()` → `MusicJob`, low-level `submit()` / `quote()` / `retrieve()` / `cancel()` | [music_generation.py](https://github.com/sethbang/venice-ai/blob/main/examples/music/music_generation.py) |
+| `embeddings` | Text embeddings | `create()` | [basic_embeddings.py](https://github.com/sethbang/venice-ai/blob/main/examples/embeddings/basic_embeddings.py) |
+| `models` | Model discovery | `list()`, `get()` | [list_models.py](https://github.com/sethbang/venice-ai/blob/main/examples/models/list_models.py) |
+| `billing` | Usage analytics | `get_balance()`, `get_usage_history()`, `get_usage_analytics()` | [usage_analytics.py](https://github.com/sethbang/venice-ai/blob/main/examples/billing/usage_analytics.py) |
+| `api_keys` | Key management | `list()`, `get_rate_limits()` | [key_management.py](https://github.com/sethbang/venice-ai/blob/main/examples/api_keys/key_management.py) |
+| `characters` | Character discovery & reviews | `list()`, `get()`, `reviews()` | [character_details.py](https://github.com/sethbang/venice-ai/blob/main/examples/characters/character_details.py) |
+| `augment` | Web scrape / search / text-parser | `scrape()`, `search()`, `parse_text()` | [scrape.py](https://github.com/sethbang/venice-ai/blob/main/examples/augment/scrape.py) |
+| `x402` | Wallet-billing (SIWE auth; `[x402]` extra) | `balance()`, `transactions()`, `top_up()` | [balance.py](https://github.com/sethbang/venice-ai/blob/main/examples/x402/balance.py) |
+| `crypto` | Multi-chain JSON-RPC proxy | `networks()`, `rpc()`, `batch_rpc()` | [networks_and_rpc.py](https://github.com/sethbang/venice-ai/blob/main/examples/crypto/networks_and_rpc.py) |
+| `tee` | Confidential-compute attestation & E2EE session (`[e2ee]` extra) | `get_attestation()`, `open_session()` | — |
+
+## Type Safety
+
+The SDK uses Pydantic v2 models throughout:
+
+```python
+from venice_ai.types.api import UserMessage, SystemMessage, AssistantMessage, ToolMessage
+from venice_ai.types.api.requests import VeniceParameters, StreamOptions
+from venice_ai.types.api.requests.common import Tool, ToolFunction
+from venice_ai.types import JSONSchemaFormat
+from venice_ai.types.chat import ChatCompletionChunk
+from venice_ai.types.audio import Voice, ResponseFormat
+```
 
 ## Testing
 
-The library includes a comprehensive test suite using `pytest`.
+```python
+from venice_ai import create_test_venice_client
+from venice_ai.core.config import SchedulerMode
 
-To run all tests (unit, E2E, benchmarks) and generate a coverage report:
-
-```bash
-# Ensure dev dependencies are installed:
-poetry install --with dev
-poetry run python test_runner.py --group all --coverage --html
+async with create_test_venice_client(api_key="test-key", scheduler_mode=SchedulerMode.BASIC) as client:
+    response = await client.chat.completions.create(...)
 ```
 
-The test runner ([`test_runner.py`](test_runner.py)) also supports an interactive mode and options to run specific test groups or files. Run `poetry run python test_runner.py --help` for more options.
+```bash
+make test           # All tests (parallel)
+make test-unit      # Unit tests only
+make test-e2e       # E2E tests (requires API key)
+make test-verbose   # With coverage
+```
 
-## Documentation
+## Best Practices
 
-This project, venice-ai, has docs @ [venice-ai docs](https://venice-ai.readthedocs.io/)
+1. **Always use context managers** for proper cleanup
+2. **Handle errors** with specific exception types (`RateLimitError`, `AuthenticationError`, etc.)
+3. **Monitor rate limits** via `response.response_rate_limits`
+4. **Use environment variables** for API keys (never hardcode)
+5. **Use Redis backend** for production multi-instance deployments
+6. **Use streaming** for long responses to reduce time to first token
 
-This Python client library is generated using Sphinx from the docstrings within the codebase. It can be built locally from the `docs/` directory.
+---
 
-Detailed API documentation for the Venice.ai API itself is available @ [https://docs.venice.ai/api-reference](https://docs.venice.ai/api-reference)
+## Requirements
+
+- **Python 3.13+**
+- **Core deps:** aiohttp (>=3.13.4,<3.15), pydantic (^2.13.4)
+- **Platform:** Linux, macOS, Windows
+
+See [Installation Options](#installation-options) for optional dependencies.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to open issues for bugs or feature requests. If you'd like to contribute code, please see our [`CONTRIBUTING.md`](CONTRIBUTING.md) for guidelines on reporting issues.
+```bash
+git clone https://github.com/sethbang/venice-ai.git && cd venice-ai
+poetry install
+make test
+```
+
+Follow PEP 8, use type hints, write tests, and submit a PR.
+
+## Support
+
+- [Documentation](https://venice-docs.sbang.dev/)
+- [Issue Tracker](https://github.com/sethbang/venice-ai/issues)
+- [Examples](https://github.com/sethbang/venice-ai/tree/main/examples/)
+- [Changelog](https://github.com/sethbang/venice-ai/blob/main/CHANGELOG.md)
 
 ## License
 
-This project is licensed under the MIT License.
+MIT License — see [`LICENSE`](https://github.com/sethbang/venice-ai/blob/main/LICENSE).
 
 ---
+
+<div align="center">
+
+**[Back to Top](#venice-ai-python-sdk)**
+
+An unofficial community SDK for Venice.ai
+
+</div>

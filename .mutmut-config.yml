@@ -1,0 +1,38 @@
+# Mutation Testing Configuration for Venice AI SDK
+# See: https://mutmut.readthedocs.io/
+
+# Paths to mutate (relative to project root)
+paths_to_mutate: src/venice_ai
+
+# Test directory
+tests_dir: tests/unit
+
+# Test runner command
+# Mutmut will prepend 'python -m' to this command
+# Parallel execution with -n auto for faster mutation testing
+# Explicitly ignore examples, benchmarks, and profiling tests
+runner: pytest tests/unit -x --tb=short --no-cov -n auto --ignore=examples --ignore=tests/benchmarks --ignore=tests/profiling
+
+# Paths to exclude from mutation
+# Exclude generated files, type stubs, __init__.py files, examples, benchmarks, and profiling tests
+paths_to_exclude:
+  - src/venice_ai/types/generated/
+  - src/venice_ai/__init__.py
+  - src/venice_ai/*/__init__.py
+  - src/venice_ai/*/*/__init__.py
+  - examples/
+  - tests/benchmarks/
+  - tests/profiling/
+
+# Dictionary synonyms for smarter mutations
+dict_synonyms: dict, OrderedDict, defaultdict
+
+# Mutation operators to use
+# Default includes: arithmetic, comparison, boolean, function call, decorator, etc.
+
+# Target modules for initial mutation testing (start small, expand gradually)
+# Focus on critical business logic modules first
+# Uncomment to limit scope during initial runs:
+# paths_to_mutate:
+#   - src/venice_ai/costs.py
+#   - src/venice_ai/exceptions.py

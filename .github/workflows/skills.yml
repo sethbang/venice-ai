@@ -1,0 +1,75 @@
+# .github/workflows/skills.yml
+# Validates the Claude Code skills shipped under src/venice_ai/skills/.
+# Runs on PRs that touch the skills, on every push to main, and on a
+# weekly schedule to catch reference drift between the skills and the
+# rest of the repo (e.g., a renamed example file).
+#
+# Action SHA pinning matches ci-validation.yaml; see that file's header
+# for the rationale.
+
+name: Skills Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/venice_ai/skills/**'
+      - 'tools/skills/**'
+      - 'examples/**'
+      - 'src/venice_ai/cli/utils/lint_rules.py'
+      - '.github/workflows/skills.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/venice_ai/skills/**'
+      - 'tools/skills/**'
+      - 'examples/**'
+      - 'src/venice_ai/cli/utils/lint_rules.py'
+      - '.github/workflows/skills.yml'
+  schedule:
+    # Weekly drift check: catches the case where an examples/ file gets
+    # renamed without updating skill references.
+    - cron: '0 12 * * 1'  # Mondays 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1  # not pinned — see ci-validation.yaml header
+
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+        with:
+          path: ~/.cache/pypoetry
+          key: skills-poetry-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
+
+      # Skills validation imports venice_ai.cli.utils (the lint visitor) and the
+      # skill code-block linter imports the CLI command modules, so the [cli]
+      # extra (questionary, rich, click, aiofiles) must be installed alongside
+      # [x402]. No need for redis, dev, benchmarks, etc.
+      - name: Install dependencies
+        run: poetry install --no-interaction --extras "x402 cli" --without dev
+
+      - name: Skill SKILL.md size check (≤500 lines)
+        run: poetry run python tools/skills/check_skill_size.py
+
+      - name: Skill examples/* path resolution
+        run: poetry run python tools/skills/check_skill_examples.py
+
+      - name: Skill code-block lint
+        run: poetry run python tools/skills/lint_skill_code.py
+
+      - name: Skill SDK symbol existence (imports / kwargs / attrs)
+        run: poetry run python tools/skills/check_skill_symbols.py
+

@@ -1,0 +1,49 @@
+{
+    "chat/completions": {
+        "status": 200,
+        "headers": {
+            "content-type": "application/json",
+            "x-ratelimit-limit-requests": "100",
+            "x-ratelimit-remaining-requests": "99",
+            "x-ratelimit-reset-requests": "1678886400"
+        },
+        "body": {
+            "id": "chatcmpl-123",
+            "object": "chat.completion",
+            "created": 1677652288,
+            "model": "gpt-3.5-turbo-0613",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": "Hello there, how may I assist you today?"
+                    },
+                    "finish_reason": "stop"
+                }
+            ],
+            "usage": {
+                "prompt_tokens": 9,
+                "completion_tokens": 12,
+                "total_tokens": 21
+            }
+        }
+    },
+    "models": {
+        "status": 200,
+        "headers": {
+            "content-type": "application/json"
+        },
+        "body": {
+            "object": "list",
+            "data": [
+                {
+                    "id": "model-1",
+                    "object": "model",
+                    "created": 1686935002,
+                    "owned_by": "venice"
+                }
+            ]
+        }
+    }
+}

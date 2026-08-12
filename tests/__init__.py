@@ -1,3 +1,1 @@
-"""
-Test package for the Venice AI client library.
-"""
+"""Test suite for Venice AI Python library."""

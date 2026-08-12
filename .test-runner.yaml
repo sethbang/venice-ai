@@ -1,0 +1,25 @@
+defaults:
+  coverage: true
+  parallel: true
+  num_workers: auto
+  log_level: INFO
+
+profiles:
+  quick:
+    fail_fast: true
+    coverage: false
+    parallel: false
+    verbose: 1
+  
+  ci:
+    coverage: true
+    html_coverage: true
+    parallel: true
+    fail_fast: true
+    log: true
+    
+  debug:
+    log_level: DEBUG
+    verbose: 3
+    fail_fast: true
+    parallel: false

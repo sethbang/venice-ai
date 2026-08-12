@@ -1,0 +1,210 @@
+# docker-compose.redis-cluster.yml
+# Uses 6 nodes: 3 primaries + 3 replicas for proper failover testing
+# 
+# Uses host network mode so that:
+# 1. All nodes share the host's network namespace
+# 2. Clients on the host can directly reach any node
+# 3. Cluster gossip works because all nodes are on the same network
+#
+# Each node listens on a different port (6379-6384) and cluster bus port (16379-16384).
+services:
+  redis-node-1:
+    image: redis:7-alpine
+    network_mode: host
+    command: >
+      redis-server
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --port 6379
+      --bind 0.0.0.0
+      --protected-mode no
+      --maxmemory 512mb
+      --maxmemory-policy volatile-lru
+    volumes:
+      - redis-node-1-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6379", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  
+  redis-node-2:
+    image: redis:7-alpine
+    network_mode: host
+    command: >
+      redis-server
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --port 6380
+      --bind 0.0.0.0
+      --protected-mode no
+      --maxmemory 512mb
+      --maxmemory-policy volatile-lru
+    volumes:
+      - redis-node-2-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6380", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  
+  redis-node-3:
+    image: redis:7-alpine
+    network_mode: host
+    command: >
+      redis-server
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --port 6381
+      --bind 0.0.0.0
+      --protected-mode no
+      --maxmemory 512mb
+      --maxmemory-policy volatile-lru
+    volumes:
+      - redis-node-3-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6381", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  
+  # Replica nodes for failover testing
+  redis-node-4:
+    image: redis:7-alpine
+    network_mode: host
+    command: >
+      redis-server
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --port 6382
+      --bind 0.0.0.0
+      --protected-mode no
+      --maxmemory 512mb
+      --maxmemory-policy volatile-lru
+    volumes:
+      - redis-node-4-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6382", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  
+  redis-node-5:
+    image: redis:7-alpine
+    network_mode: host
+    command: >
+      redis-server
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --port 6383
+      --bind 0.0.0.0
+      --protected-mode no
+      --maxmemory 512mb
+      --maxmemory-policy volatile-lru
+    volumes:
+      - redis-node-5-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6383", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  
+  redis-node-6:
+    image: redis:7-alpine
+    network_mode: host
+    command: >
+      redis-server
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --port 6384
+      --bind 0.0.0.0
+      --protected-mode no
+      --maxmemory 512mb
+      --maxmemory-policy volatile-lru
+    volumes:
+      - redis-node-6-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6384", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  
+  redis-cluster-init:
+    image: redis:7-alpine
+    depends_on:
+      redis-node-1:
+        condition: service_healthy
+      redis-node-2:
+        condition: service_healthy
+      redis-node-3:
+        condition: service_healthy
+      redis-node-4:
+        condition: service_healthy
+      redis-node-5:
+        condition: service_healthy
+      redis-node-6:
+        condition: service_healthy
+    restart: "no"
+    network_mode: host
+    command:
+      - sh
+      - -c
+      - |
+        echo 'Waiting for network to settle...'
+        sleep 3
+        
+        echo 'All nodes healthy, creating cluster...'
+        
+        # Create cluster using localhost addresses since we're on host network
+        for i in 1 2 3 4 5; do
+          echo "Attempt $$i: Creating cluster..."
+          if redis-cli --cluster create \
+            127.0.0.1:6379 \
+            127.0.0.1:6380 \
+            127.0.0.1:6381 \
+            127.0.0.1:6382 \
+            127.0.0.1:6383 \
+            127.0.0.1:6384 \
+            --cluster-replicas 1 --cluster-yes; then
+            break
+          fi
+          echo 'Cluster creation failed, retrying in 5s...'
+          sleep 5
+        done
+        
+        # CRITICAL: Verify all 16384 slots are assigned
+        echo 'Verifying cluster slot coverage...'
+        for i in 1 2 3 4 5 6 7 8 9 10; do
+          SLOTS=$$(redis-cli -p 6379 cluster info | grep cluster_slots_ok | cut -d: -f2 | tr -d '\r')
+          if [ "$$SLOTS" = "16384" ]; then
+            echo 'All 16384 slots assigned - cluster ready'
+            redis-cli -p 6379 --cluster check 127.0.0.1:6379
+            exit 0
+          fi
+          echo "Slots assigned: $$SLOTS/16384, waiting... ($$i/10)"
+          sleep 2
+        done
+        
+        echo 'ERROR: Cluster slots not fully assigned after 20 seconds'
+        redis-cli -p 6379 cluster info
+        exit 1
+
+volumes:
+  redis-node-1-data:
+  redis-node-2-data:
+  redis-node-3-data:
+  redis-node-4-data:
+  redis-node-5-data:
+  redis-node-6-data:
