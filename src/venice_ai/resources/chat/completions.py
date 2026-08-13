@@ -82,7 +82,7 @@ from typing import (
     overload,
 )
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 
 from ..._resource import APIResource
 from ...costs import ChatCostEstimate
@@ -97,6 +97,7 @@ from ...types.api import (
     ChatCompletionRequest,
     # Response models
     ChatCompletionResponse,
+    ChatMessageParam,
     DeveloperMessage,
     JSONObjectFormat,
     JSONSchemaFormat,
@@ -241,10 +242,25 @@ async def _execute_tool_call(
     return result if isinstance(result, str) else str(result)
 
 
+_ChatMessageModel = UserMessage | AssistantMessage | SystemMessage | ToolMessage | DeveloperMessage
+
+_MESSAGE_LIST_ADAPTER: TypeAdapter[list[_ChatMessageModel]] = TypeAdapter(list[_ChatMessageModel])
+
+
+def _coerce_messages(messages: Sequence[ChatMessageParam]) -> list[_ChatMessageModel]:
+    """Validate a caller's messages into the concrete message models.
+
+    :meth:`ChatCompletions.create` gets this for free, since
+    ``ChatCompletionRequest`` coerces mappings while building the request
+    body. Methods that read or accumulate messages *before* that point need
+    it explicitly, so that a caller passing plain dicts doesn't hit an
+    ``AttributeError`` on ``.content``.
+    """
+    return _MESSAGE_LIST_ADAPTER.validate_python(list(messages))
+
+
 def _concat_message_text(
-    messages: Sequence[
-        UserMessage | AssistantMessage | SystemMessage | ToolMessage | DeveloperMessage
-    ],
+    messages: Sequence[_ChatMessageModel],
 ) -> str:
     """Concatenate plain-text content across a message list.
 
@@ -461,9 +477,7 @@ class ChatCompletions(APIResource["VeniceClient"]):
         self,
         *,
         model: str,
-        messages: Sequence[
-            UserMessage | AssistantMessage | SystemMessage | ToolMessage | DeveloperMessage
-        ],
+        messages: Sequence[ChatMessageParam],
         stream: Literal[False] = False,  # Explicit non-streaming case
         # --- Common Optional Parameters ---
         frequency_penalty: float | None = None,
@@ -514,9 +528,7 @@ class ChatCompletions(APIResource["VeniceClient"]):
         self,
         *,
         model: str,
-        messages: Sequence[
-            UserMessage | AssistantMessage | SystemMessage | ToolMessage | DeveloperMessage
-        ],
+        messages: Sequence[ChatMessageParam],
         stream: Literal[True],
         stream_cls: type[ChunkModelFactory[ChatCompletionChunk]] | None = None,
         # --- Common Optional Parameters ---
@@ -566,9 +578,7 @@ class ChatCompletions(APIResource["VeniceClient"]):
         self,
         *,
         model: str,
-        messages: Sequence[
-            UserMessage | AssistantMessage | SystemMessage | ToolMessage | DeveloperMessage
-        ],
+        messages: Sequence[ChatMessageParam],
         stream: bool = False,
         stream_cls: type[ChunkModelFactory[ChatCompletionChunk]] | None = None,
         **kwargs: Any,  # Catch all other keyword args
@@ -594,7 +604,12 @@ class ChatCompletions(APIResource["VeniceClient"]):
             messages: Sequence of messages forming the conversation. Each
                 entry is one of :class:`UserMessage`, :class:`AssistantMessage`,
                 :class:`SystemMessage`, :class:`ToolMessage`, or
-                :class:`DeveloperMessage`.
+                :class:`DeveloperMessage` — or a plain mapping in the same
+                shape (``{"role": "user", "content": "hi"}``), which is
+                validated into the matching model before the request is
+                built. The models are preferred: they give editor completion
+                and raise on a bad field at construction rather than at call
+                time.
             stream: If ``True``, stream back partial progress as
                 ``AsyncIterator[ChatCompletionChunk]``. Defaults to ``False``,
                 which returns a single :class:`ChatCompletionResponse`.
@@ -894,7 +909,7 @@ class ChatCompletions(APIResource["VeniceClient"]):
         # Create Pydantic request model
         chat_request = ChatCompletionRequest(
             model=model,
-            messages=list(messages),  # Convert Sequence to List for Pydantic
+            messages=_coerce_messages(messages),  # Mappings validated into message models
             stream=stream,
             **api_params,
         )
@@ -1094,9 +1109,7 @@ class ChatCompletions(APIResource["VeniceClient"]):
         self,
         *,
         model: str,
-        messages: Sequence[
-            UserMessage | AssistantMessage | SystemMessage | ToolMessage | DeveloperMessage
-        ],
+        messages: Sequence[ChatMessageParam],
         e2ee: bool | TeeOptions = False,
         **kwargs: Any,
     ) -> ChatStream:
@@ -1150,9 +1163,7 @@ class ChatCompletions(APIResource["VeniceClient"]):
         self,
         *,
         model: str,
-        messages: Sequence[
-            UserMessage | AssistantMessage | SystemMessage | ToolMessage | DeveloperMessage
-        ],
+        messages: Sequence[ChatMessageParam],
         expected_completion_tokens: int = 500,
         tokens_per_word: float = 1.3,
     ) -> ChatCostEstimate:
@@ -1199,7 +1210,7 @@ class ChatCompletions(APIResource["VeniceClient"]):
         """
         pricing = await self._fetch_chat_pricing(model)
 
-        prompt_text = _concat_message_text(messages)
+        prompt_text = _concat_message_text(_coerce_messages(messages))
         prompt_tokens = int(len(prompt_text.split()) * tokens_per_word)
 
         input_usd = Decimal(str(pricing.input.usd or 0.0))
@@ -1222,9 +1233,7 @@ class ChatCompletions(APIResource["VeniceClient"]):
         self,
         *,
         model: str,
-        messages: Sequence[
-            UserMessage | AssistantMessage | SystemMessage | ToolMessage | DeveloperMessage
-        ],
+        messages: Sequence[ChatMessageParam],
         response_format: type[T],
         schema_name: str | None = None,
         strict: bool = True,
@@ -1416,9 +1425,7 @@ class ChatCompletions(APIResource["VeniceClient"]):
         self,
         *,
         model: str,
-        messages: Sequence[
-            UserMessage | AssistantMessage | SystemMessage | ToolMessage | DeveloperMessage
-        ],
+        messages: Sequence[ChatMessageParam],
         tools: Sequence[Callable[..., Any] | Tool],
         on_tool_call: Callable[[ToolCall, Any], None] | None = None,
         on_tool_error: Callable[[ToolCall, Exception], str] | None = None,
@@ -1503,9 +1510,7 @@ class ChatCompletions(APIResource["VeniceClient"]):
         tool_defs = [entry.tool for entry in registry.values()]
         on_error = on_tool_error or _default_on_tool_error
 
-        history: list[
-            UserMessage | AssistantMessage | SystemMessage | ToolMessage | DeveloperMessage
-        ] = list(messages)
+        history: list[_ChatMessageModel] = _coerce_messages(messages)
 
         last_response: ChatCompletionResponse | None = None
         for iteration in range(1, max_iterations + 1):

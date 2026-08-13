@@ -169,6 +169,7 @@ from .requests import (
     AudioTranscriptionRequest,
     BillingUsageHistoryQueryParams,
     ChatCompletionRequest,
+    ChatMessageParam,
     # API key models
     ConsumptionLimit,
     CreateApiKeyRequest,
@@ -442,6 +443,7 @@ __all__ = [
     "AssistantMessage",
     "ToolMessage",
     "SystemMessage",
+    "ChatMessageParam",
     "DeveloperMessage",
     "StreamOptions",
     "ToolFunction",

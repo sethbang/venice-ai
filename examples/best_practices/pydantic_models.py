@@ -163,10 +163,13 @@ def example_message_models_anti_patterns():
     print("Section 1: Message Models - ANTI-PATTERNS (What NOT to Do)")
     print("=" * 70)
 
-    print("\n❌ WRONG: Using plain dicts instead of Pydantic models")
-    print("   # DON'T DO THIS:")
+    print("\n⚠️  WEAKER: Building messages as plain dicts")
+    print("   # ACCEPTED, BUT PREFER THE MODEL:")
     print("   # user_msg = {'role': 'user', 'content': 'Hello'}")
-    print("   # This bypasses all validation and type checking!")
+    print("   # Dicts are validated into UserMessage when the request is built,")
+    print("   # so a bad role still raises - but only once you call the API.")
+    print("   # UserMessage(content='Hello') fails at construction instead,")
+    print("   # and gives you editor completion on the fields.")
 
     print("\n❌ WRONG: Dict-style access on Pydantic models")
     print("   # DON'T DO THIS:")
@@ -188,7 +191,7 @@ def example_message_models_anti_patterns():
     print("   # user_msg.role = 'assistant'  # Wrong role!")
     print("   # INSTEAD: Create a new message object")
 
-    print("\n💡 Key Takeaway: Always use Pydantic models, never plain dicts!")
+    print("\n💡 Key Takeaway: Prefer the Pydantic models - they catch mistakes earlier!")
 
 
 def example_validation_rejections_live():

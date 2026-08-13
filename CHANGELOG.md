@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-08-12
+
+### Fixed
+
+- **`messages=` now type-checks with plain dicts.** The parameter was annotated `Sequence[UserMessage | AssistantMessage | SystemMessage | ToolMessage | DeveloperMessage]`, which is narrower than what the code actually accepts: mappings in the OpenAI wire shape (`{"role": "user", "content": "hi"}`) have always been validated and coerced into the corresponding message model, but type checkers rejected them (`error: List item 0 has incompatible type "dict[str, str]"`). The annotation is now the public `ChatMessageParam` union, so both forms check cleanly on `create()`, `stream()`, `parse()`, `estimate_cost()`, and `run_with_tools()`. The typed models remain the documented idiom — they give completion and validation at construction — and malformed mappings still raise `ValidationError` before the request is sent. Reported in [#1](https://github.com/sethbang/venice-ai/issues/1).
+- **`estimate_cost()` and `run_with_tools()` accept mapping messages.** Both read the message list before it reaches the request model, so dict input previously raised `AttributeError` on `.content` (`estimate_cost`) or left raw dicts in the returned `ToolLoopResult.messages` history (`run_with_tools`). Messages are now normalized at the method boundary.
+
+### Added
+
+- **`ChatMessageParam`** (exported from `venice_ai.types`) — the union describing what `messages=` accepts: any of the five message models, or a plain `Mapping[str, Any]`. Use it to annotate your own message-building helpers. Note that `ChatCompletionRequest.messages` deliberately stays model-only; it is the validation boundary where mappings are coerced.
+
 ## [2.0.0] - 2026-08-12
 
 ### Breaking Changes

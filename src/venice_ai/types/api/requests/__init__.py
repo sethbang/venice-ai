@@ -23,6 +23,7 @@ from .chat import (
     AssistantMessage,
     # Request model
     ChatCompletionRequest,
+    ChatMessageParam,
     DeveloperMessage,
     SystemMessage,
     ToolMessage,
@@ -124,6 +125,7 @@ __all__ = [
     "AssistantMessage",
     "ToolMessage",
     "SystemMessage",
+    "ChatMessageParam",
     "DeveloperMessage",
     # Chat completion
     "ChatCompletionRequest",

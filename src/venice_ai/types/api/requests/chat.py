@@ -4,6 +4,7 @@ Chat completion request models for Venice.ai API.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -187,9 +188,27 @@ class DeveloperMessage(BaseModel):
     name: str | None = None
 
 
-# ============================================================================
-# Chat Completion Request
-# ============================================================================
+ChatMessageParam = (
+    UserMessage
+    | AssistantMessage
+    | SystemMessage
+    | ToolMessage
+    | DeveloperMessage
+    | Mapping[str, Any]
+)
+"""What ``messages=`` accepts: a typed message model or a plain mapping.
+
+The models are the recommended form — they give completion, field
+validation at construction, and self-documenting call sites. Mappings in
+the OpenAI wire shape (``{"role": "user", "content": "hi"}``) are accepted
+too, and are validated into the corresponding model before the request is
+built, so a mistyped role or a missing field still raises rather than
+reaching the API.
+
+Note that this is deliberately wider than ``ChatCompletionRequest.messages``,
+which stays model-only: that field is the validation boundary where mappings
+are coerced, so widening it there would let raw mappings through unvalidated.
+"""
 
 
 class ChatCompletionRequest(BaseModel):
@@ -352,6 +371,8 @@ __all__ = [
     "ToolMessage",
     "SystemMessage",
     "DeveloperMessage",
+    # Message unions
+    "ChatMessageParam",
     # Request model
     "ChatCompletionRequest",
 ]
