@@ -11,12 +11,15 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from pydantic import ValidationError
 
+from venice_ai.exceptions import InvalidRequestError
 from venice_ai.resources.chat.completions import (
     ChatCompletions,
     _coerce_messages,
+    _validate_e2ee_request,
 )
 from venice_ai.types.api import (
     AssistantMessage,
+    ChatCompletionRequest,
     DeveloperMessage,
     SystemMessage,
     ToolMessage,
@@ -104,6 +107,44 @@ class TestCoerceMessages:
     def test_tool_message_missing_call_id_rejected(self):
         with pytest.raises(ValidationError):
             _coerce_messages([{"role": "tool", "content": "result"}])
+
+    def test_unmodeled_field_handling_matches_the_request_model(self):
+        # Per-message fields the models don't declare are dropped, because the
+        # message models use pydantic's default extra="ignore". Only
+        # ChatCompletionRequest itself is extra="allow", and that governs
+        # top-level request fields. Coercing here must not diverge from
+        # handing the mapping straight to ChatCompletionRequest.
+        mapping = {"role": "user", "content": "hi", "some_future_field": 1}
+
+        (coerced,) = _coerce_messages([dict(mapping)])
+        via_request = ChatCompletionRequest(model=_FAKE_CHAT_MODEL, messages=[dict(mapping)])
+
+        assert coerced.model_dump() == via_request.messages[0].model_dump()
+
+
+class TestE2EEGuardSeesMappings:
+    """The E2EE pre-flight guard inspects the caller's raw sequence.
+
+    It must reject an E2EE-incompatible message whichever shape it arrives in,
+    since a mapping reaches the guard before any coercion happens.
+    """
+
+    def test_multimodal_mapping_rejected_under_e2ee(self):
+        with pytest.raises(InvalidRequestError, match="Multimodal"):
+            _validate_e2ee_request(
+                model="e2ee-fake-model",
+                messages=[{"role": "user", "content": [{"type": "text", "text": "describe"}]}],
+                tools=None,
+                venice_parameters=None,
+            )
+
+    def test_text_mapping_allowed_under_e2ee(self):
+        _validate_e2ee_request(
+            model="e2ee-fake-model",
+            messages=[{"role": "user", "content": "plain text"}],
+            tools=None,
+            venice_parameters=None,
+        )
 
 
 # ---------------------------------------------------------------------------
