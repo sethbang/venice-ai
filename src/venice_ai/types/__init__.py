@@ -90,6 +90,7 @@ from .api import (
     ChatCompletionTokenLogprob,
     ChatCompletionTopLogprob,
     ChatMessage,
+    ChatMessageParam,
     ChatUsage,
     # From streaming module
     ChunkModelFactory,
@@ -462,6 +463,7 @@ __all__ = [
     "AssistantMessage",
     "ToolMessage",
     "SystemMessage",
+    "ChatMessageParam",
     "DeveloperMessage",
     "StreamOptions",
     "ToolFunction",
