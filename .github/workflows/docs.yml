@@ -56,6 +56,11 @@ jobs:
         working-directory: website
         run: npm run build
 
+      # Runs after the build so the generated .docusaurus/ types are on disk.
+      - name: Type-check the site
+        working-directory: website
+        run: npm run typecheck
+
       - name: Deploy to Cloudflare Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0  # v4.0.0
