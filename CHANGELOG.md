@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-08-14
+
+### Fixed
+
+- **Getting Started example raised `TypeError`.** The first code sample in the documentation site's Getting Started page constructed a message positionally (`UserMessage("Hello, Venice!")`), which Pydantic rejects with `BaseModel.__init__() takes 1 positional argument but 2 were given`. The message models take keyword arguments only; the sample now reads `UserMessage(content="Hello, Venice!")`.
+- **Getting Started gave an installation sequence that could not work.** The Claude Code skills section instructed readers to run `venice skills install` after a plain `pip install venice-ai`. The `venice` CLI ships behind the optional `[cli]` extra, so that sequence fails on the install command. The section now installs `'venice-ai[cli]>=2'` first.
+
+### Changed
+
+- **Documented installation commands now carry a `>=2` version floor and are quoted.** On Python 3.12 and below, a bare `pip install venice-ai` resolves to v1.3.x silently — pip backtracks to the newest release whose `Requires-Python` matches, with no warning — so a reader following v2 documentation on an older interpreter would install v1 and hit confusing import errors. `pip install 'venice-ai>=2'` instead produces an explicit failure naming the cause (`Ignored the following versions that require a different python version: 2.0.2 Requires-Python >=3.13`). The specifiers are also quoted throughout because `[...]` is a glob in zsh, where an unquoted `pip install venice-ai[cli]` fails with `no matches found`. Applies to the README, the documentation site, and the bundled skills. To stay on v1, pin `venice-ai<2`.
+- **The Python 3.13 requirement is stated at the point of installation.** It previously appeared only in the README's Requirements section, several hundred lines below the Quick Start, and below the install block on the Getting Started page.
+
 ## [2.0.1] - 2026-08-13
 
 ### Fixed

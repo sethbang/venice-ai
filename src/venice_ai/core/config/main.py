@@ -88,7 +88,7 @@ class VeniceAIConfig(BaseSettings):
                 "pydantic-settings is not installed. VENICE_* environment variables "
                 "(e.g. VENICE_API_KEY) will NOT be read automatically. "
                 "Install it with: pip install pydantic-settings  "
-                "or: pip install venice-ai[enterprise]",
+                "or: pip install 'venice-ai[enterprise]'",
                 UserWarning,
                 stacklevel=3,
             )

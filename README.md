@@ -23,14 +23,17 @@
 > **This is an unofficial, community-maintained SDK for Venice.ai.**
 > Not affiliated with or endorsed by Venice AI. For official resources visit [Venice.ai](https://venice.ai/).
 
-> **v2.0.0** — fully breaking rewrite over v1.3.x with enterprise-grade features. Review the [CHANGELOG](https://github.com/sethbang/venice-ai/blob/main/CHANGELOG.md) and the [Migration Guide](https://venice-docs.sbang.dev/docs/guides/migration/) before upgrading.
+> **v2.x** — fully breaking rewrite over v1.3.x with enterprise-grade features. Review the [release notes](https://github.com/sethbang/venice-ai/releases), the [CHANGELOG](https://github.com/sethbang/venice-ai/blob/main/CHANGELOG.md), and the [Migration Guide](https://venice-docs.sbang.dev/docs/guides/migration/) before upgrading.
 
 ---
 
 ## Quick Start
 
+> **Requires Python 3.13+.** On earlier versions `pip install venice-ai` resolves to v1.3.x
+> without an error. Pin the major version so you get a clear failure instead of the wrong SDK.
+
 ```bash
-pip install venice-ai
+pip install 'venice-ai>=2'
 export VENICE_API_KEY="your-api-key-here"
 ```
 
@@ -55,7 +58,7 @@ Migrating from v1.x? See the [Migration Guide](https://venice-docs.sbang.dev/doc
 ## Command Line Interface
 
 ```bash
-pip install venice-ai[cli]
+pip install 'venice-ai[cli]>=2'
 
 venice chat start                  # Interactive chat
 venice image generate "..."        # Image generation
@@ -451,17 +454,20 @@ print(f"Cost: ${cost['usd']:.4f}")
 
 ### Installation Options
 
+Quote the specifier — `[...]` is a glob in zsh, and the `>=2` floor turns an
+incompatible Python into a clear pip error instead of a silent v1.3.x install.
+
 ```bash
-pip install venice-ai            # Core
-pip install venice-ai[cli]       # CLI tools
-pip install venice-ai[redis]     # Redis backend
-pip install venice-ai[enterprise] # Enterprise (redis + prometheus + otel)
-pip install venice-ai[adaptive]  # Adaptive rate limiting
-pip install venice-ai[x402]      # x402 wallet auth (eth-account + siwe)
-pip install venice-ai[x402-solana] # x402 Solana USDC top-up (solders)
-pip install venice-ai[e2ee]      # TEE client-side E2EE (cryptography)
-pip install venice-ai[e2ee-verify] # Full client-side TDX quote verification (dcap-qvl)
-pip install venice-ai[all]       # Everything
+pip install 'venice-ai>=2'                # Core
+pip install 'venice-ai[cli]>=2'           # CLI tools
+pip install 'venice-ai[redis]>=2'         # Redis backend
+pip install 'venice-ai[enterprise]>=2'    # Enterprise (redis + prometheus + otel)
+pip install 'venice-ai[adaptive]>=2'      # Adaptive rate limiting
+pip install 'venice-ai[x402]>=2'          # x402 wallet auth (eth-account + siwe)
+pip install 'venice-ai[x402-solana]>=2'   # x402 Solana USDC top-up (solders)
+pip install 'venice-ai[e2ee]>=2'          # TEE client-side E2EE (cryptography)
+pip install 'venice-ai[e2ee-verify]>=2'   # Full client-side TDX quote verification (dcap-qvl)
+pip install 'venice-ai[all]>=2'           # Everything
 ```
 
 ### Client Setup
@@ -495,7 +501,7 @@ export VENICE_BACKEND__REDIS__REDIS_URL=redis://localhost:6379
 export VENICE_HTTP_CLIENT__TIMEOUT=60.0
 ```
 
-> **Note:** Env var auto-loading requires `pydantic-settings`: `pip install venice-ai[enterprise]`
+> **Note:** Env var auto-loading requires `pydantic-settings`: `pip install 'venice-ai[enterprise]>=2'`
 
 ---
 

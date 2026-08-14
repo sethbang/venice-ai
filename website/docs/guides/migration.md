@@ -10,6 +10,39 @@ rough order of impact. For the complete list of additions, see the
 
 ---
 
+## 0. Raise your Python floor first, in your dependency file
+
+v2 requires **Python 3.13+**. On anything older, pip resolves `venice-ai` to the newest
+v1 release *silently* — no error, no warning — so the first sign of trouble is an
+`ImportError` on a v2 name.
+
+Pin the major version everywhere the dependency is declared, not just in the command you
+type. A bare `venice-ai` in `requirements.txt` or `pyproject.toml` is the common way to
+end up back on v1 without noticing:
+
+```text
+# requirements.txt
+venice-ai>=2
+```
+
+```toml
+# pyproject.toml
+dependencies = ["venice-ai>=2"]
+```
+
+With the floor in place, an interpreter that is too old fails loudly and says why:
+
+```console
+$ pip install 'venice-ai>=2'
+ERROR: Ignored the following versions that require a different python version:
+       2.0.2 Requires-Python <4.0,>=3.13
+ERROR: No matching distribution found for venice-ai>=2
+```
+
+Staying on v1 for now is a legitimate choice — pin `venice-ai<2` to make it explicit.
+
+---
+
 ## 1. The client is now async by default
 
 This is the largest change. In v1, `VeniceClient` was **synchronous** and a separate

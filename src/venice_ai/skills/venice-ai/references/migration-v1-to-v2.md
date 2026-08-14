@@ -27,9 +27,12 @@ async with VeniceClient() as client:
 | Concern | v1.3.x | v2 |
 |---|---|---|
 | Python | ≥3.11 | **≥3.13** |
-| Install | `pip install venice-ai` | same; optional extras `[x402]`, `[redis]`, `[adaptive]`, `[e2ee]` |
+| Install | `pip install venice-ai` | `pip install 'venice-ai>=2'`; optional extras `[x402]`, `[redis]`, `[adaptive]`, `[e2ee]` |
 
-If you're stuck on Python ≤3.12, stay on the latest v1 release.
+Keep the `>=2` floor: on Python ≤3.12 a bare `pip install venice-ai` resolves to v1.3.x
+with no error, so the floor is what turns a wrong-version install into a clear pip failure.
+
+If you're stuck on Python ≤3.12, stay on the latest v1 release by pinning `venice-ai<2`.
 
 ## 3. Renamed methods
 

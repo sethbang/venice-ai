@@ -91,7 +91,7 @@ The cache works on **prefix matching** — if your messages list has the same fi
 
 For multi-turn conversations:
 ```
-[SystemMessage, UserMessage("Hi"), AssistantMessage("Hi back"), UserMessage("Q")]
+[SystemMessage(content=BIG_PROMPT), UserMessage(content="Hi"), AssistantMessage(content="Hi back"), UserMessage(content="Q")]
 ```
 The longest cacheable prefix is `[SystemMessage]` if the user message changes per call. Keep your stable-prefix content at the top of the messages list.
 

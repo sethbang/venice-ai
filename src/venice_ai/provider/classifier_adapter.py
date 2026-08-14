@@ -66,7 +66,7 @@ class VeniceClassifierAdapter(ClassifierProtocol):
         if not _ADAPTIVE_AVAILABLE:
             raise ImportError(
                 "adaptive-rate-limiter package is required for VeniceClassifierAdapter. "
-                "Install with: pip install venice-ai[adaptive]"
+                "Install with: pip install 'venice-ai[adaptive]'"
             )
         self._classifier = classifier
 

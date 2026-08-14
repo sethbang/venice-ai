@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "venice-ai"
-version = "2.0.1"
+version = "2.0.2"
 description = "Unofficial, community-maintained Python client library for interacting with the Venice.ai API, offering comprehensive access to its features with unified architecture and intelligent rate limiting."
 readme = "README.md"
 license = "MIT"
