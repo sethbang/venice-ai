@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-08-14
+
+### Changed
+
+- **The CLI command is now `venice-py`, renamed from `venice`.** Venice's official CLI ([`veniceai-cli`](https://www.npmjs.com/package/veniceai-cli), published March 2026) installs a binary named `venice`, and so did this SDK's `[cli]` extra as of v2.0.0. With both installed, which one ran depended on `PATH` order — typically this SDK's inside an activated virtualenv and Venice's outside it. Because the two share subcommand names (`chat`, `image`, `video`, `embeddings`, `models`, `characters`), the wrong tool would run and reject the flags rather than report the collision. The two are unrelated programs and no longer contend for the name.
+
+  Update any scripts, aliases, and CI steps that invoke `venice`:
+
+  ```bash
+  venice chat start        # before
+  venice-py chat start     # after
+  ```
+
+  Shell completions must be regenerated, and their environment variable is now `_VENICE_PY_COMPLETE`:
+
+  ```bash
+  venice-py completion zsh >> ~/.zshrc
+  ```
+
+  Upgrading in place does not remove the old script. If `venice --version` still reports a Venice **AI CLI** banner after upgrading, a stale entry point is left over from the v2.0.x install — delete it from the environment's `bin/` directory (`rm "$(command -v venice)"` while that environment is active), or the collision persists.
+
+  This SDK is unofficial and community-maintained. For Venice's official CLI, see [veniceai/venice-cli](https://github.com/veniceai/venice-cli).
+
 ## [2.0.2] - 2026-08-14
 
 ### Fixed

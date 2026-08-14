@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "venice-ai"
-version = "2.0.2"
+version = "2.1.0"
 description = "Unofficial, community-maintained Python client library for interacting with the Venice.ai API, offering comprehensive access to its features with unified architecture and intelligent rate limiting."
 readme = "README.md"
 license = "MIT"
@@ -38,7 +38,7 @@ classifiers = [
 ]
 packages = [{ include = "venice_ai", from = "src" }]
 # skills/*/evals holds held-out calibration sets for the bundled skills. They are
-# authoring-time material, never read at runtime (`venice skills install` filters
+# authoring-time material, never read at runtime (`venice-py skills install` filters
 # them out), and publishing them would leak the test set into every install.
 exclude = ["src/venice_ai/test_support", "src/venice_ai/skills/*/evals"]
 
@@ -350,4 +350,4 @@ exclude = [
 ]
 
 [tool.poetry.scripts]
-venice = "venice_ai.cli:cli"
+venice-py = "venice_ai.cli:cli"

@@ -2972,14 +2972,14 @@ class TestEditAsync:
 
     def test_edit_command_has_no_mask_option(self):
         """``mask`` (inpainting) is dead code — the server rejects it.
-        The ``venice image edit`` command must not expose a ``--mask`` option."""
+        The ``venice-py image edit`` command must not expose a ``--mask`` option."""
         param_names = {p.name for p in edit_image.params}
         assert "mask" not in param_names
 
 
 class TestEditNewFlags:
     """--aspect-ratio, --resolution, --output-format, --safe-mode flags
-    on ``venice image edit``, mirroring ``image multi-edit``. Each maps to a real
+    on ``venice-py image edit``, mirroring ``image multi-edit``. Each maps to a real
     ``client.image.edit()`` kwarg."""
 
     @pytest.fixture

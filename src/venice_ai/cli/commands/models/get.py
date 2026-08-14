@@ -1,4 +1,4 @@
-"""``venice models get <id>`` — fetch a single ModelResponse.
+"""``venice-py models get <id>`` — fetch a single ModelResponse.
 
 Wraps :meth:`venice_ai.resources.models.Models.get`.
 """
@@ -22,8 +22,8 @@ def get(ctx: click.Context, model_id: str, output_json: bool) -> None:
 
     Examples:
 
-      venice models get llama-3.3-70b
-      venice models get qwen3-235b --json
+      venice-py models get llama-3.3-70b
+      venice-py models get qwen3-235b --json
     """
     asyncio.run(_get_async(ctx, model_id=model_id, output_json=output_json))
 

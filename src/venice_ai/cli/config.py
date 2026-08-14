@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 # ``yaml`` is gated behind the ``[cli]`` extra. Lazy-import it inside the
 # read/write helpers so subcommands that don't touch the config file (e.g.
-# ``venice lint``) work on a bare ``pip install venice-ai`` install.
+# ``venice-py lint``) work on a bare ``pip install venice-ai`` install.
 
 # Load environment variables
 load_dotenv()
@@ -22,7 +22,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "defaults": {
         # Model IDs are intentionally NOT defaulted here. When unset, the CLI
         # resolves a model from the live /models API at runtime (see
-        # cli/_model_defaults.py). A user's choice in `venice configure` is
+        # cli/_model_defaults.py). A user's choice in `venice-py configure` is
         # written back here per-key.
         "max_completion_tokens": 2048,
         "temperature": 0.7,
@@ -167,7 +167,7 @@ def ensure_api_key(config_path: Path | None = None) -> str:
     if not api_key:
         raise click.ClickException(
             "No API key found. Set it using:\n"
-            "  1. Run: venice configure\n"
+            "  1. Run: venice-py configure\n"
             "  2. Or set environment variable: export VENICE_API_KEY=your-key"
         )
     return api_key

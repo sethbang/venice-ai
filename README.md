@@ -57,16 +57,21 @@ Migrating from v1.x? See the [Migration Guide](https://venice-docs.sbang.dev/doc
 
 ## Command Line Interface
 
+The command is `venice-py`. It is not Venice's official CLI — that one is
+[`veniceai-cli`](https://github.com/veniceai/venice-cli), a separate Node program invoked
+as `venice`. Both can be installed at once. (This command was `venice` in v2.0.x; see the
+[CHANGELOG](CHANGELOG.md) if you are upgrading.)
+
 ```bash
 pip install 'venice-ai[cli]>=2'
 
-venice chat start                  # Interactive chat
-venice image generate "..."        # Image generation
-venice image multi-edit -p "..."   # Multi-image edit
-venice models                      # Browse models
-venice characters reviews <slug>   # Character reviews
-venice account keys rate-limits    # Per-model RPM/TPM limits
-venice configure                   # Setup wizard
+venice-py chat start                  # Interactive chat
+venice-py image generate "..."        # Image generation
+venice-py image multi-edit -p "..."   # Multi-image edit
+venice-py models                      # Browse models
+venice-py characters reviews <slug>   # Character reviews
+venice-py account keys rate-limits    # Per-model RPM/TPM limits
+venice-py configure                   # Setup wizard
 ```
 
 Features: streaming chat with 6 animation modes, image generation with 11+ parameters, model discovery, rich terminal UI. See the [CLI Reference](https://venice-docs.sbang.dev/docs/guides/cli/) for full CLI documentation.
@@ -75,12 +80,12 @@ Features: streaming chat with 6 animation modes, image generation with 11+ param
 
 ## Build with Claude Code
 
-Four [Claude Code skills](https://docs.claude.com/en/docs/claude-code/skills) ship with the SDK. Install them into the current project with `venice skills install` (or `venice skills install --global` for `~/.claude/skills/`); list them with `venice skills list`. They auto-load when their trigger contexts match — `venice chat`, `venice image`, `venice rate limit`, `venice x402` — and steer Claude toward idiomatic v2 code (dynamic model resolution, `async with stream:`, `run_with_tools`, `client.gather(max_concurrency=N)`, `top_up_with`, etc.) instead of OpenAI-style or v1 patterns.
+Four [Claude Code skills](https://docs.claude.com/en/docs/claude-code/skills) ship with the SDK. Install them into the current project with `venice-py skills install` (or `venice-py skills install --global` for `~/.claude/skills/`); list them with `venice-py skills list`. They auto-load when their trigger contexts match — `venice-py chat`, `venice-py image`, `venice rate limit`, `venice x402` — and steer Claude toward idiomatic v2 code (dynamic model resolution, `async with stream:`, `run_with_tools`, `client.gather(max_concurrency=N)`, `top_up_with`, etc.) instead of OpenAI-style or v1 patterns.
 
 ```bash
-venice skills install            # → ./.claude/skills/
-venice skills install --global   # → ~/.claude/skills/
-venice skills list               # show bundled skills + install state
+venice-py skills install            # → ./.claude/skills/
+venice-py skills install --global   # → ~/.claude/skills/
+venice-py skills list               # show bundled skills + install state
 ```
 
 Catalog: `venice-ai` (chat / streaming / tools / structured output), `venice-ai-multimodal` (image / audio / video / music), `venice-ai-production` (retries / rate limits / cost tracking / observability), `venice-ai-x402` (wallet auth / SIWE / on-chain top-up). See [`tools/skills/README.md`](https://github.com/sethbang/venice-ai/blob/main/tools/skills/README.md) for the full catalog and validation tooling.

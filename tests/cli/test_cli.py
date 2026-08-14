@@ -312,7 +312,7 @@ class TestModuleConstants:
         """__version__ must match installed package metadata.
 
         Regression guard: the value was hardcoded to "2.0.0" while the
-        installed package was "2.0.0rc1", so ``venice --version`` lied.
+        installed package was "2.0.0rc1", so ``venice-py --version`` lied.
         """
         from importlib.metadata import version as _installed_version
 

@@ -1,4 +1,4 @@
-"""Tests for the ``venice health`` CLI subcommand.
+"""Tests for the ``venice-py health`` CLI subcommand.
 
 Mocks every network-touching call (`models.list`, `billing.get_balance`,
 `embeddings.create`, `x402.balance`) so the tests run offline. Asserts on

@@ -1,4 +1,4 @@
-"""Tests for ``venice account keys get|update`` (cli/commands/account.py)."""
+"""Tests for ``venice-py account keys get|update`` (cli/commands/account.py)."""
 
 from __future__ import annotations
 
@@ -63,7 +63,7 @@ def _make_api_key(
 
 
 # ---------------------------------------------------------------------------
-# `venice account keys` group + `keys get` subcommand
+# `venice-py account keys` group + `keys get` subcommand
 # ---------------------------------------------------------------------------
 
 

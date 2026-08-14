@@ -43,10 +43,10 @@ def speak(ctx, text, model, voice, audio_format, speed, output, save_dir):
     """Convert text to speech.
 
     Examples:
-        venice audio speak "Hello, world!"
-        venice audio speak "Welcome to Venice" --voice af_heart --format wav
-        venice audio speak --model <tts-model> --output greeting.mp3 "Hi there"
-        echo "Some text" | venice audio speak
+        venice-py audio speak "Hello, world!"
+        venice-py audio speak "Welcome to Venice" --voice af_heart --format wav
+        venice-py audio speak --model <tts-model> --output greeting.mp3 "Hi there"
+        echo "Some text" | venice-py audio speak
     """
     asyncio.run(_speak_async(ctx, text, model, voice, audio_format, speed, output, save_dir))
 
@@ -132,10 +132,10 @@ def transcribe(ctx, file, model, language, timestamps, output_format, output):
     """Transcribe audio to text.
 
     Examples:
-        venice audio transcribe recording.mp3
-        venice audio transcribe meeting.wav --model <stt-model>
-        venice audio transcribe audio.mp3 --language en --timestamps
-        venice audio transcribe audio.mp3 --output transcript.txt
+        venice-py audio transcribe recording.mp3
+        venice-py audio transcribe meeting.wav --model <stt-model>
+        venice-py audio transcribe audio.mp3 --language en --timestamps
+        venice-py audio transcribe audio.mp3 --output transcript.txt
     """
     asyncio.run(_transcribe_async(ctx, file, model, language, timestamps, output_format, output))
 
@@ -235,10 +235,10 @@ def voices(ctx, model_id, gender, region_code, output_json):
 
     Examples:
 
-      venice audio voices
-      venice audio voices --gender female
-      venice audio voices --region af --json
-      venice audio voices --model tts-kokoro
+      venice-py audio voices
+      venice-py audio voices --gender female
+      venice-py audio voices --region af --json
+      venice-py audio voices --model tts-kokoro
     """
     asyncio.run(_voices_async(ctx, model_id, gender, region_code, output_json))
 

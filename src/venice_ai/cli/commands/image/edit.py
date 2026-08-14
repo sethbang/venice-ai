@@ -79,9 +79,9 @@ def edit_image(
 
     Examples:
 
-        venice image edit photo.jpg --prompt "Add a rainbow to the sky"
+        venice-py image edit photo.jpg --prompt "Add a rainbow to the sky"
 
-        venice image edit portrait.png --prompt "Change hair color to red"
+        venice-py image edit portrait.png --prompt "Change hair color to red"
     """
     asyncio.run(
         _edit_async(
@@ -242,9 +242,9 @@ def remove_bg(
 
     Examples:
 
-        venice image remove-bg photo.jpg
+        venice-py image remove-bg photo.jpg
 
-        venice image remove-bg product.png --save-dir ./cutouts --open
+        venice-py image remove-bg product.png --save-dir ./cutouts --open
     """
     asyncio.run(_remove_bg_async(ctx, input_file, output, save_dir, img_format, open_image))
 

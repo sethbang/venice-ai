@@ -1,7 +1,7 @@
 """AST-based linter for v1 / OpenAI-style / non-idiomatic Venice patterns.
 
 Walks Python source files and reports patterns that won't work (or work
-sub-optimally) on Venice SDK v2. Used by the ``venice lint`` CLI subcommand
+sub-optimally) on Venice SDK v2. Used by the ``venice-py lint`` CLI subcommand
 and importable as a library for tooling integrations (e.g., a future
 ``ruff`` plugin).
 

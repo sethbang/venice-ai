@@ -50,13 +50,13 @@ Installing them uses the `venice` CLI, which ships as an optional extra:
 ```bash
 pip install 'venice-ai[cli]>=2'
 
-venice skills install            # → ./.claude/skills/
-venice skills install --global   # → ~/.claude/skills/
-venice skills list               # show bundled skills + install state
+venice-py skills install            # → ./.claude/skills/
+venice-py skills install --global   # → ~/.claude/skills/
+venice-py skills list               # show bundled skills + install state
 ```
 
 Open Claude Code in the project and the skills auto-load when their trigger
-contexts match (e.g. "venice chat", "venice image", "venice x402").
+contexts match (e.g. "venice-py chat", "venice-py image", "venice x402").
 
 ## Next steps
 

@@ -1,4 +1,4 @@
-"""Tests for the ``venice lint`` CLI subcommand and its underlying rules.
+"""Tests for the ``venice-py lint`` CLI subcommand and its underlying rules.
 
 Covers:
 
@@ -6,7 +6,7 @@ Covers:
   fires on a known-bad fixture snippet and stays silent on a clean snippet.
 - :func:`venice_ai.cli.utils.lint_rules.lint_path` — file vs directory walk,
   ``--code`` filter behavior, skip-dir heuristics.
-- ``venice lint`` Click command — exit codes (clean=0, info-only=0,
+- ``venice-py lint`` Click command — exit codes (clean=0, info-only=0,
   errors=1, info-only-with-strict=1), output format, ``--code`` filter.
 """
 
@@ -236,7 +236,7 @@ def test_lint_file_reports_syntax_error_as_v000(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Click command — `venice lint <path>`
+# Click command — `venice-py lint <path>`
 # ---------------------------------------------------------------------------
 
 
@@ -331,12 +331,12 @@ def test_informational_codes_are_known_codes() -> None:
 
 
 # ---------------------------------------------------------------------------
-# venice lint must run without the [cli] extra
+# venice-py lint must run without the [cli] extra
 # ---------------------------------------------------------------------------
 
 
 def test_lint_runs_without_pyyaml(tmp_path: Path, monkeypatch) -> None:
-    """``venice lint`` is the most useful subcommand for codebases-using-venice;
+    """``venice-py lint`` is the most useful subcommand for codebases-using-venice;
     it must work on a bare ``pip install venice-ai`` install (no ``[cli]`` extra,
     no PyYAML).
 

@@ -1,4 +1,4 @@
-"""``venice skills`` — install the SDK's bundled Claude Code skills.
+"""``venice-py skills`` — install the SDK's bundled Claude Code skills.
 
 The four skills ship as package data under ``venice_ai/skills/<name>/`` and are
 copied into a project-local (default) or global ``.claude/skills/`` directory so
@@ -122,9 +122,9 @@ def install_skills(names: tuple[str, ...], global_: bool, force: bool, dry_run: 
 
     Examples::
 
-        venice skills install
-        venice skills install venice-ai venice-ai-x402 --global
-        venice skills install --force
+        venice-py skills install
+        venice-py skills install venice-ai venice-ai-x402 --global
+        venice-py skills install --force
     """
     bundled = available_skills()
     targets = list(names) if names else bundled

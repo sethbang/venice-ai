@@ -1,4 +1,4 @@
-"""``venice lint <path>`` — flag v1 / OpenAI-style / non-idiomatic Venice patterns.
+"""``venice-py lint <path>`` — flag v1 / OpenAI-style / non-idiomatic Venice patterns.
 
 Wraps :mod:`venice_ai.cli.utils.lint_rules` as a Click subcommand. Reports
 findings in flake8-compatible ``path:line:col: CODE message`` format and
@@ -48,11 +48,11 @@ def lint_command(
 
     Examples::
 
-        venice lint src/
+        venice-py lint src/
 
-        venice lint --strict path/to/file.py
+        venice-py lint --strict path/to/file.py
 
-        venice lint --code V100 --code V200 src/
+        venice-py lint --code V100 --code V200 src/
     """
     findings: list[Finding] = lint_path(path, codes=codes if codes else None)
 

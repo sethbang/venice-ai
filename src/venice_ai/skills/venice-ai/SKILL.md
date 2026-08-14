@@ -324,7 +324,7 @@ See `references/migration-v1-to-v2.md` for the full v2 breaking-change list with
 15. **Music & video model duration values are model-specific enums** — `client.music.run(model="ace-step-15", duration_seconds=30)` is a 400 because that model only accepts `[60, 90, 120, 150, 180, 210]`. As of 2.0 the SDK pre-validates against `spec.duration_options` (or `min_duration` / `max_duration`) and raises `ValueError` before the HTTP call when the spec is reachable; if the catalog can't be fetched, the server is the backstop. Either way: read `client.models.get(model_id).model_spec` for the per-model tier list when picking durations.
 16. **Tool function args using PEP 604 unions like `int | None`** — `tool_from_function` accepts both `Optional[T]` and `T | None` identically; either works for an optional tool parameter.
 
-To catch these patterns automatically in user code, run **`venice lint <path>`** (built into the CLI on SDK ≥ 2.0.0). Reports findings in flake8-compatible `path:line:col: CODE message` format; supports `--code` filtering and `--strict`. See the venice-ai CLI docs for the full rule-code table.
+To catch these patterns automatically in user code, run **`venice-py lint <path>`** (built into the CLI on SDK ≥ 2.0.0). Reports findings in flake8-compatible `path:line:col: CODE message` format; supports `--code` filtering and `--strict`. See the venice-ai CLI docs for the full rule-code table.
 
 ## References
 
@@ -341,7 +341,7 @@ To catch these patterns automatically in user code, run **`venice lint <path>`**
 
 ## Scripts
 
-- `scripts/lint_v1_usage.py <path>` — AST-walks a directory and flags v1 / legacy / non-idiomatic patterns: `max_tokens=`, `client.image.generate(`, `client.audio.generate_music(`, hardcoded model strings on `model=` kwargs. Legacy: prefer `venice lint <path>` on SDK ≥ 2.0.0; same rules, discoverable via `venice --help`.
+- `scripts/lint_v1_usage.py <path>` — AST-walks a directory and flags v1 / legacy / non-idiomatic patterns: `max_tokens=`, `client.image.generate(`, `client.audio.generate_music(`, hardcoded model strings on `model=` kwargs. Legacy: prefer `venice-py lint <path>` on SDK ≥ 2.0.0; same rules, discoverable via `venice-py --help`.
 
 ## Examples to read
 

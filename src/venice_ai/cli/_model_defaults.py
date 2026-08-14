@@ -1,7 +1,7 @@
 """Runtime resolution of default models for the CLI.
 
 The CLI hardcodes NO model IDs. When the user has not explicitly chosen a
-model (via a flag or via a saved value in ``venice configure``), the model is
+model (via a flag or via a saved value in ``venice-py configure``), the model is
 resolved from the live Venice ``/models`` API at call time, so newly added and
 deprecated models are picked up automatically without code changes.
 """
@@ -61,6 +61,6 @@ async def resolve_default_model(
         raise click.ClickException(
             f"Could not resolve a default {kind} model from the Venice API "
             f"({exc}). Pass an explicit model with --model, or run "
-            f"'venice configure' while online."
+            f"'venice-py configure' while online."
         ) from exc
     return resolved

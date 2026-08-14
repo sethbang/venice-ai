@@ -186,7 +186,7 @@ async def _make_nonstreaming_request(
 def chat(ctx: click.Context):
     """Chat with AI models.
 
-    Use 'venice chat start' to begin a chat session or send a single message.
+    Use 'venice-py chat start' to begin a chat session or send a single message.
     """
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
@@ -328,13 +328,13 @@ def start_chat(
     Examples:
 
         # Quick message with word animation
-        venice chat start -a word "Tell me a joke"
+        venice-py chat start -a word "Tell me a joke"
 
         # Interactive session with typewriter effect
-        venice chat start --animation typewriter --animation-speed 0.05
+        venice-py chat start --animation typewriter --animation-speed 0.05
 
         # Fast streaming with stats
-        venice chat start --animation none --show-stats
+        venice-py chat start --animation none --show-stats
     """
     # Build venice_parameters dict from Venice-specific options.
     # NB: reasoning_effort is a top-level API field, not a member of
@@ -985,13 +985,13 @@ def chat_history(ctx: click.Context, json_output: bool, delete_id: str | None) -
     Examples:
 
         # List all saved conversations
-        venice chat history
+        venice-py chat history
 
         # Output as JSON
-        venice chat history --json
+        venice-py chat history --json
 
         # Delete a saved conversation
-        venice chat history --delete <id>
+        venice-py chat history --delete <id>
     """
     plain = ctx.obj.get("plain", False) if ctx.obj else False
 
@@ -1046,5 +1046,5 @@ def chat_history(ctx: click.Context, json_output: bool, delete_id: str | None) -
 
         console.print(table)
         console.print(
-            "\n[dim]Use [bold]venice chat start --continue-from <id>[/bold] to resume a conversation.[/dim]"
+            "\n[dim]Use [bold]venice-py chat start --continue-from <id>[/bold] to resume a conversation.[/dim]"
         )

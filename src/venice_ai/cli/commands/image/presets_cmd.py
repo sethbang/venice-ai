@@ -89,7 +89,7 @@ async def _manage_presets_async(ctx: click.Context):
                 )
 
             console.print(table)
-            print_info("\nUse with: venice image generate 'prompt' --preset <name>")
+            print_info("\nUse with: venice-py image generate 'prompt' --preset <name>")
 
         elif action == "Save current config as preset":
             preset_name = await asyncio.to_thread(

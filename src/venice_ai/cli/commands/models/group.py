@@ -1,17 +1,17 @@
-"""``venice models`` Click group.
+"""``venice-py models`` Click group.
 
-Wraps the historical ``venice models`` listing command (kept as the
+Wraps the historical ``venice-py models`` listing command (kept as the
 default callback when no subcommand is supplied, so existing flag-based
-invocations like ``venice models --type text`` keep working) and hangs
+invocations like ``venice-py models --type text`` keep working) and hangs
 new model-discovery subcommands off the same group.
 
 Subcommands:
-    - ``venice models resolve --type <type> ...`` — wraps
+    - ``venice-py models resolve --type <type> ...`` — wraps
       :meth:`venice_ai.resources.models.Models.resolve` and the eleven
       ``resolve_*`` shortcuts.
-    - ``venice models get <id>`` — wraps
+    - ``venice-py models get <id>`` — wraps
       :meth:`venice_ai.resources.models.Models.get`.
-    - ``venice models capabilities <id>`` — wraps
+    - ``venice-py models capabilities <id>`` — wraps
       :meth:`venice_ai.resources.models.Models.get_capabilities`.
 """
 
@@ -91,27 +91,27 @@ def models(ctx: click.Context, **kwargs) -> None:
     """List, filter, resolve, and inspect available AI models.
 
     With no subcommand, lists models with the supplied filter flags.
-    Use ``venice models <subcommand> --help`` for resolve/get/capabilities.
+    Use ``venice-py models <subcommand> --help`` for resolve/get/capabilities.
 
     Examples:
 
       # List all models (default)
-      venice models
+      venice-py models
 
       # Show only text models
-      venice models --type text
+      venice-py models --type text
 
       # Filter by capabilities
-      venice models --vision --function-calling
+      venice-py models --vision --function-calling
 
       # Resolve the cheapest chat model with function calling
-      venice models resolve --type chat --function-calling
+      venice-py models resolve --type chat --function-calling
 
       # Inspect a single model
-      venice models get llama-3.3-70b
+      venice-py models get llama-3.3-70b
 
       # Get a typed capability view
-      venice models capabilities llama-3.3-70b
+      venice-py models capabilities llama-3.3-70b
     """
     if ctx.invoked_subcommand is not None:
         # Subcommand will run instead — drop top-level filter flags.

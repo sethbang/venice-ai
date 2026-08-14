@@ -85,12 +85,12 @@ def list_characters(
     """List available AI characters.
 
     Examples:
-        venice characters list
-        venice characters list --search coding
-        venice characters list --sort-by highlyRated --limit 20
-        venice characters list --tags philosophy --web-enabled
-        venice characters list --categories education
-        venice characters list --json
+        venice-py characters list
+        venice-py characters list --search coding
+        venice-py characters list --sort-by highlyRated --limit 20
+        venice-py characters list --tags philosophy --web-enabled
+        venice-py characters list --categories education
+        venice-py characters list --json
     """
     asyncio.run(
         _list_characters_async(
@@ -205,8 +205,8 @@ def info_character(ctx, slug, output_json):
     """Show detailed information about a character.
 
     Examples:
-        venice characters info alan-watts
-        venice characters info alan-watts --json
+        venice-py characters info alan-watts
+        venice-py characters info alan-watts --json
     """
     asyncio.run(_info_character_async(ctx, slug, output_json))
 
@@ -314,9 +314,9 @@ def reviews_character(ctx, slug, output_json, page, page_size):
     """Show public reviews for a character.
 
     Examples:
-        venice characters reviews alan-watts
-        venice characters reviews alan-watts --page 2 --page-size 50
-        venice characters reviews alan-watts --json
+        venice-py characters reviews alan-watts
+        venice-py characters reviews alan-watts --page 2 --page-size 50
+        venice-py characters reviews alan-watts --json
     """
     asyncio.run(_reviews_character_async(ctx, slug, output_json, page, page_size))
 

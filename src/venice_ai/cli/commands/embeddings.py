@@ -51,19 +51,19 @@ def embeddings(ctx, text, model, encoding_format, dimensions, output_json, outpu
     Examples:
 
       # Generate embeddings for text
-      venice embeddings "The quick brown fox"
+      venice-py embeddings "The quick brown fox"
 
       # Use a specific model
-      venice embeddings "Hello world" --model <embedding-model>
+      venice-py embeddings "Hello world" --model <embedding-model>
 
       # Output full JSON embedding vector
-      venice embeddings "Some text" --json
+      venice-py embeddings "Some text" --json
 
       # Save embeddings to file
-      venice embeddings "Some text" --output embeddings.json
+      venice-py embeddings "Some text" --output embeddings.json
 
       # Pipe text via stdin
-      echo "Some text" | venice embeddings
+      echo "Some text" | venice-py embeddings
     """
     asyncio.run(
         _embeddings_async(ctx, text, model, encoding_format, dimensions, output_json, output)

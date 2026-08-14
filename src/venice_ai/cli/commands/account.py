@@ -28,9 +28,9 @@ def balance(ctx, output_json):
 
     Examples:
 
-      venice account balance
+      venice-py account balance
 
-      venice account balance --json
+      venice-py account balance --json
     """
     asyncio.run(_balance_async(ctx, output_json))
 
@@ -127,15 +127,15 @@ def usage(ctx, output_json, start_date, end_date, currency):
 
     Examples:
 
-      venice account usage
+      venice-py account usage
 
-      venice account usage --start-date 2025-01-01 --end-date 2025-02-01
+      venice-py account usage --start-date 2025-01-01 --end-date 2025-02-01
 
-      venice account usage --currency USD
+      venice-py account usage --currency USD
 
-      venice account usage --json
+      venice-py account usage --json
 
-      venice account usage --start-date 2025-01-01 --json
+      venice-py account usage --start-date 2025-01-01 --json
     """
     asyncio.run(_usage_async(ctx, output_json, start_date, end_date, currency))
 
@@ -369,7 +369,7 @@ async def _usage_async(ctx, output_json, start_date, end_date, currency=None):
 
 
 # ---------------------------------------------------------------------------
-# `venice account keys ...` — single-key retrieve + update.
+# `venice-py account keys ...` — single-key retrieve + update.
 # `account list/create/delete` already live under the top-level `api-keys`
 # group; this subgroup adds the missing single-key surface (retrieve/update)
 # while keeping the `api-keys` group intact for backward compatibility.
@@ -380,7 +380,7 @@ async def _usage_async(ctx, output_json, start_date, end_date, currency=None):
 def keys():
     """Inspect and update individual API keys.
 
-    See ``venice api-keys`` for list/create/delete.
+    See ``venice-py api-keys`` for list/create/delete.
     """
     pass
 
@@ -394,8 +394,8 @@ def keys_get(ctx, api_key_id, output_json):
 
     Examples:
 
-      venice account keys get key_abc123
-      venice account keys get key_abc123 --json
+      venice-py account keys get key_abc123
+      venice-py account keys get key_abc123 --json
     """
     asyncio.run(_keys_get_async(ctx, api_key_id, output_json))
 
@@ -469,10 +469,10 @@ def keys_update(
 
     Examples:
 
-      venice account keys update key_abc123 --description "Production"
-      venice account keys update key_abc123 --expiry 2026-12-31
-      venice account keys update key_abc123 --limit-usd 50 --limit-diem 5
-      venice account keys update key_abc123 --limit-period MONTH
+      venice-py account keys update key_abc123 --description "Production"
+      venice-py account keys update key_abc123 --expiry 2026-12-31
+      venice-py account keys update key_abc123 --limit-usd 50 --limit-diem 5
+      venice-py account keys update key_abc123 --limit-period MONTH
     """
     # ``--limit-vcu`` is the legacy alias for ``--limit-diem``; the request
     # model (ConsumptionLimit) has no ``vcu`` field, so fold it into ``diem``
@@ -620,7 +620,7 @@ def _render_api_key(api_key_obj, *, plain: bool, output_json: bool, title: str) 
 
 
 # ---------------------------------------------------------------------------
-# `venice account keys rate-limits` / `rate-limit-logs` — surface
+# `venice-py account keys rate-limits` / `rate-limit-logs` — surface
 # client.api_keys.get_rate_limits() and get_rate_limit_logs().
 # ---------------------------------------------------------------------------
 
@@ -642,8 +642,8 @@ def keys_rate_limits(ctx, output_json):
 
     Examples:
 
-      venice account keys rate-limits
-      venice account keys rate-limits --json
+      venice-py account keys rate-limits
+      venice-py account keys rate-limits --json
     """
     asyncio.run(_keys_rate_limits_async(ctx, output_json))
 
@@ -734,8 +734,8 @@ def keys_rate_limit_logs(ctx, output_json):
 
     Examples:
 
-      venice account keys rate-limit-logs
-      venice account keys rate-limit-logs --json
+      venice-py account keys rate-limit-logs
+      venice-py account keys rate-limit-logs --json
     """
     asyncio.run(_keys_rate_limit_logs_async(ctx, output_json))
 

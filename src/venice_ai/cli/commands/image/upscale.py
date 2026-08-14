@@ -59,9 +59,9 @@ def upscale_image(
 
     Examples:
 
-        venice image upscale photo.jpg --scale 2
+        venice-py image upscale photo.jpg --scale 2
 
-        venice image upscale photo.png --scale 4 --enhance --save-dir ./upscaled
+        venice-py image upscale photo.png --scale 4 --enhance --save-dir ./upscaled
     """
     asyncio.run(
         _upscale_async(
