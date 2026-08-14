@@ -5,12 +5,12 @@ Exposes wallet-based auth for the ``/x402/*`` endpoints:
 * :class:`venice_ai.auth.x402.X402Auth` — EVM (EIP-4361 SIWE + EIP-3009)
   flow. Requires the ``x402`` extra::
 
-      pip install venice-ai[x402]
+      pip install 'venice-ai[x402]'
 
 * :class:`venice_ai.auth.x402_solana.SolanaX402Auth` — Solana ("exact"
   SVM settlement) flow. Requires the ``x402-solana`` extra::
 
-      pip install venice-ai[x402-solana]
+      pip install 'venice-ai[x402-solana]'
 
 Both names are imported lazily (PEP 562 ``__getattr__``) so that installing
 only one extra does not force the other's optional dependencies — importing

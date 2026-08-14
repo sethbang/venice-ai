@@ -184,7 +184,7 @@ class SchedulerConfig(BaseModel):
 
     Enterprise feature: Only active when ``RateLimiterMode.ADAPTIVE`` is selected
     (``VeniceAIConfig.rate_limiter.mode = RateLimiterMode.ADAPTIVE``).
-    Requires: ``pip install venice-ai[adaptive]`` and a Redis backend.
+    Requires: ``pip install 'venice-ai[adaptive]'`` and a Redis backend.
 
     For basic SDK usage the default ``RateLimiterMode.SIMPLE`` mode does not use
     this scheduler at all — only ``HttpClientConfig`` is needed.

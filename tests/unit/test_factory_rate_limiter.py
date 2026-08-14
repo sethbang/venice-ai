@@ -99,7 +99,7 @@ class TestAdaptiveFallbackWithoutPackage:
 
             # Should raise with informative message
             assert "adaptive-rate-limiter" in str(exc_info.value)
-            assert "pip install venice-ai[adaptive]" in str(exc_info.value)
+            assert "pip install 'venice-ai[adaptive]'" in str(exc_info.value)
 
     def test_adaptive_fallback_warning_message(self):
         """Adaptive mode raises ImportError with install instructions (strict mode)."""
@@ -131,7 +131,7 @@ class TestAdaptiveFallbackWithoutPackage:
             # Error message should contain install instructions
             error_msg = str(exc_info.value)
             assert "adaptive-rate-limiter" in error_msg
-            assert "pip install venice-ai[adaptive]" in error_msg
+            assert "pip install 'venice-ai[adaptive]'" in error_msg
 
 
 class TestAdaptiveRequiresRedisUrl:

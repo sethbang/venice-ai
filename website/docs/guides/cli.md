@@ -11,14 +11,17 @@ Command-line interface for Venice AI. Chat with AI models, generate images, crea
 
 ### Install with pip
 
+Requires Python 3.13+. Quote the specifier — `[...]` is a glob in zsh — and keep the
+`>=2` floor so an older Python fails loudly instead of installing v1.3.x.
+
 ```bash
-pip install venice-ai[cli]
+pip install 'venice-ai[cli]>=2'
 ```
 
 ### Install with Poetry
 
 ```bash
-poetry add venice-ai[cli]
+poetry add 'venice-ai[cli]>=2'
 ```
 
 ### Development Install
@@ -1397,7 +1400,7 @@ venice configure
 ### Module Not Found
 
 ```bash
-pip install venice-ai[cli]
+pip install 'venice-ai[cli]>=2'
 ```
 
 ### Command Not Found

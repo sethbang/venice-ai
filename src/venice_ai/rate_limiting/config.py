@@ -26,7 +26,7 @@ class RateLimiterConfig:
         - Proactive rate limiting (prevents 429s)
         - Multi-process/worker coordination via Redis
         - Token prediction and cold-start protection
-        - Requires: pip install venice-ai[adaptive]
+        - Requires: pip install 'venice-ai[adaptive]'
         - Requires: redis_url configuration
     """
 

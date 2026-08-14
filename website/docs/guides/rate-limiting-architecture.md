@@ -45,7 +45,7 @@ resolves nothing to buckets.
 The reactive limiter above is the default. For multi-process / multi-worker
 deployments, the SDK can swap it for the proactive `AdaptiveScheduler` that
 ships in the standalone **`adaptive-rate-limiter`** PyPI package
-(`pip install venice-ai[adaptive]`). When `RateLimiterMode.ADAPTIVE` is
+(`pip install 'venice-ai[adaptive]>=2'`). When `RateLimiterMode.ADAPTIVE` is
 configured, `factory._create_rate_limiter` constructs an `AdaptiveScheduler`
 backed by Redis, wraps it in `AdaptiveSchedulerAdapter` (in `factory.py`)
 to satisfy `RateLimiterProtocol`, and returns it in place of

@@ -13,7 +13,7 @@ Usage::
     # auth.wallet_address — checksummed address derived from the key
     # auth.build_header() — returns the base64 value for ``X-Sign-In-With-X``
 
-This module is optional and requires ``pip install venice-ai[x402]``.
+This module is optional and requires ``pip install 'venice-ai[x402]'``.
 """
 
 from __future__ import annotations

@@ -38,7 +38,7 @@ Usage::
         token_program="Tokenkeg...",
     )
 
-This module is optional and requires ``pip install venice-ai[x402-solana]``.
+This module is optional and requires ``pip install 'venice-ai[x402-solana]'``.
 """
 
 from __future__ import annotations
