@@ -401,4 +401,4 @@ try:
 
     __version__ = _pkg_version("venice-ai")
 except Exception:  # pragma: no cover - source tree without installed metadata
-    __version__ = "2.0.2"
+    __version__ = "2.1.0"

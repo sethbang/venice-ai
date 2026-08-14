@@ -147,7 +147,7 @@ def _determine_output_path(output: str | None, save_dir: str, ext: str = "mp4") 
 
 
 # ---------------------------------------------------------------------------
-# venice video generate
+# venice-py video generate
 # ---------------------------------------------------------------------------
 
 
@@ -255,13 +255,13 @@ def generate(
 
     Examples:
 
-      venice video generate "A sunset over the ocean with gentle waves"
+      venice-py video generate "A sunset over the ocean with gentle waves"
 
-      venice video generate "A cat playing piano" --duration 10s --model <video-model>
+      venice-py video generate "A cat playing piano" --duration 10s --model <video-model>
 
-      venice video generate "Cinematic drone shot" --aspect-ratio 16:9 --resolution 1080p
+      venice-py video generate "Cinematic drone shot" --aspect-ratio 16:9 --resolution 1080p
 
-      venice video generate "Quick preview" --no-poll
+      venice-py video generate "Quick preview" --no-poll
     """
     asyncio.run(
         _generate_async(
@@ -351,7 +351,7 @@ async def _generate_async(
         OutputManager.success(f"Job queued! Job ID: {queue_id}")
 
         if no_poll:
-            OutputManager.echo(f"Use 'venice video status {queue_id}' to check progress.")
+            OutputManager.echo(f"Use 'venice-py video status {queue_id}' to check progress.")
             return
 
         output_path = _determine_output_path(output, save_dir)
@@ -371,7 +371,7 @@ async def _generate_async(
 
 
 # ---------------------------------------------------------------------------
-# venice video from-image
+# venice-py video from-image
 # ---------------------------------------------------------------------------
 
 
@@ -478,13 +478,13 @@ def from_image(
 
     Examples:
 
-      venice video from-image photo.jpg
+      venice-py video from-image photo.jpg
 
-      venice video from-image photo.png --prompt "Gentle breeze through the trees"
+      venice-py video from-image photo.png --prompt "Gentle breeze through the trees"
 
-      venice video from-image portrait.jpg --model <i2v-model> --duration 10s
+      venice-py video from-image portrait.jpg --model <i2v-model> --duration 10s
 
-      venice video from-image landscape.jpg --no-poll
+      venice-py video from-image landscape.jpg --no-poll
     """
     asyncio.run(
         _from_image_async(
@@ -577,7 +577,7 @@ async def _from_image_async(
         OutputManager.success(f"Job queued! Job ID: {queue_id}")
 
         if no_poll:
-            OutputManager.echo(f"Use 'venice video status {queue_id}' to check progress.")
+            OutputManager.echo(f"Use 'venice-py video status {queue_id}' to check progress.")
             return
 
         output_path = _determine_output_path(output, save_dir)
@@ -597,7 +597,7 @@ async def _from_image_async(
 
 
 # ---------------------------------------------------------------------------
-# venice video status
+# venice-py video status
 # ---------------------------------------------------------------------------
 
 
@@ -617,9 +617,9 @@ def status(ctx, job_id, model):
 
     Examples:
 
-      venice video status abc123
+      venice-py video status abc123
 
-      venice video status abc123 --model <i2v-model>
+      venice-py video status abc123 --model <i2v-model>
     """
     asyncio.run(_status_async(ctx, job_id=job_id, model=model))
 

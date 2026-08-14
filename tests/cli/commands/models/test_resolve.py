@@ -1,4 +1,4 @@
-"""Tests for ``venice models resolve`` (cli/commands/models/resolve.py)."""
+"""Tests for ``venice-py models resolve`` (cli/commands/models/resolve.py)."""
 
 from __future__ import annotations
 

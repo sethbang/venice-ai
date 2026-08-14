@@ -25,7 +25,7 @@ from .commands.models.group import models as models_group
 from .config import load_config, set_active_config_path
 from .utils.console import console, enable_plain_mode, print_version_info
 
-# Top-level command grouping for the curated ``venice --help`` layout.
+# Top-level command grouping for the curated ``venice-py --help`` layout.
 # The CLI ships ~13 subcommands; lumping them in one alphabetical block was
 # making the help output a wall of names, so we group them by intent.
 _COMMAND_GROUPS: tuple[tuple[str, tuple[str, ...]], ...] = (
@@ -75,8 +75,8 @@ def cli(ctx: click.Context, version: bool, config: str | None, plain: bool) -> N
     """
     Venice AI CLI - Your AI assistant in the terminal.
 
-    Featured commands: ``venice models resolve`` (find a model by capability),
-    ``venice lint`` (catch v1 / OpenAI-style usage in your code).
+    Featured commands: ``venice-py models resolve`` (find a model by capability),
+    ``venice-py lint`` (catch v1 / OpenAI-style usage in your code).
     """
     # Enable plain mode first if requested (before any output)
     if plain:
@@ -135,16 +135,16 @@ def completion(ctx: click.Context, shell: str) -> None:
 
     Examples:
 
-        venice completion bash >> ~/.bashrc
+        venice-py completion bash >> ~/.bashrc
 
-        venice completion zsh >> ~/.zshrc
+        venice-py completion zsh >> ~/.zshrc
 
-        venice completion fish > ~/.config/fish/completions/venice.fish
+        venice-py completion fish > ~/.config/fish/completions/venice-py.fish
     """
     from click.shell_completion import BashComplete, FishComplete, ZshComplete
 
-    prog_name = "venice"
-    complete_var = f"_{prog_name.upper()}_COMPLETE"
+    prog_name = "venice-py"
+    complete_var = f"_{prog_name.replace('-', '_').upper()}_COMPLETE"
 
     shell_map = {
         "bash": BashComplete,

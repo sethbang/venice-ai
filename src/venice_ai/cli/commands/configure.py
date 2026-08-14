@@ -119,7 +119,7 @@ def configure_cli(ctx: dict[str, Any]) -> None:
                 print_error(
                     f"Could not fetch {label} models from the API. Skipping "
                     f"{label}-model selection — the CLI will auto-resolve one at "
-                    "runtime. Re-run 'venice configure' while online to pin one."
+                    "runtime. Re-run 'venice-py configure' while online to pin one."
                 )
                 continue
 
@@ -222,4 +222,4 @@ def configure_cli(ctx: dict[str, Any]) -> None:
 
     # Final message
     console.print("\n[bold green]Configuration complete![/bold green]")
-    print_info("You can now use 'venice chat' or 'venice image generate' commands")
+    print_info("You can now use 'venice-py chat' or 'venice-py image generate' commands")

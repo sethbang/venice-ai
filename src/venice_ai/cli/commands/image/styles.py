@@ -49,7 +49,7 @@ async def _list_styles_async(ctx: click.Context):
 
             console.print(table)
             print_success(f"\nFound {len(response.data)} available styles")
-            print_info("Use with: venice image generate 'prompt' --style-preset 'Style Name'")
+            print_info("Use with: venice-py image generate 'prompt' --style-preset 'Style Name'")
 
         except Exception as e:
             print_error(f"Failed to fetch styles: {e}")

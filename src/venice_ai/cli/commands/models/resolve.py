@@ -1,4 +1,4 @@
-"""``venice models resolve`` — auto-pick a model by type and capabilities.
+"""``venice-py models resolve`` — auto-pick a model by type and capabilities.
 
 Wraps :meth:`venice_ai.resources.models.Models.resolve` and the eleven
 ``resolve_*`` shortcuts (chat / embedding / image / video / tts / asr /
@@ -113,13 +113,13 @@ def resolve(
 
     Examples:
 
-      venice models resolve --type chat
-      venice models resolve --type chat --function-calling --vision
-      venice models resolve --type embedding
-      venice models resolve --type video --audio --min-resolution 720p
-      venice models resolve --type cheapest-video --duration 5s
-      venice models resolve --type video-upscale
-      venice models resolve --type chat --json
+      venice-py models resolve --type chat
+      venice-py models resolve --type chat --function-calling --vision
+      venice-py models resolve --type embedding
+      venice-py models resolve --type video --audio --min-resolution 720p
+      venice-py models resolve --type cheapest-video --duration 5s
+      venice-py models resolve --type video-upscale
+      venice-py models resolve --type chat --json
     """
     asyncio.run(
         _resolve_async(

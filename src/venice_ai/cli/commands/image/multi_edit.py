@@ -93,9 +93,9 @@ def multi_edit_image(
 
     Examples:
 
-        venice image multi-edit --prompt "combine these" --image base.png
+        venice-py image multi-edit --prompt "combine these" --image base.png
 
-        venice image multi-edit -p "blend" -i base.png --image-2 overlay.png
+        venice-py image multi-edit -p "blend" -i base.png --image-2 overlay.png
     """
     asyncio.run(
         _multi_edit_async(

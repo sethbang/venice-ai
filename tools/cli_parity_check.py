@@ -62,13 +62,13 @@ KNOWN_CLI_MAP: dict[str, tuple[str, list[str], str]] = {
     ),
     "chat.completions.create": (
         "covered",
-        ["venice chat start"],
+        ["venice-py chat start"],
         "Both stream=True (default) and stream=False paths are reachable.",
     ),
     "chat.completions.estimate_cost": (
         "missing",
         [],
-        "No `venice chat estimate-cost` (or similar) command.",
+        "No `venice-py chat estimate-cost` (or similar) command.",
     ),
     "chat.completions.parse": (
         "missing",
@@ -82,33 +82,33 @@ KNOWN_CLI_MAP: dict[str, tuple[str, list[str], str]] = {
     ),
     "chat.completions.stream": (
         "partial",
-        ["venice chat start --stream"],
+        ["venice-py chat start --stream"],
         "CLI calls `create(stream=True)` directly, not the `.stream()` helper.",
     ),
     # ---- image ----
     "image.background_remove": (
         "covered",
-        ["venice image remove-bg"],
+        ["venice-py image remove-bg"],
         "",
     ),
     "image.create": (
         "covered",
-        ["venice image generate", "venice image batch"],
+        ["venice-py image generate", "venice-py image batch"],
         "Full parameter surface incl. style presets, LoRA, watermark, EXIF.",
     ),
     "image.edit": (
         "covered",
-        ["venice image edit"],
+        ["venice-py image edit"],
         "Exposes --aspect-ratio, --resolution, --output-format, --safe-mode/--no-safe-mode.",
     ),
     "image.list_styles": (
         "covered",
-        ["venice image list-styles"],
+        ["venice-py image list-styles"],
         "",
     ),
     "image.multi_edit": (
         "covered",
-        ["venice image multi-edit"],
+        ["venice-py image multi-edit"],
         "Layers up to 3 images (--image, --image-2, --image-3) with one prompt.",
     ),
     "image.simple_generate": (
@@ -118,15 +118,15 @@ KNOWN_CLI_MAP: dict[str, tuple[str, list[str], str]] = {
     ),
     "image.upscale": (
         "covered",
-        ["venice image upscale"],
+        ["venice-py image upscale"],
         "",
     ),
     # ---- video ----
     "video.cancel": (
         "partial",
-        ["venice video status (auto-cancels on Ctrl-C)"],
+        ["venice-py video status (auto-cancels on Ctrl-C)"],
         "Cancel is invoked implicitly by the polling loop, not as a standalone "
-        "`venice video cancel <job_id>`.",
+        "`venice-py video cancel <job_id>`.",
     ),
     "video.quote": (
         "missing",
@@ -135,18 +135,18 @@ KNOWN_CLI_MAP: dict[str, tuple[str, list[str], str]] = {
     ),
     "video.retrieve": (
         "covered",
-        ["venice video status"],
+        ["venice-py video status"],
         "Used to poll job status by queue_id.",
     ),
     "video.run": (
         "partial",
-        ["venice video generate", "venice video from-image"],
+        ["venice-py video generate", "venice-py video from-image"],
         "CLI uses `submit` + `retrieve` polling rather than the high-level "
         "`run` helper. Equivalent end result.",
     ),
     "video.submit": (
         "covered",
-        ["venice video generate --no-poll", "venice video from-image --no-poll"],
+        ["venice-py video generate --no-poll", "venice-py video from-image --no-poll"],
         "",
     ),
     "video.transcribe": (
@@ -157,17 +157,17 @@ KNOWN_CLI_MAP: dict[str, tuple[str, list[str], str]] = {
     # ---- audio ----
     "audio.create_speech": (
         "covered",
-        ["venice audio speak"],
+        ["venice-py audio speak"],
         "",
     ),
     "audio.get_voices": (
         "covered",
-        ["venice audio voices"],
+        ["venice-py audio voices"],
         "Filters by --model / --gender / --region; --json for scripting.",
     ),
     "audio.transcribe": (
         "covered",
-        ["venice audio transcribe"],
+        ["venice-py audio transcribe"],
         "",
     ),
     # ---- music ----
@@ -199,23 +199,23 @@ KNOWN_CLI_MAP: dict[str, tuple[str, list[str], str]] = {
     # ---- embeddings ----
     "embeddings.create": (
         "covered",
-        ["venice embeddings"],
+        ["venice-py embeddings"],
         "",
     ),
     # ---- models ----
     "models.get": (
         "covered",
-        ["venice models get <id>"],
+        ["venice-py models get <id>"],
         "Single-model lookup via the cached list; --json for raw payload.",
     ),
     "models.get_capabilities": (
         "covered",
-        ["venice models capabilities <id>"],
+        ["venice-py models capabilities <id>"],
         "Renders the typed Capabilities discriminated union.",
     ),
     "models.list": (
         "covered",
-        ["venice models", "venice configure", "venice chat start --select-model"],
+        ["venice-py models", "venice-py configure", "venice-py chat start --select-model"],
         "Used by multiple commands; primary discovery path.",
     ),
     "models.list_compatibility": (
@@ -225,69 +225,69 @@ KNOWN_CLI_MAP: dict[str, tuple[str, list[str], str]] = {
     ),
     "models.list_traits": (
         "partial",
-        ["venice models --trait <t>"],
+        ["venice-py models --trait <t>"],
         "CLI filters traits client-side from `list` results; never calls "
         "`list_traits` to get the canonical trait set.",
     ),
     "models.resolve": (
         "covered",
-        ["venice models resolve --type <type>"],
+        ["venice-py models resolve --type <type>"],
         "Single command exposes resolve() + every resolve_* shortcut via --type.",
     ),
     "models.resolve_asr": (
         "covered",
-        ["venice models resolve --type asr"],
+        ["venice-py models resolve --type asr"],
         "Routed through resolve() with type='asr'.",
     ),
     "models.resolve_chat": (
         "covered",
-        ["venice models resolve --type chat"],
+        ["venice-py models resolve --type chat"],
         "Carries chat capability flags (--function-calling, --vision, etc).",
     ),
     "models.resolve_cheapest_video": (
         "covered",
-        ["venice models resolve --type cheapest-video"],
+        ["venice-py models resolve --type cheapest-video"],
         "Renders the CheapestVideoResult with all-quotes table.",
     ),
     "models.resolve_embedding": (
         "covered",
-        ["venice models resolve --type embedding"],
+        ["venice-py models resolve --type embedding"],
         "",
     ),
     "models.resolve_image": (
         "covered",
-        ["venice models resolve --type image"],
+        ["venice-py models resolve --type image"],
         "",
     ),
     "models.resolve_inpaint": (
         "covered",
-        ["venice models resolve --type inpaint"],
+        ["venice-py models resolve --type inpaint"],
         "",
     ),
     "models.resolve_music": (
         "covered",
-        ["venice models resolve --type music"],
+        ["venice-py models resolve --type music"],
         "",
     ),
     "models.resolve_tts": (
         "covered",
-        ["venice models resolve --type tts"],
+        ["venice-py models resolve --type tts"],
         "",
     ),
     "models.resolve_video": (
         "covered",
-        ["venice models resolve --type video"],
+        ["venice-py models resolve --type video"],
         "Carries video filters (--video-type, --audio, --min-resolution, --min-duration).",
     ),
     "models.resolve_video_upscale": (
         "covered",
-        ["venice models resolve --type video-upscale"],
+        ["venice-py models resolve --type video-upscale"],
         "",
     ),
     # ---- api_keys ----
     "api_keys.create": (
         "covered",
-        ["venice api-keys create"],
+        ["venice-py api-keys create"],
         "",
     ),
     "api_keys.create_web3_key": (
@@ -297,7 +297,7 @@ KNOWN_CLI_MAP: dict[str, tuple[str, list[str], str]] = {
     ),
     "api_keys.delete": (
         "covered",
-        ["venice api-keys delete"],
+        ["venice-py api-keys delete"],
         "",
     ),
     "api_keys.get_rate_limit_logs": (
@@ -317,33 +317,33 @@ KNOWN_CLI_MAP: dict[str, tuple[str, list[str], str]] = {
     ),
     "api_keys.iter_all": (
         "partial",
-        ["venice api-keys list"],
+        ["venice-py api-keys list"],
         "CLI calls `list()` (single page). Auto-paginating helper not used.",
     ),
     "api_keys.list": (
         "covered",
-        ["venice api-keys list"],
+        ["venice-py api-keys list"],
         "",
     ),
     "api_keys.retrieve": (
         "covered",
-        ["venice account keys get <id>"],
+        ["venice-py account keys get <id>"],
         "Renders the bare ApiKey via Rich panel; --json for scripting.",
     ),
     "api_keys.update": (
         "covered",
-        ["venice account keys update <id> [--description ... | --expiry ... | --limit-* ...]"],
+        ["venice-py account keys update <id> [--description ... | --expiry ... | --limit-* ...]"],
         "Updates description / expiry / consumption limits.",
     ),
     # ---- characters ----
     "characters.get": (
         "covered",
-        ["venice characters info"],
+        ["venice-py characters info"],
         "",
     ),
     "characters.iter_all": (
         "partial",
-        ["venice characters list"],
+        ["venice-py characters list"],
         "CLI uses `list()` only; no pagination over full catalogue.",
     ),
     "characters.iter_reviews": (
@@ -353,7 +353,7 @@ KNOWN_CLI_MAP: dict[str, tuple[str, list[str], str]] = {
     ),
     "characters.list": (
         "covered",
-        ["venice characters list"],
+        ["venice-py characters list"],
         "Exposes --search, --sort-by/--sort-order, --tags, --categories, and status filters.",
     ),
     "characters.reviews": (
@@ -364,12 +364,12 @@ KNOWN_CLI_MAP: dict[str, tuple[str, list[str], str]] = {
     # ---- billing ----
     "billing.get_balance": (
         "covered",
-        ["venice account balance"],
+        ["venice-py account balance"],
         "",
     ),
     "billing.get_usage_history": (
         "covered",
-        ["venice account usage"],
+        ["venice-py account usage"],
         "",
     ),
     "billing.get_usage_analytics": (
@@ -379,7 +379,7 @@ KNOWN_CLI_MAP: dict[str, tuple[str, list[str], str]] = {
     ),
     "billing.iter_usage_history": (
         "partial",
-        ["venice account usage"],
+        ["venice-py account usage"],
         "CLI shows the first usage-history page plus a 'more available' hint; no auto-pagination.",
     ),
     # ---- augment ----

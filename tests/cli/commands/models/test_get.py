@@ -1,4 +1,4 @@
-"""Tests for ``venice models get`` (cli/commands/models/get.py)."""
+"""Tests for ``venice-py models get`` (cli/commands/models/get.py)."""
 
 from __future__ import annotations
 

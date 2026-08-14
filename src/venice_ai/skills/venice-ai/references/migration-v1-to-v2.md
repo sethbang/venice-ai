@@ -70,7 +70,7 @@ The new async-job resources (`video`, `music`) use a consistent verb scheme — 
 
 ## Patterns the linter flags (not real v2 methods)
 
-`venice lint <path>` flags calls that won't run on v2 — including method names that look plausible but **do not exist in v2** (often from OpenAI habits or stale docs). These are *not* old v1 methods; they're mistakes to avoid:
+`venice-py lint <path>` flags calls that won't run on v2 — including method names that look plausible but **do not exist in v2** (often from OpenAI habits or stale docs). These are *not* old v1 methods; they're mistakes to avoid:
 
 - `client.audio.generate_music(...)` → use `client.music.run(...)` (V102)
 - `client.audio.generate_speech(...)` → use `client.audio.create_speech(...)` (V103)
@@ -81,7 +81,7 @@ The new async-job resources (`video`, `music`) use a consistent verb scheme — 
 plus the genuine v1 patterns it catches: `AsyncVeniceClient` (V100), `client.image.generate(...)` (V101), and `max_tokens=`.
 
 ```bash
-venice lint src/     # ships with SDK >= 2.0.0; discoverable via venice --help
+venice-py lint src/     # ships with SDK >= 2.0.0; discoverable via venice-py --help
 ```
 
 (The skill also ships a standalone copy at `scripts/lint_v1_usage.py` you can run directly.)

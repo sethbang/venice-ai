@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run ``venice lint`` against every Python code block in SKILL.md / references/*.md.
+"""Run ``venice-py lint`` against every Python code block in SKILL.md / references/*.md.
 
 Extracts ```python fenced code blocks from each markdown file under
 ``src/venice_ai/skills/<skill>/`` and pipes the body through the lint visitor. CI

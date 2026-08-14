@@ -31,9 +31,9 @@ def list_keys(ctx, output_json):
 
     Examples:
 
-      venice api-keys list
+      venice-py api-keys list
 
-      venice api-keys list --json
+      venice-py api-keys list --json
     """
     asyncio.run(_list_keys_async(ctx, output_json))
 
@@ -196,13 +196,13 @@ def create_key(
 
     Examples:
 
-      venice api-keys create --name "Production Key"
+      venice-py api-keys create --name "Production Key"
 
-      venice api-keys create --name "Admin" --type ADMIN
+      venice-py api-keys create --name "Admin" --type ADMIN
 
-      venice api-keys create --name "Capped" --limit-usd 50 --limit-period MONTH
+      venice-py api-keys create --name "Capped" --limit-usd 50 --limit-period MONTH
 
-      venice api-keys create --name "My App" --json
+      venice-py api-keys create --name "My App" --json
     """
     asyncio.run(
         _create_key_async(
@@ -320,9 +320,9 @@ def delete_key(ctx, key_id, yes):
 
     Examples:
 
-      venice api-keys delete key_abc123
+      venice-py api-keys delete key_abc123
 
-      venice api-keys delete key_abc123 --yes
+      venice-py api-keys delete key_abc123 --yes
     """
     asyncio.run(_delete_key_async(ctx, key_id, yes))
 

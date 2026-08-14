@@ -174,7 +174,7 @@ These integrations are evolving. Don't trust a code snippet from training data �
 
 1. **Passing `wallet_address=` to `X402Auth`** — no such kwarg; address is derived. Use `auth.wallet_address` (property) to read it.
 2. **Calling a fictional `auth.payment_header(amount_usd=...)`** — doesn't exist. `X402Auth` signs SIWE only. For payment headers use `auth.build_payment_header(requirement)` or, for the common case, `client.x402.top_up_with(...)`.
-3. **Treating `PaymentRequiredError` as transient** — it's terminal. The structured requirements live on `e.body` (NOT `e.payment_instructions` — `venice lint` flags this as V601). Sign a payment, then retry the original op.
+3. **Treating `PaymentRequiredError` as transient** — it's terminal. The structured requirements live on `e.body` (NOT `e.payment_instructions` — `venice-py lint` flags this as V601). Sign a payment, then retry the original op.
 4. **Signing SIWE on every call** instead of reusing one `X402Auth` instance within its TTL window — `VeniceClient(auth=auth)` caches the token internally, so this only matters for raw-HTTP code.
 5. **Forgetting the `[x402]` extra** — `from venice_ai.auth.x402 import X402Auth` ImportError is a setup smell. (Solana settlement needs the separate `[x402-solana]` extra.)
 6. **Committing the private key** — the wallet IS the agent's credentials; see `references/wallet-security.md`.

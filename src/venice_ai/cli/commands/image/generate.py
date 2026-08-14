@@ -120,16 +120,16 @@ def generate_image(
     Examples:
 
         # Basic usage
-        venice image generate "sunset over mountains"
+        venice-py image generate "sunset over mountains"
 
         # With advanced parameters
-        venice image generate "cyberpunk city" --steps 30 --cfg-scale 8.5 --style-preset Cinematic
+        venice-py image generate "cyberpunk city" --steps 30 --cfg-scale 8.5 --style-preset Cinematic
 
         # Using a preset
-        venice image generate "portrait photo" --preset photorealistic
+        venice-py image generate "portrait photo" --preset photorealistic
 
         # Interactive mode
-        venice image generate --interactive
+        venice-py image generate --interactive
     """
     if interactive:
         # Lazy import to avoid circular dependency (wizard imports _generate_image_async)

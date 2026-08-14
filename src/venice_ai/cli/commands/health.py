@@ -1,4 +1,4 @@
-"""``venice health`` — connectivity + balance diagnostic.
+"""``venice-py health`` — connectivity + balance diagnostic.
 
 Quick check that the SDK can reach Venice, the API key is valid, the model
 catalog is accessible, and (optionally) a tiny embedding ping succeeds and
@@ -86,9 +86,9 @@ def health_command(
 
     Examples::
 
-        venice health
-        venice health --full
-        venice health --wallet --wallet-env MY_WALLET_KEY
+        venice-py health
+        venice-py health --full
+        venice-py health --wallet --wallet-env MY_WALLET_KEY
     """
     api_key = ensure_api_key()
     asyncio.run(_run_checks(api_key, full=full, wallet=wallet, wallet_env=wallet_env))
@@ -96,7 +96,7 @@ def health_command(
 
 async def _run_checks(api_key: str, *, full: bool, wallet: bool, wallet_env: str) -> None:
     """Run the health check sequence; print results; raise SystemExit on failure."""
-    OutputManager.info("venice health")
+    OutputManager.info("venice-py health")
     results: list[_CheckResult] = []
 
     # 1. API key presence — already validated by ensure_api_key, but record it.

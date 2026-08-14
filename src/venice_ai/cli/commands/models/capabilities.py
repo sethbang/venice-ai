@@ -1,4 +1,4 @@
-"""``venice models capabilities <id>`` — typed capability view.
+"""``venice-py models capabilities <id>`` — typed capability view.
 
 Wraps :meth:`venice_ai.resources.models.Models.get_capabilities`. The
 SDK returns one of :class:`ChatCapabilities` / :class:`ImageCapabilities` /
@@ -28,8 +28,8 @@ def capabilities(ctx: click.Context, model_id: str, output_json: bool) -> None:
 
     Examples:
 
-      venice models capabilities llama-3.3-70b
-      venice models capabilities flux-dev --json
+      venice-py models capabilities llama-3.3-70b
+      venice-py models capabilities flux-dev --json
     """
     asyncio.run(_capabilities_async(ctx, model_id=model_id, output_json=output_json))
 

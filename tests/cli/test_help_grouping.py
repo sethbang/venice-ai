@@ -1,4 +1,4 @@
-"""Tests for the curated ``venice --help`` command-group layout."""
+"""Tests for the curated ``venice-py --help`` command-group layout."""
 
 from __future__ import annotations
 
@@ -50,5 +50,5 @@ def test_help_top_text_mentions_featured_commands() -> None:
     result = runner.invoke(cli, ["--help"])
     assert result.exit_code == 0
     out = result.output
-    assert "venice models resolve" in out
-    assert "venice lint" in out
+    assert "venice-py models resolve" in out
+    assert "venice-py lint" in out

@@ -125,7 +125,7 @@ solves it: pass an empty tracker at construction time, then hydrate
 pricing once the client is open. Pass `populate_pricing=False` if you've
 already supplied a pricing map yourself or want to skip the round-trip.
 
-**Field names that bite** (`venice lint` flags V502/V503):
+**Field names that bite** (`venice-py lint` flags V502/V503):
 - `tracker.total_cost_usd` (NOT `tracker.total`)
 - `tracker.total_tokens` (NOT `tracker.calls`)
 - `len(tracker.requests)` for call count

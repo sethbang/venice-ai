@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Flag v1 / OpenAI-style / non-idiomatic patterns in Venice v2 codebases.
 
-NOTE: On SDK >= 2.0.0, prefer ``venice lint <path>`` (the built-in CLI
+NOTE: On SDK >= 2.0.0, prefer ``venice-py lint <path>`` (the built-in CLI
 subcommand) — same rule codes, same flake8-style output, plus discoverable
-via ``venice --help``. This script exists for users on older SDK versions
+via ``venice-py --help``. This script exists for users on older SDK versions
 or as a standalone tool that doesn't require installing the SDK.
 
 Walks Python files under a target path and reports:

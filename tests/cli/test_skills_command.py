@@ -1,4 +1,4 @@
-"""Tests for the ``venice skills`` CLI command group."""
+"""Tests for the ``venice-py skills`` CLI command group."""
 
 from __future__ import annotations
 

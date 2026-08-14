@@ -60,4 +60,4 @@ async def test_offline_raises_clickexception():
     with pytest.raises(click.ClickException) as exc:
         await resolve_default_model(client, {"defaults": {}}, "chat", explicit=None)
     assert "--model" in str(exc.value)
-    assert "venice configure" in str(exc.value)
+    assert "venice-py configure" in str(exc.value)

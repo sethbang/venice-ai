@@ -1,4 +1,4 @@
-"""Tests for ``venice audio voices`` (cli/commands/audio.py)."""
+"""Tests for ``venice-py audio voices`` (cli/commands/audio.py)."""
 
 from __future__ import annotations
 
