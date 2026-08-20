@@ -296,4 +296,4 @@ def test_client_exposes_augment_namespace() -> None:
         # Don't need to close — no HTTP was issued — but do it anyway.
         import asyncio
 
-        asyncio.get_event_loop_policy().new_event_loop().run_until_complete(client.close())
+        asyncio.run(client.close())
