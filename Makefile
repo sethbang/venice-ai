@@ -27,7 +27,7 @@ endif
 .PHONY: help install clean clean-all clean-cassettes \
         test test-ci test-unit test-e2e test-fast test-fresh test-refresh test-quick test-verbose \
         test-mutation test-mutation-core test-mutation-results test-mutation-report test-mutation-show \
-        lint format format-check type-check type-check-strict type-check-report security \
+        lint format format-check type-check type-check-strict type-check-pyright type-check-report security \
         check-all check-imports check-dead-code \
         coverage coverage-html release-check dev-check pre-commit \
         build smoke-test \
@@ -205,20 +205,20 @@ test-mutation-show: ## Show mutation details
 # =====================================================
 lint: ## Run ruff linting checks
 	@echo "$(GREEN)Running ruff linting...$(NC)"
-	$(RUFF) check src/ tests/
+	$(RUFF) check src/ tests/ tools/ benchmarks/
 
 format: ## Format code with ruff
 	@echo "$(GREEN)Formatting code with ruff...$(NC)"
-	$(RUFF) format src/ tests/
-	$(RUFF) check --fix src/ tests/
+	$(RUFF) format src/ tests/ tools/ benchmarks/
+	$(RUFF) check --fix src/ tests/ tools/ benchmarks/
 
 # Non-mutating counterpart to `format`, for CI. `format` rewrites files, so
 # running it in a pipeline gates nothing — badly formatted code is silently
 # fixed and the job passes. This target fails instead.
 format-check: ## Verify formatting without modifying files
 	@echo "$(GREEN)Checking formatting with ruff...$(NC)"
-	$(RUFF) format --check src/ tests/
-	$(RUFF) check src/ tests/
+	$(RUFF) format --check src/ tests/ tools/ benchmarks/
+	$(RUFF) check src/ tests/ tools/ benchmarks/
 
 type-check: ## Run mypy type checking
 	@echo "$(GREEN)Running mypy type checking...$(NC)"
@@ -231,6 +231,15 @@ type-check-strict: ## Run strict mypy on critical modules
 		-p venice_ai._request_classifier \
 		-p venice_ai.auth.x402 \
 		--strict --show-error-codes --pretty
+
+# The `pyright (project)` job on main-review gates every PR, and mypy does not
+# stand in for it: pyright reports classes mypy does not, such as a name bound
+# only inside a try block being referenced from its except clause. Without a
+# target here, nothing local runs it and the first signal is a red required
+# check. CI installs --extras all so modules behind optional extras resolve.
+type-check-pyright: ## Run pyright over src/ (mirrors the required CI check)
+	@echo "$(GREEN)Running pyright...$(NC)"
+	$(RUN) pyright src/
 
 type-check-report: ## Generate mypy coverage report
 	@echo "$(GREEN)Generating mypy coverage report...$(NC)"
@@ -263,7 +272,7 @@ check-dead-code: ## Check for dead/unused code
 		$(RUFF) check --select F841 src/; \
 	fi
 
-check-all: format lint type-check check-imports check-dead-code security ## Run all quality checks
+check-all: format lint type-check type-check-pyright check-imports check-dead-code security ## Run all quality checks
 	@echo "$(GREEN)All quality checks completed!$(NC)"
 
 # =====================================================

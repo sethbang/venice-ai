@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **`__version__` no longer falls back to a plausible-looking version string.** When the
+  package metadata cannot be read — a source tree with nothing installed — `__version__`
+  now reports `0.0.0+unknown` instead of a hardcoded release number. A fallback spelled
+  like a real version makes a broken metadata lookup indistinguishable from a working one,
+  which is how the pre-rename lookup went unnoticed while `User-Agent` reported the wrong
+  version on every request. The lookup also narrowed from `except Exception` to
+  `except PackageNotFoundError`, so unrelated failures surface instead of being swallowed.
+
+- **`venice-py configure` reads the default config path at call time.** It previously bound
+  `DEFAULT_CONFIG_PATH` at import, so redirecting the config location reached
+  `venice_ai.cli.config` but not the `configure` command, which kept using the path captured
+  when the module was first imported.
+
+- Four version headings in this file (`2.0.1`, `2.0.2`, `2.1.0`, `2.2.0`) were written as
+  links but had no link definition, so they rendered as literal bracketed text.
+
+### Changed
+
+- **`make check-all` now runs pyright.** The `pyright (project)` job gates every PR, but no
+  `make` target invoked it, so the first signal for a pyright-only finding was a red required
+  check. mypy does not stand in for it — it does not report a name bound only inside a `try`
+  block being referenced from that block's `except` clause, which pyright does.
+
+- `make lint`, `make format`, and `make format-check` now cover `tools/` and `benchmarks/` in
+  addition to `src/` and `tests/`. `format-check` runs in CI, so both are gated rather than
+  merely formatted by hand. Clearing `benchmarks/` took 92 non-behavioural ruff fixes —
+  whitespace, import ordering, and `List`/`Dict`/`Optional` rewritten to builtin generics.
+  Every Python directory in the repo is now linted; `examples/` is covered by `examples.yml`.
+
 ## [2.2.0] - 2026-08-20
 
 ### Changed
@@ -28,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   `venice-ai` remains on PyPI permanently and is **not** yanked, so existing lockfiles keep resolving exactly as they do today.
 
-  A final `venice-ai` release follows this one as a bridge: metadata-only, with `venice-py` as its single dependency, so that `pip install venice-ai` still lands a working install — it just arrives under the new name. It has to ship second, since it depends on a `venice-py` that must already exist on PyPI. Until it does, `venice-ai` stays at 2.1.0, which is a complete and working v2 SDK; nothing breaks in the interval.
+  `venice-ai` 2.1.1 ships alongside this release as a bridge: metadata-only, with `venice-py` as its single dependency, so `pip install venice-ai` still lands a working install — it just arrives under the new name. It had to be published second, since it depends on a `venice-py` that must already exist on PyPI.
 
   Having both installed at once is safe: the bridge ships no importable module, so there is no `venice_ai/` directory for the two to fight over.
 
@@ -666,6 +699,11 @@ _Initial public release. No retroactive release notes documented._
 
 **Note**: This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. For detailed technical information about any changes, please refer to the git commit history or the linked source files.
 
+[Unreleased]: https://github.com/sethbang/venice-ai/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/sethbang/venice-ai/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/sethbang/venice-ai/compare/v2.0.2...v2.1.0
+[2.0.2]: https://github.com/sethbang/venice-ai/compare/v2.0.1...v2.0.2
+[2.0.1]: https://github.com/sethbang/venice-ai/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/sethbang/venice-ai/compare/v1.3.0...v2.0.0
 [1.3.0]: https://github.com/sethbang/venice-ai/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/sethbang/venice-ai/compare/v1.1.2...v1.2.0

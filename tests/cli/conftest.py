@@ -11,7 +11,6 @@ from venice_ai.cli import _paths as _cli_paths
 from venice_ai.cli import config as _cli_config
 from venice_ai.cli import conversation as _cli_conversation
 from venice_ai.cli import presets as _cli_presets
-from venice_ai.cli.commands import configure as _cli_configure
 from venice_ai.cli.utils.console import console as _cli_console
 from venice_ai.cli.utils.console import disable_plain_mode
 
@@ -36,7 +35,6 @@ def _sandbox_user_config_dir(tmp_path, monkeypatch):
 
     monkeypatch.setattr(_cli_paths, "_home", lambda: home)
     monkeypatch.setattr(_cli_config, "DEFAULT_CONFIG_PATH", app_dir / "config.yaml")
-    monkeypatch.setattr(_cli_configure, "DEFAULT_CONFIG_PATH", app_dir / "config.yaml")
     monkeypatch.setattr(_cli_conversation, "CONVERSATIONS_DIR", str(app_dir / "conversations"))
     monkeypatch.setattr(_cli_presets, "DEFAULT_PRESETS_DIR", app_dir / "presets")
 

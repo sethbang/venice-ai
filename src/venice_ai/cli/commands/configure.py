@@ -13,8 +13,8 @@ from rich.panel import Panel
 from venice_ai import VeniceClient
 from venice_ai.resources.models import ModelListType
 
+from .. import config as _config
 from ..config import (
-    DEFAULT_CONFIG_PATH,
     get_active_config_path,
     get_base_url,
     load_config,
@@ -55,7 +55,7 @@ def configure_cli(ctx: dict[str, Any]) -> None:
 
     # Honor ``venice --config <path>``: read from and write back to the
     # user-chosen file (falling back to the default location).
-    active_path = get_active_config_path() or DEFAULT_CONFIG_PATH
+    active_path = get_active_config_path() or _config.DEFAULT_CONFIG_PATH
 
     # Load existing config
     config = load_config(active_path)
@@ -209,7 +209,7 @@ def configure_cli(ctx: dict[str, Any]) -> None:
                 raise SystemExit(1) from e
         else:
             custom_path = questionary.path(
-                "Enter configuration file path:", default=str(DEFAULT_CONFIG_PATH)
+                "Enter configuration file path:", default=str(_config.DEFAULT_CONFIG_PATH)
             ).ask()
 
             if custom_path:
