@@ -47,6 +47,11 @@ configuration classes.
 
 from __future__ import annotations
 
+# Imported at module scope, not inside the try below, so the except clause can
+# name it. importlib.metadata is stdlib on every supported Python, so the import
+# itself cannot be what fails.
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _pkg_version
 from typing import TYPE_CHECKING
 
 # ── Static type-checking imports (not executed at runtime) ───────────────────
@@ -397,9 +402,6 @@ __all__ = [
 ]
 
 try:
-    from importlib.metadata import PackageNotFoundError
-    from importlib.metadata import version as _pkg_version
-
     __version__ = _pkg_version("venice-py")
 except PackageNotFoundError:  # pragma: no cover - source tree without installed metadata
     # Deliberately not a plausible release version. A real-looking literal here

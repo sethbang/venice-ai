@@ -27,6 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`make check-all` now runs pyright.** The `pyright (project)` job gates every PR, but no
+  `make` target invoked it, so the first signal for a pyright-only finding was a red required
+  check. mypy does not stand in for it — it does not report a name bound only inside a `try`
+  block being referenced from that block's `except` clause, which pyright does.
+
 - `make lint`, `make format`, and `make format-check` now cover `tools/` and `benchmarks/` in
   addition to `src/` and `tests/`. `format-check` runs in CI, so both are gated rather than
   merely formatted by hand. Clearing `benchmarks/` took 92 non-behavioural ruff fixes —
