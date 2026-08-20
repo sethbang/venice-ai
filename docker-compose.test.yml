@@ -1,7 +1,7 @@
 services:
   redis:
     image: redis:7-alpine
-    container_name: venice-ai-test-redis
+    container_name: venice-py-test-redis
     ports:
       - "6379:6379"
     command: redis-server --appendonly yes --appendfsync everysec
@@ -14,12 +14,12 @@ services:
       retries: 5
       start_period: 10s
     networks:
-      - venice-ai-test
+      - venice-py-test
 
 volumes:
   redis_test_data:
     driver: local
 
 networks:
-  venice-ai-test:
+  venice-py-test:
     driver: bridge

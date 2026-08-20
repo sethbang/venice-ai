@@ -26,7 +26,7 @@ from .fixtures import (
     load_collateral_json,
 )
 
-dcap_qvl = pytest.importorskip("dcap_qvl", reason="requires venice-ai[e2ee-verify]")
+dcap_qvl = pytest.importorskip("dcap_qvl", reason="requires venice-py[e2ee-verify]")
 
 #: TCB statuses dcap-qvl reports for a current, unrevoked platform. The Verifier
 #: phase pins the exact accept/reject policy; here we only assert the corpus is

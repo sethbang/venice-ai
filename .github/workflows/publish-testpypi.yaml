@@ -7,7 +7,7 @@
 # Trusted Publisher setup (one-time, on test.pypi.org):
 #   1. Log into https://test.pypi.org/manage/account/publishing/
 #   2. Add a new pending publisher with:
-#        - PyPI Project Name:    venice-ai
+#        - PyPI Project Name:    venice-py
 #        - Owner:                sethbang
 #        - Repository name:      venice-ai   (update to venice-py after the repo rename)
 #        - Workflow name:        publish-testpypi.yaml
@@ -91,5 +91,5 @@ jobs:
           echo "  /tmp/venice-rc/bin/pip install \\"
           echo "    -i https://test.pypi.org/simple/ \\"
           echo "    --extra-index-url https://pypi.org/simple/ \\"
-          echo "    \"venice-ai[all]==$v\""
+          echo "    \"venice-py[all]==$v\""
           echo "  /tmp/venice-rc/bin/python -c \"from venice_ai import __version__; print(__version__)\""

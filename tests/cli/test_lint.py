@@ -337,7 +337,7 @@ def test_informational_codes_are_known_codes() -> None:
 
 def test_lint_runs_without_pyyaml(tmp_path: Path, monkeypatch) -> None:
     """``venice-py lint`` is the most useful subcommand for codebases-using-venice;
-    it must work on a bare ``pip install venice-ai`` install (no ``[cli]`` extra,
+    it must work on a bare ``pip install venice-py`` install (no ``[cli]`` extra,
     no PyYAML).
 
     Simulate the bare install by hiding ``yaml`` from ``sys.modules`` and from

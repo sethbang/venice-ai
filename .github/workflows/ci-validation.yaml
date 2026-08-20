@@ -205,7 +205,7 @@ jobs:
 
       - name: Smoke import
         run: |
-          /tmp/venv/bin/python -c "from venice_ai import VeniceClient, __version__; print(f'venice-ai v{__version__} OK extra=${{ matrix.extra }}')"
+          /tmp/venv/bin/python -c "from venice_ai import VeniceClient, __version__; print(f'venice-py v{__version__} OK extra=${{ matrix.extra }}')"
 
   # ---------------------------------------------------------------------------
   # vulture (audit Phase 5D-4) — dead-code gate at min_confidence=80
