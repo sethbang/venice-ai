@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-08-20
+
+### Changed
+
+- **The PyPI package is now `venice-py`, renamed from `venice-ai`.** v2.1.0 renamed the CLI binary for the same reason: Venice's official tooling already owns the `venice` name, and a community SDK sitting on `venice-ai` invites people to mistake it for an official release. Renaming the distribution finishes what the CLI rename started.
+
+  ```bash
+  pip install venice-ai    # before
+  pip install venice-py    # after
+  ```
+
+  **Your code does not change.** The import package is still `venice_ai`, and `VENICE_API_KEY` is still `VENICE_API_KEY`:
+
+  ```python
+  from venice_ai import VeniceClient   # unchanged
+  ```
+
+  A distribution name that differs from its import name is ordinary in Python — `pillow` imports as `PIL`, `python-dotenv` as `dotenv`. Renaming the import package would have broken every existing `import venice_ai` for no benefit, so it was left alone. `VENICE_API_KEY` names the *service* rather than this package, so sharing it with Venice's own tooling is deliberate: one key works everywhere.
+
+  Update the dependency wherever it is pinned — `requirements.txt`, `pyproject.toml`, lockfiles, Dockerfiles, CI installs. Extras are unaffected apart from the name: `pip install 'venice-py[cli]'`, `[x402]`, `[redis]`, `[adaptive]`, `[e2ee]`.
+
+  `venice-ai` remains on PyPI permanently and is **not** yanked, so existing lockfiles keep resolving. Its final release is metadata-only and depends on `venice-py`, which means `pip install venice-ai` still gets you a working install — it just arrives under the new name.
+
+  Installing both at once is safe: the bridge ships no importable module, so there is no `venice_ai/` directory for the two to fight over.
+
+- **Pinning `>=2` is no longer necessary.** The old advice existed because a bare `pip install venice-ai` on Python ≤3.12 silently resolved to v1.3.x, which supported Python ≥3.11. No v1 line was ever published under `venice-py`, so there is no wrong version to land on — on an unsupported Python, pip now reports that no matching distribution exists, which is the failure the pin was engineered to force. `pip install venice-py` is enough.
+
+  If you are staying on v1 for now, keep pinning `venice-ai<2`; the v1 line exists only under the old name.
+
+- **The bundled skills are now `venice-py`, `venice-py-multimodal`, `venice-py-production` and `venice-py-x402`.** `venice-py skills install` removes the superseded `venice-ai*` directories it finds in the target `.claude/skills/`, so upgrading does not leave both generations installed and triggering against each other. A directory is only removed when its `SKILL.md` identifies it as one of ours, so a directory of your own that happens to share a name is left alone.
+
+- **CLI data has moved from `~/.venice/` to `~/.venice-py/`.** `~/.venice/` collides with Venice's official CLI, which may legitimately own that path.
+
+  The first `venice-py` command that reads the directory copies `config.yaml`, `conversations/` and `presets/` across and prints a one-line notice. Nothing is lost and nothing needs doing by hand.
+
+  The old directory is **left exactly as it was** — it may hold the official CLI's data, and deleting another tool's files would be worse than leaving a stale copy behind. Remove it yourself once you are satisfied nothing else needs it. Only the three subpaths listed above are copied; anything else in `~/.venice/` stays put.
+
+  Permissions are tightened rather than merely preserved: `conversations/` is narrowed to `0700` and `config.yaml` to `0600`, since transcripts hold prompt and response text and the config may hold a plaintext API key.
+
+- **The `User-Agent` sent with every request is now `venice-py/<version>`**, previously `VeniceAI-Python-SDK/<version>`.
+
+### Fixed
+
+- **`__version__` no longer reports a stale version.** It is resolved from the installed distribution's metadata, and that lookup sat inside a bare `except Exception` that fell back to a hardcoded literal. Any mismatch between the looked-up name and the built distribution therefore froze `__version__` silently — and `User-Agent` is derived from it, so every request would have misreported the version. The lookup now tracks the distribution name, with a test asserting the two cannot drift apart again.
+
 ## [2.1.0] - 2026-08-14
 
 ### Changed

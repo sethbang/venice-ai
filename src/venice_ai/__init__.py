@@ -401,4 +401,4 @@ try:
 
     __version__ = _pkg_version("venice-py")
 except Exception:  # pragma: no cover - source tree without installed metadata
-    __version__ = "2.1.0"
+    __version__ = "2.2.0"
