@@ -138,7 +138,7 @@ def _try_import(module: str) -> object | None:
         # `eth_account`) is not evidence the venice symbol is wrong — the SDK
         # gates those behind extras. Re-raise only for missing venice_ai.*
         # submodules, which ARE real structural problems.
-        missing = (exc.name or "")
+        missing = exc.name or ""
         if missing == "venice_ai" or missing.startswith("venice_ai."):
             raise
         return None
@@ -248,8 +248,7 @@ def _check_block(body: str, md: Path, start_line: int) -> list[Finding]:
                 Finding(
                     md,
                     loc(node),
-                    f"no module named '{node.module}' in venice_ai "
-                    "(module path does not exist)",
+                    f"no module named '{node.module}' in venice_ai (module path does not exist)",
                 )
             )
             continue
