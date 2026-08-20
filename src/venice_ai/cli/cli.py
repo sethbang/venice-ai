@@ -73,7 +73,10 @@ class _GroupedCLI(click.Group):
 @click.pass_context
 def cli(ctx: click.Context, version: bool, config: str | None, plain: bool) -> None:
     """
-    Venice AI CLI - Your AI assistant in the terminal.
+    venice-py - Your Venice AI assistant in the terminal.
+
+    Unofficial and community-maintained. This is not Venice's official CLI,
+    which is a separate Node program invoked as ``venice``.
 
     Featured commands: ``venice-py models resolve`` (find a model by capability),
     ``venice-py lint`` (catch v1 / OpenAI-style usage in your code).
