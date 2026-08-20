@@ -27,9 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `make lint`, `make format`, and `make format-check` now cover `tools/` in addition to
-  `src/` and `tests/`. `format-check` runs in CI, so `tools/` is gated rather than merely
-  formatted by hand.
+- `make lint`, `make format`, and `make format-check` now cover `tools/` and `benchmarks/` in
+  addition to `src/` and `tests/`. `format-check` runs in CI, so both are gated rather than
+  merely formatted by hand. Clearing `benchmarks/` took 92 non-behavioural ruff fixes —
+  whitespace, import ordering, and `List`/`Dict`/`Optional` rewritten to builtin generics.
+  Every Python directory in the repo is now linted; `examples/` is covered by `examples.yml`.
 
 ## [2.2.0] - 2026-08-20
 
