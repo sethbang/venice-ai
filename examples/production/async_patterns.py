@@ -11,7 +11,7 @@ This example demonstrates production-ready asynchronous patterns for the Venice 
 6. Connection pooling optimization
 
 Requirements:
-    pip install venice-ai
+    pip install venice-py
     export VENICE_API_KEY="your-api-key"
 """
 

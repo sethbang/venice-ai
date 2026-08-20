@@ -60,7 +60,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 _INSTALL_HINT = (
     "Venice full client-side TDX quote verification requires the ``dcap-qvl`` "
     "package, which is an optional dependency. Install it with: "
-    "pip install 'venice-ai[e2ee-verify]'"
+    "pip install 'venice-py[e2ee-verify]'"
 )
 
 #: REPORTDATA layout = signing_address(20B) || 12 zero bytes || sent_nonce(32B).

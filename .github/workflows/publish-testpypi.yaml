@@ -1,20 +1,20 @@
 # .github/workflows/publish-testpypi.yaml
 #
-# Manual TestPyPI publish for v2.0.0 RC dry-runs (Phase 6 of the
-# pre-release audit). Triggered via the GitHub UI's "Run workflow"
-# button on this file in the Actions tab.
+# Manual TestPyPI publish for release-candidate dry-runs. Triggered via the
+# GitHub UI's "Run workflow" button on this file in the Actions tab. Refuses
+# any version that is not an rc/a/b pre-release, so it can never shadow a
+# real release.
 #
 # Trusted Publisher setup (one-time, on test.pypi.org):
 #   1. Log into https://test.pypi.org/manage/account/publishing/
 #   2. Add a new pending publisher with:
-#        - PyPI Project Name:    venice-ai
+#        - PyPI Project Name:    venice-py
 #        - Owner:                sethbang
-#        - Repository name:      venice-ai
+#        - Repository name:      venice-ai   (update if the repo is ever renamed)
 #        - Workflow name:        publish-testpypi.yaml
 #        - Environment name:     testpypi
-#   3. Save. The first successful run from this workflow against an
-#      `rc`-suffixed version (e.g. 2.0.0rc1) will materialize the
-#      pending publisher into a real one.
+#   3. Save. A pending publisher becomes a real one on the first
+#      successful publish from this workflow.
 #
 # Why a separate environment from `pypi`:
 #   - Lets the GitHub repo restrict who can manually trigger TestPyPI
@@ -40,10 +40,10 @@ jobs:
   build-and-publish-testpypi:
     name: Build wheel + sdist and publish to TestPyPI
     runs-on: ubuntu-latest
-    if: github.repository == 'sethbang/venice-ai' && github.event.inputs.confirm == 'publish-rc'
+    if: github.repository_owner == 'sethbang' && github.event.inputs.confirm == 'publish-rc'
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/venice-ai
+      url: https://test.pypi.org/p/venice-py
 
     steps:
       - name: Checkout repository
@@ -91,5 +91,5 @@ jobs:
           echo "  /tmp/venice-rc/bin/pip install \\"
           echo "    -i https://test.pypi.org/simple/ \\"
           echo "    --extra-index-url https://pypi.org/simple/ \\"
-          echo "    \"venice-ai[all]==$v\""
+          echo "    \"venice-py[all]==$v\""
           echo "  /tmp/venice-rc/bin/python -c \"from venice_ai import __version__; print(__version__)\""

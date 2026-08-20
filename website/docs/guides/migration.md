@@ -1,6 +1,6 @@
 # Migration Guide: v1 → v2
 
-**venice-ai v2.0.0 is a ground-up rewrite.** The client is now async-first, most
+**Venice AI Python SDK v2.0.0 is a ground-up rewrite.** The client is now async-first, most
 responses are typed Pydantic models, and a large set of new resources (video, music,
 crypto, augment, x402, a CLI, rate limiting, and more) ships alongside the v1 surface.
 
@@ -10,36 +10,45 @@ rough order of impact. For the complete list of additions, see the
 
 ---
 
-## 0. Raise your Python floor first, in your dependency file
+## 0. Change the package name — that is also your version floor
 
-v2 requires **Python 3.13+**. On anything older, pip resolves `venice-ai` to the newest
-v1 release *silently* — no error, no warning — so the first sign of trouble is an
-`ImportError` on a v2 name.
+v2 requires **Python 3.13+**, and it is published under a different name than v1. The
+v1 line (1.3.x and earlier) exists only as `venice-ai`; v2 lives on PyPI as
+[`venice-py`](https://pypi.org/project/venice-py/).
 
-Pin the major version everywhere the dependency is declared, not just in the command you
-type. A bare `venice-ai` in `requirements.txt` or `pyproject.toml` is the common way to
-end up back on v1 without noticing:
+That rename does the job the old `>=2` pin used to do. Under `venice-ai`, a bare install
+on Python 3.12 or older resolved to the newest v1 release *silently* — no error, no
+warning — so the first sign of trouble was an `ImportError` on a v2 name. `venice-py` has
+no v1 to fall back to, so an interpreter that is too old fails loudly and says why:
+
+```console
+$ pip install venice-py
+ERROR: Ignored the following versions that require a different python version: ...
+ERROR: No matching distribution found for venice-py
+```
+
+Change the name everywhere the dependency is declared, not just in the command you type —
+`requirements.txt`, `pyproject.toml`, lockfiles, Dockerfiles, CI installs:
 
 ```text
 # requirements.txt
-venice-ai>=2
+venice-py
 ```
 
 ```toml
 # pyproject.toml
-dependencies = ["venice-ai>=2"]
+dependencies = ["venice-py"]
 ```
 
-With the floor in place, an interpreter that is too old fails loudly and says why:
+**Your imports do not change.** The distribution is `venice-py`; the module it installs is
+still `venice_ai`, exactly as before:
 
-```console
-$ pip install 'venice-ai>=2'
-ERROR: Ignored the following versions that require a different python version:
-       2.0.2 Requires-Python <4.0,>=3.13
-ERROR: No matching distribution found for venice-ai>=2
+```python
+from venice_ai import VeniceClient   # unchanged
 ```
 
-Staying on v1 for now is a legitimate choice — pin `venice-ai<2` to make it explicit.
+Staying on v1 for now is a legitimate choice — keep `venice-ai<2`, which pins you to the
+old name, where the v1 line lives.
 
 ---
 
@@ -319,7 +328,7 @@ these over hardcoding a model id, which goes stale on deprecation.
 
 ### CLI, rate limiting, and observability
 
-v2 ships a `venice` command-line tool (`pip install` exposes the `venice` entry
+v2 ships a `venice-py` command-line tool (`pip install` exposes the `venice-py` entry
 point), pluggable rate limiting (`SIMPLE` / `ADAPTIVE` modes; the `[adaptive]` extra),
 configurable backends (in-memory by default, Redis via the `[redis]` extra), cost
 tracking, and structured logging.
@@ -327,11 +336,11 @@ tracking, and structured logging.
 ### New optional extras
 
 ```bash
-pip install 'venice-ai[redis]'        # Redis-backed rate limiting / caching
-pip install 'venice-ai[adaptive]'     # ADAPTIVE rate limiter
-pip install 'venice-ai[x402]'         # SIWE wallet auth (eth-account + siwe)
-pip install 'venice-ai[x402-solana]'  # Solana wallet settlement
-pip install 'venice-ai[e2ee]'         # TEE client-side encryption (cryptography)
+pip install 'venice-py[redis]'        # Redis-backed rate limiting / caching
+pip install 'venice-py[adaptive]'     # ADAPTIVE rate limiter
+pip install 'venice-py[x402]'         # SIWE wallet auth (eth-account + siwe)
+pip install 'venice-py[x402-solana]'  # Solana wallet settlement
+pip install 'venice-py[e2ee]'         # TEE client-side encryption (cryptography)
 ```
 
 ### Client-side E2EE (`enable_e2ee` / `e2ee=True`)
@@ -343,7 +352,7 @@ attested enclave key, stream the response, and decrypt it locally.
 
 **What to do:**
 
-- Install the extra: `pip install 'venice-ai[e2ee]'` (pulls `cryptography`).
+- Install the extra: `pip install 'venice-py[e2ee]'` (pulls `cryptography`).
   Baseline attestation works without it; only encryption needs it.
 - Use an `e2ee-*` confidential-compute model. Discover one dynamically — do not
   hardcode a model id:

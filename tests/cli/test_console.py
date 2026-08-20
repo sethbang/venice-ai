@@ -121,7 +121,7 @@ class TestVersionInfo:
             print_version_info()
 
         result = output.getvalue()
-        assert "Venice AI CLI" in result
+        assert "venice-py" in result
         assert "1.0.0" in result
 
 
@@ -331,7 +331,7 @@ class TestPlainModePrintFunctions:
             print_version_info()
 
         result = output.getvalue()
-        assert "Venice AI CLI v2.0.0" in result
+        assert "venice-py v2.0.0" in result
 
     def test_print_markdown_plain_mode(self, capture_plain_console):
         """Test markdown printing in plain mode (prints raw text)"""

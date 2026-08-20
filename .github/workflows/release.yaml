@@ -51,11 +51,14 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     needs: version-check
-    # Fail-safe: only the canonical repo may publish to PyPI, never a fork.
-    if: github.repository == 'sethbang/venice-ai'
+    # Fail-safe: only repos under the canonical owner may publish to PyPI, never a
+    # fork. Matched on the OWNER, not `owner/repo`: a hardcoded repo name silently
+    # turns this job into a no-op the moment the repo is renamed (green check,
+    # nothing published), and the owner is the part that actually gates forks.
+    if: github.repository_owner == 'sethbang'
     environment:
       name: pypi
-      url: https://pypi.org/p/venice-ai # Update with your project name
+      url: https://pypi.org/p/venice-py
 
     steps:
       - name: Checkout repository

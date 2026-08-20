@@ -149,7 +149,7 @@ def test_import_error_hint(monkeypatch: pytest.MonkeyPatch) -> None:
         return real_import(name, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "__import__", _blocked_import)
-    with pytest.raises(ImportError, match=r"venice-ai\[x402-solana\]"):
+    with pytest.raises(ImportError, match=r"venice-py\[x402-solana\]"):
         importlib.import_module("venice_ai.auth.x402_solana")
 
 

@@ -168,7 +168,7 @@ def test_require_crypto_raises_helpful_importerror_when_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """When cryptography is unavailable, ``_require_crypto`` raises ImportError
-    with the ``pip install venice-ai[e2ee]`` hint."""
+    with the ``pip install venice-py[e2ee]`` hint."""
     import builtins
 
     real_import = builtins.__import__
@@ -179,5 +179,5 @@ def test_require_crypto_raises_helpful_importerror_when_missing(
         return real_import(name, *args, **kwargs)  # type: ignore[arg-type]
 
     monkeypatch.setattr(builtins, "__import__", fake_import)
-    with pytest.raises(ImportError, match=r"venice-ai\[e2ee\]"):
+    with pytest.raises(ImportError, match=r"venice-py\[e2ee\]"):
         tee._require_crypto()

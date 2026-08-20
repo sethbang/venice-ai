@@ -20,7 +20,11 @@ PYTHON="${PYTHON:-python3.13}"
 echo "==> Building wheel + sdist"
 poetry build
 
-WHEEL=$(ls -t "$DIST_DIR"/venice_ai-*.whl | head -1)
+WHEEL=$(ls -t "$DIST_DIR"/venice_py-*.whl 2>/dev/null | head -1)
+if [ -z "$WHEEL" ]; then
+  echo "error: no venice_py-*.whl in $DIST_DIR" >&2
+  exit 1
+fi
 echo "==> Wheel: $WHEEL"
 
 EXTRAS=(

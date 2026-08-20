@@ -80,7 +80,7 @@ def main() -> int:
     blocks_checked = 0
     files_checked = 0
 
-    for skill_dir in sorted(SKILLS_ROOT.glob("venice-ai*")):
+    for skill_dir in sorted(SKILLS_ROOT.glob("venice-py*")):
         if not skill_dir.is_dir():
             continue
         for md in skill_dir.rglob("*.md"):
@@ -95,6 +95,9 @@ def main() -> int:
                     all_findings.extend(f for f in findings if f.code not in INFORMATIONAL_CODES)
 
     print(f"Checked {blocks_checked} python code block(s) across {files_checked} markdown file(s).")
+    if not files_checked:
+        print(f"error: no skill markdown found under {SKILLS_ROOT}", file=sys.stderr)
+        return 1
     if all_findings:
         print()
         for f in all_findings:

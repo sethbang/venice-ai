@@ -199,13 +199,22 @@ jobs:
         run: |
           python -m venv /tmp/venv
           /tmp/venv/bin/pip install --upgrade pip
-          WHEEL=$(ls dist/venice_ai-*.whl | head -1)
+          # Guarded, not a bare glob: an unmatched glob leaves WHEEL empty and
+          # `pip install "[redis]"` fails with an opaque error instead of naming
+          # the real cause. The distribution rename venice_ai -> venice_py is
+          # exactly how that happens.
+          WHEEL=$(ls dist/venice_py-*.whl 2>/dev/null | head -1)
+          if [ -z "${WHEEL}" ]; then
+            echo "::error::No dist/venice_py-*.whl found. Contents of dist/:"
+            ls -la dist/ || true
+            exit 1
+          fi
           echo "Installing: ${WHEEL}${{ matrix.extra }}"
           /tmp/venv/bin/pip install "${WHEEL}${{ matrix.extra }}"
 
       - name: Smoke import
         run: |
-          /tmp/venv/bin/python -c "from venice_ai import VeniceClient, __version__; print(f'venice-ai v{__version__} OK extra=${{ matrix.extra }}')"
+          /tmp/venv/bin/python -c "from venice_ai import VeniceClient, __version__; print(f'venice-py v{__version__} OK extra=${{ matrix.extra }}')"
 
   # ---------------------------------------------------------------------------
   # vulture (audit Phase 5D-4) — dead-code gate at min_confidence=80

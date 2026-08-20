@@ -1,13 +1,13 @@
 # Venice Claude Code skills
 
-Four [Claude Code skills](https://docs.claude.com/en/docs/claude-code/skills) that empower AI builders to write idiomatic Venice AI v2 code on the first try. They auto-load when their trigger contexts match — `venice-py chat`, `venice-py image`, `venice rate limit`, `venice x402`, etc.
+Four [Claude Code skills](https://docs.claude.com/en/docs/claude-code/skills) that empower AI builders to write idiomatic Venice AI v2 code on the first try. They auto-load when their trigger contexts match — "Venice chat", "generate an image with Venice", "Venice rate limits", "Venice x402", etc.
 
 | Skill | Purpose | Triggers on |
 |---|---|---|
-| **`venice-ai`** | Setup, chat, streaming, tool calling / agent loops, structured output, model resolution, embeddings, characters, augment, response metadata, v1→v2 migration | `venice_ai` import, `VeniceClient`, "venice-py chat / stream / tool / agent" |
-| **`venice-ai-multimodal`** | Image, audio (TTS + STT), video, music generation; save patterns; async-job lifecycle | "venice-py image / TTS / STT / video / music" |
-| **`venice-ai-production`** | Retries with `RateLimitError.retry_after_seconds`, bounded concurrency via `client.gather()`, header-driven cost tracking, error taxonomy, observability, prompt caching | "production venice", "rate limit", "track cost", "retry / backoff venice" |
-| **`venice-ai-x402`** | `client.x402.*` (balance, transactions, top_up, top_up_with), SIWE auth via `X402Auth`, agent-framework wiring (Coinbase Agentkit, Eliza, x402-axios) | "x402 venice", "SIWE", "venice without API key", "venice from autonomous agent" |
+| **`venice-py`** | Setup, chat, streaming, tool calling / agent loops, structured output, model resolution, embeddings, characters, augment, response metadata, v1→v2 migration | `venice_ai` import, `VeniceClient`, "venice-py chat / stream / tool / agent" |
+| **`venice-py-multimodal`** | Image, audio (TTS + STT), video, music generation; save patterns; async-job lifecycle | "venice-py image / TTS / STT / video / music" |
+| **`venice-py-production`** | Retries with `RateLimitError.retry_after_seconds`, bounded concurrency via `client.gather()`, header-driven cost tracking, error taxonomy, observability, prompt caching | "production venice", "rate limit", "track cost", "retry / backoff venice" |
+| **`venice-py-x402`** | `client.x402.*` (balance, transactions, top_up, top_up_with), SIWE auth via `X402Auth`, agent-framework wiring (Coinbase Agentkit, Eliza, x402-axios) | "x402 venice", "SIWE", "venice without API key", "venice from autonomous agent" |
 
 ## Install
 

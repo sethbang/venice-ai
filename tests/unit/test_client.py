@@ -670,4 +670,4 @@ def test_http_client_config_user_agent_uses_package_version() -> None:
     hardcoded literal (which drifted from the real version, e.g. on rc builds)."""
     import venice_ai
 
-    assert HttpClientConfig().user_agent == f"VeniceAI-Python-SDK/{venice_ai.__version__}"
+    assert HttpClientConfig().user_agent == f"venice-py/{venice_ai.__version__}"

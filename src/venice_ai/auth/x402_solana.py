@@ -38,7 +38,7 @@ Usage::
         token_program="Tokenkeg...",
     )
 
-This module is optional and requires ``pip install 'venice-ai[x402-solana]'``.
+This module is optional and requires ``pip install 'venice-py[x402-solana]'``.
 """
 
 from __future__ import annotations
@@ -62,7 +62,7 @@ try:
 except ImportError as exc:  # pragma: no cover - import-time only
     raise ImportError(
         "The x402 Solana settlement helpers require the ``x402-solana`` extra. "
-        "Install it with: pip install 'venice-ai[x402-solana]'"
+        "Install it with: pip install 'venice-py[x402-solana]'"
     ) from exc
 
 if TYPE_CHECKING:

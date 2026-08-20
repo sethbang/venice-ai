@@ -12,7 +12,7 @@ def _default_user_agent() -> str:
     # client, which imports this config module).
     from venice_ai import __version__
 
-    return f"VeniceAI-Python-SDK/{__version__}"
+    return f"venice-py/{__version__}"
 
 
 class HttpClientConfig(BaseModel):

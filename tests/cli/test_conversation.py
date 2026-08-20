@@ -98,7 +98,7 @@ class TestConversationPermissions:
     def test_saved_file_mode_is_0600(self, tmp_path):
         import stat
 
-        convs_dir = tmp_path / ".venice" / "conversations"
+        convs_dir = tmp_path / ".venice-py" / "conversations"
         with patch("venice_ai.cli.conversation.CONVERSATIONS_DIR", str(convs_dir)):
             filepath = save_conversation("conv1", "model", [{"role": "user", "content": "hi"}])
         mode = stat.S_IMODE(Path(filepath).stat().st_mode)
@@ -108,7 +108,7 @@ class TestConversationPermissions:
         import stat
 
         # Point at a fresh, non-existent subpath so directory creation runs.
-        convs_dir = tmp_path / ".venice" / "conversations"
+        convs_dir = tmp_path / ".venice-py" / "conversations"
         with patch("venice_ai.cli.conversation.CONVERSATIONS_DIR", str(convs_dir)):
             _ensure_dir()
         mode = stat.S_IMODE(convs_dir.stat().st_mode)

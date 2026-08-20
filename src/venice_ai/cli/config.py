@@ -9,14 +9,16 @@ from typing import Any
 import click
 from dotenv import load_dotenv
 
+from . import _paths
+
 # ``yaml`` is gated behind the ``[cli]`` extra. Lazy-import it inside the
 # read/write helpers so subcommands that don't touch the config file (e.g.
-# ``venice-py lint``) work on a bare ``pip install venice-ai`` install.
+# ``venice-py lint``) work on a bare ``pip install venice-py`` install.
 
 # Load environment variables
 load_dotenv()
 
-DEFAULT_CONFIG_PATH = Path.home() / ".venice" / "config.yaml"
+DEFAULT_CONFIG_PATH = _paths.app_dir() / "config.yaml"
 DEFAULT_CONFIG: dict[str, Any] = {
     "api": {"base_url": "https://api.venice.ai/api/v1"},
     "defaults": {
@@ -65,6 +67,7 @@ def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any
 
 def load_config(config_path: Path | None = None) -> dict[str, Any]:
     """Load configuration from file or create default"""
+    _paths.ensure_migrated()
     if config_path is None:
         config_path = DEFAULT_CONFIG_PATH
 
@@ -75,7 +78,7 @@ def load_config(config_path: Path | None = None) -> dict[str, Any]:
             except ModuleNotFoundError:
                 click.echo(
                     f"Warning: PyYAML not installed; cannot read {config_path}. "
-                    "Install with: pip install 'venice-ai[cli]'",
+                    "Install with: pip install 'venice-py[cli]'",
                     err=True,
                 )
                 return DEFAULT_CONFIG.copy()
@@ -114,6 +117,7 @@ def load_config(config_path: Path | None = None) -> dict[str, Any]:
 
 def save_config(config: dict[str, Any], config_path: Path | None = None) -> None:
     """Save configuration to file"""
+    _paths.ensure_migrated()
     if config_path is None:
         config_path = DEFAULT_CONFIG_PATH
 

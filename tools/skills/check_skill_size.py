@@ -22,7 +22,7 @@ def main() -> int:
     over: list[tuple[Path, int]] = []
     checked = 0
 
-    for skill_md in sorted(SKILLS_ROOT.glob("venice-ai*/SKILL.md")):
+    for skill_md in sorted(SKILLS_ROOT.glob("venice-py*/SKILL.md")):
         line_count = sum(1 for _ in skill_md.open(encoding="utf-8"))
         checked += 1
         rel = skill_md.relative_to(REPO_ROOT)
@@ -32,6 +32,9 @@ def main() -> int:
             over.append((skill_md, line_count))
 
     print()
+    if not checked:
+        print(f"error: no SKILL.md files found under {SKILLS_ROOT}", file=sys.stderr)
+        return 1
     if over:
         print(f"{len(over)} SKILL.md file(s) exceed {LIMIT} lines:")
         for path, n in over:

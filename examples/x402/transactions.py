@@ -9,7 +9,7 @@ entries (top-ups and usage debits) for the SIWE-authenticated wallet.
 
 **Install the optional extra** first::
 
-    pip install 'venice-ai[x402]'
+    pip install 'venice-py[x402]'
 
 **Private key safety:** Read the key from an environment variable or a
 secure vault — never hardcode. Use a test wallet when experimenting.
@@ -36,7 +36,7 @@ async def list_transactions() -> bool:
         from venice_ai.auth.x402 import X402Auth
     except ImportError as e:
         print("⏭️ Missing optional dependency — skipping. Install with:")
-        print("   pip install 'venice-ai[x402]'")
+        print("   pip install 'venice-py[x402]'")
         print(f"   (original error: {e})")
         return True
 

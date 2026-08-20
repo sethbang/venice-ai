@@ -499,7 +499,7 @@ class VeniceClientFactory:
             except ImportError:
                 raise ImportError(
                     "adaptive-rate-limiter package is required for ADAPTIVE rate limiting mode. "
-                    "Install it with: pip install 'venice-ai[adaptive]'"
+                    "Install it with: pip install 'venice-py[adaptive]'"
                 ) from None
             except Exception as exc:
                 raise RuntimeError(

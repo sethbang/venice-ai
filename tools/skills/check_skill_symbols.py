@@ -138,7 +138,7 @@ def _try_import(module: str) -> object | None:
         # `eth_account`) is not evidence the venice symbol is wrong — the SDK
         # gates those behind extras. Re-raise only for missing venice_ai.*
         # submodules, which ARE real structural problems.
-        missing = (exc.name or "")
+        missing = exc.name or ""
         if missing == "venice_ai" or missing.startswith("venice_ai."):
             raise
         return None
@@ -248,8 +248,7 @@ def _check_block(body: str, md: Path, start_line: int) -> list[Finding]:
                 Finding(
                     md,
                     loc(node),
-                    f"no module named '{node.module}' in venice_ai "
-                    "(module path does not exist)",
+                    f"no module named '{node.module}' in venice_ai (module path does not exist)",
                 )
             )
             continue
@@ -411,7 +410,7 @@ def main() -> int:
     blocks_checked = 0
     files_checked = 0
 
-    for skill_dir in sorted(SKILLS_ROOT.glob("venice-ai*")):
+    for skill_dir in sorted(SKILLS_ROOT.glob("venice-py*")):
         if not skill_dir.is_dir():
             continue
         for md in sorted(skill_dir.rglob("*.md")):
@@ -425,6 +424,9 @@ def main() -> int:
         f"Checked SDK symbols in {blocks_checked} python code block(s) "
         f"across {files_checked} markdown file(s)."
     )
+    if not files_checked:
+        print(f"error: no skill markdown found under {SKILLS_ROOT}", file=sys.stderr)
+        return 1
     if all_findings:
         print()
         for f in sorted(all_findings, key=lambda x: (str(x.path), x.line)):

@@ -12,11 +12,11 @@ The Venice AI Python SDK is a production-ready, fully-typed async client for [Ve
 
 ## Install
 
-**Python 3.13+ is required.** On earlier versions `pip install venice-ai` resolves to
-v1.3.x without an error, so pin the major version to get a clear failure instead:
+**Python 3.13+ is required.** On earlier versions pip reports that no matching
+distribution is available.
 
 ```bash
-pip install 'venice-ai>=2'
+pip install 'venice-py'
 export VENICE_API_KEY="your-api-key-here"
 ```
 
@@ -45,10 +45,10 @@ Prefer a synchronous client? Use `SyncVeniceClient` with a plain `with` block.
 ## Claude Code skills
 
 The SDK bundles four Claude Code skills (chat, multimodal, production, x402).
-Installing them uses the `venice` CLI, which ships as an optional extra:
+Installing them uses the `venice-py` CLI, which ships as an optional extra:
 
 ```bash
-pip install 'venice-ai[cli]>=2'
+pip install 'venice-py[cli]'
 
 venice-py skills install            # → ./.claude/skills/
 venice-py skills install --global   # → ~/.claude/skills/
@@ -56,7 +56,8 @@ venice-py skills list               # show bundled skills + install state
 ```
 
 Open Claude Code in the project and the skills auto-load when their trigger
-contexts match (e.g. "venice-py chat", "venice-py image", "venice x402").
+contexts match (e.g. "Venice chat", "generate an image with Venice",
+"Venice x402").
 
 ## Next steps
 

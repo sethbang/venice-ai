@@ -26,17 +26,16 @@ is active.
 
 ### Install with pip
 
-Requires Python 3.13+. Quote the specifier — `[...]` is a glob in zsh — and keep the
-`>=2` floor so an older Python fails loudly instead of installing v1.3.x.
+Requires Python 3.13+. Quote the specifier — `[...]` is a glob in zsh.
 
 ```bash
-pip install 'venice-ai[cli]>=2'
+pip install 'venice-py[cli]'
 ```
 
 ### Install with Poetry
 
 ```bash
-poetry add 'venice-ai[cli]>=2'
+poetry add 'venice-py[cli]'
 ```
 
 ### Development Install
@@ -71,13 +70,13 @@ venice-py models
 
 ## Global Options
 
-These options apply to the top-level `venice` command and affect all subcommands.
+These options apply to the top-level `venice-py` command and affect all subcommands.
 
 | Option | Description |
 |--------|-------------|
 | `--version` | Show version information and exit |
 | `--plain` | Plain text output — no colors, panels, or emojis (see [Plain Mode](#plain-mode)) |
-| `--config <path>` | Path to a custom config file (default: `~/.venice/config.yaml`) — see note below |
+| `--config <path>` | Path to a custom config file (default: `~/.venice-py/config.yaml`) — see note below |
 | `--help` | Show help text for any command |
 
 ```bash
@@ -91,7 +90,7 @@ venice --config /path/to/config.yaml models
 The `VENICE_API_KEY` environment variable still takes precedence over
 `api.key` in the file. `venice-py configure` reads from and writes back to the
 same `--config` path, so `venice --config ./team.yaml configure` edits that
-file rather than the default `~/.venice/config.yaml`.
+file rather than the default `~/.venice-py/config.yaml`.
 
 ---
 
@@ -115,7 +114,7 @@ The wizard walks through:
 
 ### Config File
 
-Configuration is stored at `~/.venice/config.yaml`:
+Configuration is stored at `~/.venice-py/config.yaml`:
 
 ```yaml
 api:
@@ -136,6 +135,19 @@ features:
   streaming: true
   cost_tracking: true   # reserved for a future feature; not read by any CLI command yet
 ```
+
+Saved chat transcripts live in `~/.venice-py/conversations/` and image presets in
+`~/.venice-py/presets/`.
+
+:::note Upgrading from `~/.venice/`
+
+Earlier releases kept this data in `~/.venice/`, which collides with the official
+`venice` CLI. The first `venice-py` command that reads the directory copies
+`config.yaml`, `conversations/` and `presets/` across and prints a one-line notice.
+The old directory is left exactly as it was, so both tools keep working; delete it
+yourself once you are satisfied nothing else needs it.
+
+:::
 
 ### Environment Variables
 
@@ -206,9 +218,9 @@ venice-py chat start [MESSAGE] [OPTIONS]
 
 > \* No static default — resolved at runtime: `--model` wins, else a matching `defaults.chat_model` in your config if set, else the live API-recommended model.
 >
-> ¹ The `--max-completion-tokens` flag has no built-in default (the click option defaults to unset); `2048` reflects the example configuration. The value actually used falls back to `defaults.max_completion_tokens` in your `~/.venice/config.yaml` when the flag is omitted.
+> ¹ The `--max-completion-tokens` flag has no built-in default (the click option defaults to unset); `2048` reflects the example configuration. The value actually used falls back to `defaults.max_completion_tokens` in your `~/.venice-py/config.yaml` when the flag is omitted.
 >
-> ² The `--temperature` flag has no built-in default (the click option defaults to unset); `0.7` reflects the example configuration. The value actually used falls back to `defaults.temperature` in your `~/.venice/config.yaml` when the flag is omitted.
+> ² The `--temperature` flag has no built-in default (the click option defaults to unset); `0.7` reflects the example configuration. The value actually used falls back to `defaults.temperature` in your `~/.venice-py/config.yaml` when the flag is omitted.
 
 #### Examples
 
@@ -537,7 +549,7 @@ The interactive menu offers:
 | `high-quality` | 50 | 8.0 | png | Maximum quality (slower) |
 | `creative` | 20 | 5.0 | webp | More creative freedom, less prompt adherence |
 
-Custom presets are stored in `~/.venice/presets/` as JSON files.
+Custom presets are stored in `~/.venice-py/presets/` as JSON files.
 
 ```bash
 # Apply a preset during generation
@@ -1415,7 +1427,7 @@ venice-py configure
 ### Module Not Found
 
 ```bash
-pip install 'venice-ai[cli]>=2'
+pip install 'venice-py[cli]'
 ```
 
 ### Command Not Found

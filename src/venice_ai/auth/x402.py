@@ -13,7 +13,7 @@ Usage::
     # auth.wallet_address — checksummed address derived from the key
     # auth.build_header() — returns the base64 value for ``X-Sign-In-With-X``
 
-This module is optional and requires ``pip install 'venice-ai[x402]'``.
+This module is optional and requires ``pip install 'venice-py[x402]'``.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ try:
 except ImportError as exc:  # pragma: no cover - import-time only
     raise ImportError(
         "The x402 auth helpers require the ``x402`` extra. "
-        "Install it with: pip install 'venice-ai[x402]'"
+        "Install it with: pip install 'venice-py[x402]'"
     ) from exc
 
 __all__ = ["X402Auth", "USDC_BASE_MAINNET"]

@@ -88,7 +88,7 @@ class VeniceProvider(ProviderInterface):
         if not _ADAPTIVE_AVAILABLE:
             raise ImportError(
                 "adaptive-rate-limiter package is required for VeniceProvider. "
-                "Install with: pip install 'venice-ai[adaptive]'"
+                "Install with: pip install 'venice-py[adaptive]'"
             )
         self._client = client
         self._discovery = rate_limit_discovery or (

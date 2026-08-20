@@ -1,11 +1,11 @@
-# Venice AI Python SDK
+# venice-py
 
 <div align="center">
 
-<a href="https://venice-docs.sbang.dev/"><img src="https://raw.githubusercontent.com/sethbang/venice-ai/main/website/static/img/venice-ai-banner.png" alt="Venice AI Python SDK — unofficial, community-maintained" width="720"></a>
+<a href="https://venice-docs.sbang.dev/"><img src="https://raw.githubusercontent.com/sethbang/venice-ai/main/website/static/img/venice-py-banner.png" alt="venice-py — unofficial, community-maintained Python SDK for Venice.ai" width="720"></a>
 
-[![PyPI version](https://img.shields.io/pypi/v/venice-ai.svg)](https://pypi.org/project/venice-ai/)
-[![Python Versions](https://img.shields.io/pypi/pyversions/venice-ai.svg)](https://pypi.org/project/venice-ai/)
+[![PyPI version](https://img.shields.io/pypi/v/venice-py.svg)](https://pypi.org/project/venice-py/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/venice-py.svg)](https://pypi.org/project/venice-py/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-125da3.svg)](https://opensource.org/licenses/MIT)
 [![CI Status](https://github.com/sethbang/venice-ai/actions/workflows/ci-validation.yaml/badge.svg)](https://github.com/sethbang/venice-ai/actions/workflows/ci-validation.yaml)
 [![Coverage Status](https://img.shields.io/codecov/c/github/sethbang/venice-ai.svg)](https://codecov.io/gh/sethbang/venice-ai)
@@ -29,11 +29,11 @@
 
 ## Quick Start
 
-> **Requires Python 3.13+.** On earlier versions `pip install venice-ai` resolves to v1.3.x
-> without an error. Pin the major version so you get a clear failure instead of the wrong SDK.
+> **Requires Python 3.13+.** On earlier versions pip reports that no matching distribution
+> is available.
 
 ```bash
-pip install 'venice-ai>=2'
+pip install 'venice-py'
 export VENICE_API_KEY="your-api-key-here"
 ```
 
@@ -63,7 +63,7 @@ as `venice`. Both can be installed at once. (This command was `venice` in v2.0.x
 [CHANGELOG](CHANGELOG.md) if you are upgrading.)
 
 ```bash
-pip install 'venice-ai[cli]>=2'
+pip install 'venice-py[cli]'
 
 venice-py chat start                  # Interactive chat
 venice-py image generate "..."        # Image generation
@@ -80,7 +80,7 @@ Features: streaming chat with 6 animation modes, image generation with 11+ param
 
 ## Build with Claude Code
 
-Four [Claude Code skills](https://docs.claude.com/en/docs/claude-code/skills) ship with the SDK. Install them into the current project with `venice-py skills install` (or `venice-py skills install --global` for `~/.claude/skills/`); list them with `venice-py skills list`. They auto-load when their trigger contexts match — `venice-py chat`, `venice-py image`, `venice rate limit`, `venice x402` — and steer Claude toward idiomatic v2 code (dynamic model resolution, `async with stream:`, `run_with_tools`, `client.gather(max_concurrency=N)`, `top_up_with`, etc.) instead of OpenAI-style or v1 patterns.
+Four [Claude Code skills](https://docs.claude.com/en/docs/claude-code/skills) ship with the SDK. Install them into the current project with `venice-py skills install` (or `venice-py skills install --global` for `~/.claude/skills/`); list them with `venice-py skills list`. They auto-load when their trigger contexts match — "Venice chat", "generate an image with Venice", "Venice rate limits", "Venice x402" — and steer Claude toward idiomatic v2 code (dynamic model resolution, `async with stream:`, `run_with_tools`, `client.gather(max_concurrency=N)`, `top_up_with`, etc.) instead of OpenAI-style or v1 patterns.
 
 ```bash
 venice-py skills install            # → ./.claude/skills/
@@ -88,7 +88,7 @@ venice-py skills install --global   # → ~/.claude/skills/
 venice-py skills list               # show bundled skills + install state
 ```
 
-Catalog: `venice-ai` (chat / streaming / tools / structured output), `venice-ai-multimodal` (image / audio / video / music), `venice-ai-production` (retries / rate limits / cost tracking / observability), `venice-ai-x402` (wallet auth / SIWE / on-chain top-up). See [`tools/skills/README.md`](https://github.com/sethbang/venice-ai/blob/main/tools/skills/README.md) for the full catalog and validation tooling.
+Catalog: `venice-py` (chat / streaming / tools / structured output), `venice-py-multimodal` (image / audio / video / music), `venice-py-production` (retries / rate limits / cost tracking / observability), `venice-py-x402` (wallet auth / SIWE / on-chain top-up). See [`tools/skills/README.md`](https://github.com/sethbang/venice-ai/blob/main/tools/skills/README.md) for the full catalog and validation tooling.
 
 ---
 
@@ -315,7 +315,7 @@ Base) instead of Bearer tokens. Install the optional extra to pick up
 `eth-account` + `siwe`:
 
 ```bash
-pip install 'venice-ai[x402]'
+pip install 'venice-py[x402]'
 ```
 
 ```python
@@ -338,7 +338,7 @@ async with VeniceClient() as client:
 
 Prefer one-call top-ups? `client.x402.top_up_with(auth=auth, amount_usdc=5.0)` runs the
 full EVM probe → sign → submit flow for you. To settle from a **Solana** wallet instead,
-install `venice-ai[x402-solana]` and use `SolanaX402Auth` with `top_up_with_solana`:
+install `venice-py[x402-solana]` and use `SolanaX402Auth` with `top_up_with_solana`:
 
 ```python
 from venice_ai.auth.x402_solana import SolanaX402Auth
@@ -358,7 +358,7 @@ message under a key only the enclave can derive (secp256k1 ECDH -> HKDF-SHA256
 -> AES-256-GCM). Install the optional extra (`cryptography`):
 
 ```bash
-pip install 'venice-ai[e2ee]'
+pip install 'venice-py[e2ee]'
 ```
 
 ```python
@@ -391,7 +391,7 @@ flag, the REPORTDATA key binding, the RTMR event-log replay, and the dstack
 compose-hash — all offline:
 
 ```bash
-pip install 'venice-ai[e2ee-verify]'   # dcap-qvl (+ cryptography)
+pip install 'venice-py[e2ee-verify]'   # dcap-qvl (+ cryptography)
 ```
 
 ```python
@@ -459,20 +459,19 @@ print(f"Cost: ${cost['usd']:.4f}")
 
 ### Installation Options
 
-Quote the specifier — `[...]` is a glob in zsh, and the `>=2` floor turns an
-incompatible Python into a clear pip error instead of a silent v1.3.x install.
+Quote the specifier — `[...]` is a glob in zsh.
 
 ```bash
-pip install 'venice-ai>=2'                # Core
-pip install 'venice-ai[cli]>=2'           # CLI tools
-pip install 'venice-ai[redis]>=2'         # Redis backend
-pip install 'venice-ai[enterprise]>=2'    # Enterprise (redis + prometheus + otel)
-pip install 'venice-ai[adaptive]>=2'      # Adaptive rate limiting
-pip install 'venice-ai[x402]>=2'          # x402 wallet auth (eth-account + siwe)
-pip install 'venice-ai[x402-solana]>=2'   # x402 Solana USDC top-up (solders)
-pip install 'venice-ai[e2ee]>=2'          # TEE client-side E2EE (cryptography)
-pip install 'venice-ai[e2ee-verify]>=2'   # Full client-side TDX quote verification (dcap-qvl)
-pip install 'venice-ai[all]>=2'           # Everything
+pip install 'venice-py'                # Core
+pip install 'venice-py[cli]'           # CLI tools
+pip install 'venice-py[redis]'         # Redis backend
+pip install 'venice-py[enterprise]'    # Enterprise (redis + prometheus + otel)
+pip install 'venice-py[adaptive]'      # Adaptive rate limiting
+pip install 'venice-py[x402]'          # x402 wallet auth (eth-account + siwe)
+pip install 'venice-py[x402-solana]'   # x402 Solana USDC top-up (solders)
+pip install 'venice-py[e2ee]'          # TEE client-side E2EE (cryptography)
+pip install 'venice-py[e2ee-verify]'   # Full client-side TDX quote verification (dcap-qvl)
+pip install 'venice-py[all]'           # Everything
 ```
 
 ### Client Setup
@@ -506,7 +505,7 @@ export VENICE_BACKEND__REDIS__REDIS_URL=redis://localhost:6379
 export VENICE_HTTP_CLIENT__TIMEOUT=60.0
 ```
 
-> **Note:** Env var auto-loading requires `pydantic-settings`: `pip install 'venice-ai[enterprise]>=2'`
+> **Note:** Env var auto-loading requires `pydantic-settings`: `pip install 'venice-py[enterprise]'`
 
 ---
 
@@ -610,7 +609,7 @@ MIT License — see [`LICENSE`](https://github.com/sethbang/venice-ai/blob/main/
 
 <div align="center">
 
-**[Back to Top](#venice-ai-python-sdk)**
+**[Back to Top](#venice-py)**
 
 An unofficial community SDK for Venice.ai
 

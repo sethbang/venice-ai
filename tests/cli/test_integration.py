@@ -41,13 +41,13 @@ class TestCLIEntryPoint:
         """Test --version flag displays version info"""
         result = cli_runner.invoke(cli, ["--version"])
         assert result.exit_code == 0
-        assert "Venice AI CLI" in result.output
+        assert "venice-py" in result.output
 
     def test_no_command_shows_help(self, cli_runner, mock_load_config):
         """Test running with no command shows help"""
         result = cli_runner.invoke(cli, [])
         assert result.exit_code == 0
-        assert "Venice AI CLI" in result.output
+        assert "venice-py" in result.output
         # The help layout groups subcommands into curated sections
         # (Generate / Discover / Account / Develop) rather than one
         # "Commands:" block.
@@ -57,7 +57,7 @@ class TestCLIEntryPoint:
         """Test --help flag shows help"""
         result = cli_runner.invoke(cli, ["--help"])
         assert result.exit_code == 0
-        assert "Venice AI CLI" in result.output
+        assert "venice-py" in result.output
         assert "Options:" in result.output
 
     def test_invalid_command(self, cli_runner, mock_load_config):

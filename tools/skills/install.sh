@@ -23,7 +23,12 @@ REPO_ROOT="${PWD}"
 SKILLS_SRC_DIR="${REPO_ROOT}/src/venice_ai/skills"
 SKILLS_DEST_DIR="${SKILLS_DIR:-${HOME}/.claude/skills}"
 
-SKILLS=(venice-ai venice-ai-multimodal venice-ai-production venice-ai-x402)
+SKILLS=(venice-py venice-py-multimodal venice-py-production venice-py-x402)
+# Directories these skills occupied before the rename. Both generations trigger
+# in Claude Code if a pre-rename install is left behind, so installing and
+# uninstalling both clear them. Symlinks count: `--symlink` setups from before
+# the rename now dangle.
+LEGACY_SKILLS=(venice-ai venice-ai-multimodal venice-ai-production venice-ai-x402)
 
 mode="copy"
 dry_run=0
@@ -55,6 +60,16 @@ run() {
   fi
 }
 
+remove_superseded() {
+  for skill in "${LEGACY_SKILLS[@]}"; do
+    target="${SKILLS_DEST_DIR}/${skill}"
+    if [ -e "$target" ] || [ -L "$target" ]; then
+      run rm -rf "$target"
+      echo "  removed superseded ${target}"
+    fi
+  done
+}
+
 if [ "$uninstall" -eq 1 ]; then
   echo "==> Uninstalling Venice skills from ${SKILLS_DEST_DIR}"
   for skill in "${SKILLS[@]}"; do
@@ -64,6 +79,7 @@ if [ "$uninstall" -eq 1 ]; then
       echo "  removed ${target}"
     fi
   done
+  remove_superseded
   echo "==> Done."
   exit 0
 fi
@@ -80,6 +96,7 @@ done
 run mkdir -p "${SKILLS_DEST_DIR}"
 
 echo "==> Installing Venice skills (mode=${mode}) into ${SKILLS_DEST_DIR}"
+remove_superseded
 for skill in "${SKILLS[@]}"; do
   src="${SKILLS_SRC_DIR}/${skill}"
   dest="${SKILLS_DEST_DIR}/${skill}"
@@ -109,8 +126,9 @@ for skill in "${SKILLS[@]}"; do
   esac
 done
 
-echo "==> Done. Verify with: ls ${SKILLS_DEST_DIR}/venice-ai*"
+echo "==> Done. Verify with: ls ${SKILLS_DEST_DIR}/venice-py*"
 echo
 echo "To use the skills: open Claude Code in any project. The skills"
-echo "auto-load when their trigger contexts match (e.g., 'venice chat',"
-echo "'venice image', 'venice x402'). See each SKILL.md for trigger phrasing."
+echo "auto-load when their trigger contexts match (e.g., 'Venice chat',"
+echo "'generate an image with Venice', 'Venice x402'). See each SKILL.md"
+echo "for trigger phrasing."

@@ -1,7 +1,7 @@
-"""Tests for the friendly ``pip install venice-ai[cli]`` hint when an optional
+"""Tests for the friendly ``pip install venice-py[cli]`` hint when an optional
 CLI dependency (rich, questionary, etc.) is missing.
 
-Without this hint, a fresh ``pip install venice-ai`` user who runs ``venice``
+Without this hint, a fresh ``pip install venice-py`` user who runs ``venice-py``
 gets a bare ``ModuleNotFoundError: No module named 'rich'`` — three failed
 ``pip install`` cycles before they discover the ``[cli]`` extra. Outside-agent
 feedback called this out specifically.
@@ -26,7 +26,7 @@ def test_rewrap_known_cli_dep_includes_install_hint() -> None:
 
     assert isinstance(rewrapped, ModuleNotFoundError)
     assert rewrapped.name == "rich"
-    assert "venice-ai[cli]" in str(rewrapped)
+    assert "venice-py[cli]" in str(rewrapped)
     assert "rich" in str(rewrapped)
 
 
@@ -41,7 +41,7 @@ def test_rewrap_covers_all_cli_extra_deps(missing: str) -> None:
     rewrapped = _maybe_hint_cli_extra(
         ModuleNotFoundError(f"No module named {missing!r}", name=missing)
     )
-    assert "venice-ai[cli]" in str(rewrapped), (
+    assert "venice-py[cli]" in str(rewrapped), (
         f"Expected install hint for CLI dep {missing!r}; got: {rewrapped}"
     )
 

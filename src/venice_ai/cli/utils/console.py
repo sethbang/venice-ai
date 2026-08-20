@@ -80,10 +80,10 @@ def print_version_info() -> None:
     from .. import __version__
 
     if _plain_mode:
-        console.print(f"Venice AI CLI v{__version__}")
+        console.print(f"venice-py v{__version__}")
     else:
         version_text = Text()
-        version_text.append("Venice AI CLI", style="bold cyan")
+        version_text.append("venice-py", style="bold cyan")
         version_text.append(f" v{__version__}", style="dim")
 
         panel = Panel(version_text, title="[bold]Version[/bold]", border_style="cyan")

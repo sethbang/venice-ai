@@ -21,7 +21,7 @@ without notice, and some accounts may not be entitled. If the account lacks
 access, the demos degrade to a clear skip rather than a hard failure.
 
 Prerequisites:
-- Install: pip install venice-ai
+- Install: pip install venice-py
 - Set API key: export VENICE_API_KEY="your-api-key"
 """
 

@@ -397,7 +397,7 @@ def test_require_dcap_raises_install_hint(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setattr(builtins, "__import__", fake_import)
     with pytest.raises(TeeError) as exc:
         verify_mod._require_dcap()
-    assert "venice-ai[e2ee-verify]" in str(exc.value)
+    assert "venice-py[e2ee-verify]" in str(exc.value)
 
 
 # --------------------------------------------------------------------------- #

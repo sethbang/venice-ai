@@ -1,0 +1,65 @@
+{
+  "skill_name": "venice-py-x402",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write `wallet_status.py`. It loads `VENICE_PRIVATE_KEY` from an env var (use `os.environ`; raise `RuntimeError` with a clear message if missing). It then opens an async `VeniceClient` (with a normal API key from `VENICE_API_KEY`), constructs a Venice `X402Auth(private_key=...)` (the wallet address is derived from the key — print it as a sanity check), and prints (a) the current prepaid USDC balance from `client.x402.balance(auth=auth)`, (b) the last 10 entries from `client.x402.transactions(auth=auth, limit=10)`. If the balance is below $1.00, attempt to probe top-up requirements by calling `client.x402.top_up()` (no payment_header) and catch the resulting `PaymentRequiredError` — do NOT retry; instead log the structured payment requirements from `e.body` and exit with status 2. Pure async; one file at `outputs/wallet_status.py`.",
+      "expected_output": "Python source file at outputs/wallet_status.py reading x402 balance and transactions with proper PaymentRequiredError handling and the correct X402Auth ctor signature.",
+      "files": [],
+      "expectations": [
+        "Code imports `X402Auth` from `venice_ai.auth.x402` (the Venice-specific path, not a generic x402 library).",
+        "Code constructs `X402Auth(private_key=PRIVATE_KEY)` — kw-only, NO `wallet_address=` kwarg (that's not a real parameter). The wallet address is read from the `auth.wallet_address` property if needed.",
+        "Code calls `await client.x402.balance(auth=auth)` and `await client.x402.transactions(auth=auth, limit=10)` — uses Venice's `client.x402.*` namespace, not a generic x402 protocol library.",
+        "Code catches `PaymentRequiredError` (imported from `venice_ai.exceptions`) distinctly and does NOT retry it.",
+        "On `PaymentRequiredError`, code reads structured payment requirements from `e.body` (NOT a fictional `e.payment_instructions`) and logs them, then exits with non-zero status.",
+        "Missing env var raises `RuntimeError` (or similar) with a message that names the missing variable; not silent.",
+        "Code uses `async with VeniceClient() as client:`.",
+        "When executed, script runs without raising AttributeError on `e.payment_instructions` or `wallet_address=` ctor failures."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I'm building an autonomous agent that should call Venice WITHOUT a Venice API key, paying per-request via x402 from an on-chain wallet. Write `agent_no_key.py` that loads `WALLET_PRIVATE_KEY` from env, sets up an x402-paying HTTP client (use whatever pattern your knowledge of Venice's x402 integration recommends — `httpx` + an x402 wrapper, or `x402-axios`-style equivalent), and makes a single chat completion request to `https://api.venice.ai/api/v1/chat/completions` asking 'What is 2+2?'. Print the response. Catch failures distinctly: if the wallet has insufficient funds for the implied 402 payment, log it clearly and exit; otherwise re-raise. Pure async; one file at `outputs/agent_no_key.py`.",
+      "expected_output": "Python source file at outputs/agent_no_key.py demonstrating Venice-as-x402-service from a non-Venice client (no API key).",
+      "files": [],
+      "expectations": [
+        "Code does NOT pass an API key (no `api_key=...` to `VeniceClient` and no `Authorization: Bearer` header with a Venice key).",
+        "Code targets `https://api.venice.ai/...` (or the equivalent `api_base`) explicitly — the x402 path requires a known endpoint.",
+        "Code uses an x402-aware HTTP client wrapper or middleware (e.g., a wallet-signing transport, an x402 Python wrapper, or a manual 402 → pay → retry loop) — NOT a plain `httpx.AsyncClient` without payment handling.",
+        "Code reads `WALLET_PRIVATE_KEY` from env (or equivalent), not hardcoded.",
+        "Code distinguishes the 'insufficient funds' / payment-failure path from generic HTTP errors and logs it clearly.",
+        "File parses with `ast.parse` and `pyflakes` is clean."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Write `hybrid_topup_agent.py`. It runs a short async loop that: opens a `VeniceClient` with a Venice API key (env var); for 5 iterations, makes one chat call asking 'Status check?' and prints the reply; before each call, checks the prepaid balance via `client.x402.balance(auth=auth)` (build the auth ONCE at startup as `X402Auth(private_key=os.environ['VENICE_PRIVATE_KEY'])` — no wallet_address kwarg, address is derived); if balance is under $5, attempts to probe top-up requirements by calling `client.x402.top_up()` and expecting `PaymentRequiredError` — log the structured requirements from `e.body` and continue (don't actually sign a payment in this script — that's a separate concern). Pure async; one file at `outputs/hybrid_topup_agent.py`.",
+      "expected_output": "Python source file at outputs/hybrid_topup_agent.py demonstrating the hybrid mode (API-key client + x402 wallet for ledger reads + structured top-up probe).",
+      "files": [],
+      "expectations": [
+        "Code uses `async with VeniceClient() as client:` with API-key auth (env var read).",
+        "Code constructs `X402Auth(private_key=os.environ['VENICE_PRIVATE_KEY'])` ONCE at startup — kw-only, no `wallet_address=` (the address is derived).",
+        "Each loop iteration calls `client.x402.balance(auth=auth)` BEFORE the chat call.",
+        "If balance is under threshold, code calls `client.x402.top_up()` with no `payment_header` (probe path) — uses Venice's own resource, not a generic x402 library.",
+        "Code catches `PaymentRequiredError` distinctly on the top-up probe; does NOT retry; reads structured payment requirements from `e.body` (not `e.payment_instructions`); logs them.",
+        "Loop runs exactly 5 iterations then exits cleanly; not infinite.",
+        "Chat model is resolved via `client.models.resolve_chat()` — no hardcoded model string.",
+        "When executed (with a wallet that may have <$5 balance), the script does not crash on AttributeError accessing fictional fields on the ctor or exception."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "[HELD-OUT TEST SET — do not iterate against] Write `siwe_token_cache.py`. Implement a small async helper `get_cached_auth(private_key, wallet, ttl_seconds=600)` that returns a Venice `X402Auth` instance, caching the underlying SIWE token across calls within the TTL window — so an agent making many calls doesn't sign on every request. Cache should be keyed by wallet address; on TTL expiry, refresh transparently. Demonstrate by calling `client.x402.balance(...)` 3 times in a row and asserting (via a print) that the cached auth was reused on calls 2 and 3 (e.g., by attaching a `creation_time` to the cached object). Pure async; one file at `outputs/siwe_token_cache.py`.",
+      "expected_output": "Python source file at outputs/siwe_token_cache.py demonstrating SIWE token caching with TTL and reuse semantics.",
+      "files": [],
+      "expectations": [
+        "Code imports `X402Auth` from `venice_ai.auth.x402` — not a generic SIWE library standalone.",
+        "Cache implementation is keyed by wallet address (a dict, an LRU, or similar) — not a global single-slot mutable.",
+        "Code respects a TTL: cached entries expire and refresh on access after the TTL window.",
+        "Code demonstrates reuse: e.g., attaches a `creation_time` to each cached auth and prints whether calls 2 and 3 reused the same one.",
+        "Code uses `async with VeniceClient() as client:` and calls `client.x402.balance(auth=auth)` (Venice-specific, not generic).",
+        "File parses with `ast.parse` and `pyflakes` is clean."
+      ]
+    }
+  ]
+}

@@ -6,10 +6,13 @@ import re
 from datetime import datetime
 from typing import Any
 
-CONVERSATIONS_DIR = os.path.join(os.path.expanduser("~"), ".venice", "conversations")
+from . import _paths
+
+CONVERSATIONS_DIR = str(_paths.app_dir() / "conversations")
 
 
 def _ensure_dir():
+    _paths.ensure_migrated()
     os.makedirs(CONVERSATIONS_DIR, exist_ok=True)
     # Conversation transcripts may contain sensitive prompt/response text;
     # restrict the directory to the owner only (0o700).
@@ -18,6 +21,9 @@ def _ensure_dir():
 
 def _safe_conv_path(conv_id: str) -> str:
     """Build a safe file path for a conversation ID, preventing path traversal."""
+    # Reads that skip _ensure_dir (load / delete) still need the migration to
+    # have run, or a conversation saved before the rename looks like it is gone.
+    _paths.ensure_migrated()
     safe_id = re.sub(r"[^a-zA-Z0-9_-]", "", conv_id)
     if not safe_id or safe_id != conv_id:
         raise ValueError(f"Invalid conversation ID: {conv_id!r}")

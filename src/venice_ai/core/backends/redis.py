@@ -37,7 +37,7 @@ try:
 except ImportError as _redis_import_error:  # pragma: no cover
     raise ImportError(
         "The 'redis' package is required to use RedisBackend. "
-        "Install it with: pip install 'venice-ai[redis]' or pip install redis"
+        "Install it with: pip install 'venice-py[redis]' or pip install redis"
     ) from _redis_import_error
 
 import builtins
