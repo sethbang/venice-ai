@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<a href="https://venice-docs.sbang.dev/"><img src="https://raw.githubusercontent.com/sethbang/venice-ai/main/website/static/img/venice-ai-banner.png" alt="Venice AI Python SDK — unofficial, community-maintained" width="720"></a>
+<a href="https://venice-docs.sbang.dev/"><img src="https://raw.githubusercontent.com/sethbang/venice-ai/main/website/static/img/venice-py-banner.png" alt="venice-py — unofficial, community-maintained Python client for the Venice.ai API" width="720"></a>
 
 [![PyPI version](https://img.shields.io/pypi/v/venice-py.svg)](https://pypi.org/project/venice-py/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/venice-py.svg)](https://pypi.org/project/venice-py/)
