@@ -27,7 +27,7 @@ pip install 'venice-py[x402]'
 
 If the dependency isn't installed, `from venice_ai.auth.x402 import X402Auth` raises `ImportError`. Code that reaches for these features should fail fast with a clear message.
 
-**Direct-wheel / file:// installs:** when `venice-py` is installed via a direct path (e.g. `pip install /path/to/venice_py-2.0.0-py3-none-any.whl` or `pip install -e ../venice-ai`) instead of from PyPI, pip's resolution of the `[x402]` extras spec is unreliable across pip versions — the extras may quietly be skipped. If `from venice_ai.auth.x402 import X402Auth` raises `ImportError` after a direct-wheel install, fall back to installing the deps directly:
+**Direct-wheel / file:// installs:** when `venice-py` is installed via a direct path (e.g. `pip install /path/to/venice_py-2.2.0-py3-none-any.whl` or `pip install -e /path/to/the/checkout`) instead of from PyPI, pip's resolution of the `[x402]` extras spec is unreliable across pip versions — the extras may quietly be skipped. If `from venice_ai.auth.x402 import X402Auth` raises `ImportError` after a direct-wheel install, fall back to installing the deps directly:
 
 ```bash
 pip install eth-account siwe

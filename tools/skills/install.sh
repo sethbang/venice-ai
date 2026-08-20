@@ -129,5 +129,6 @@ done
 echo "==> Done. Verify with: ls ${SKILLS_DEST_DIR}/venice-py*"
 echo
 echo "To use the skills: open Claude Code in any project. The skills"
-echo "auto-load when their trigger contexts match (e.g., 'venice chat',"
-echo "'venice image', 'venice x402'). See each SKILL.md for trigger phrasing."
+echo "auto-load when their trigger contexts match (e.g., 'Venice chat',"
+echo "'generate an image with Venice', 'Venice x402'). See each SKILL.md"
+echo "for trigger phrasing."

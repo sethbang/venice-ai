@@ -1,6 +1,6 @@
 # Venice Claude Code skills
 
-Four [Claude Code skills](https://docs.claude.com/en/docs/claude-code/skills) that empower AI builders to write idiomatic Venice AI v2 code on the first try. They auto-load when their trigger contexts match — `venice-py chat`, `venice-py image`, `venice rate limit`, `venice x402`, etc.
+Four [Claude Code skills](https://docs.claude.com/en/docs/claude-code/skills) that empower AI builders to write idiomatic Venice AI v2 code on the first try. They auto-load when their trigger contexts match — "Venice chat", "generate an image with Venice", "Venice rate limits", "Venice x402", etc.
 
 | Skill | Purpose | Triggers on |
 |---|---|---|

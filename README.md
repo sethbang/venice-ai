@@ -1,4 +1,4 @@
-# Venice AI Python SDK
+# venice-py
 
 <div align="center">
 
@@ -80,7 +80,7 @@ Features: streaming chat with 6 animation modes, image generation with 11+ param
 
 ## Build with Claude Code
 
-Four [Claude Code skills](https://docs.claude.com/en/docs/claude-code/skills) ship with the SDK. Install them into the current project with `venice-py skills install` (or `venice-py skills install --global` for `~/.claude/skills/`); list them with `venice-py skills list`. They auto-load when their trigger contexts match — `venice-py chat`, `venice-py image`, `venice rate limit`, `venice x402` — and steer Claude toward idiomatic v2 code (dynamic model resolution, `async with stream:`, `run_with_tools`, `client.gather(max_concurrency=N)`, `top_up_with`, etc.) instead of OpenAI-style or v1 patterns.
+Four [Claude Code skills](https://docs.claude.com/en/docs/claude-code/skills) ship with the SDK. Install them into the current project with `venice-py skills install` (or `venice-py skills install --global` for `~/.claude/skills/`); list them with `venice-py skills list`. They auto-load when their trigger contexts match — "Venice chat", "generate an image with Venice", "Venice rate limits", "Venice x402" — and steer Claude toward idiomatic v2 code (dynamic model resolution, `async with stream:`, `run_with_tools`, `client.gather(max_concurrency=N)`, `top_up_with`, etc.) instead of OpenAI-style or v1 patterns.
 
 ```bash
 venice-py skills install            # → ./.claude/skills/
@@ -609,7 +609,7 @@ MIT License — see [`LICENSE`](https://github.com/sethbang/venice-ai/blob/main/
 
 <div align="center">
 
-**[Back to Top](#venice-ai-python-sdk)**
+**[Back to Top](#venice-py)**
 
 An unofficial community SDK for Venice.ai
 

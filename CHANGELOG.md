@@ -26,9 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   Update the dependency wherever it is pinned — `requirements.txt`, `pyproject.toml`, lockfiles, Dockerfiles, CI installs. Extras are unaffected apart from the name: `pip install 'venice-py[cli]'`, `[x402]`, `[redis]`, `[adaptive]`, `[e2ee]`.
 
-  `venice-ai` remains on PyPI permanently and is **not** yanked, so existing lockfiles keep resolving. Its final release is metadata-only and depends on `venice-py`, which means `pip install venice-ai` still gets you a working install — it just arrives under the new name.
+  `venice-ai` remains on PyPI permanently and is **not** yanked, so existing lockfiles keep resolving exactly as they do today.
 
-  Installing both at once is safe: the bridge ships no importable module, so there is no `venice_ai/` directory for the two to fight over.
+  A final `venice-ai` release follows this one as a bridge: metadata-only, with `venice-py` as its single dependency, so that `pip install venice-ai` still lands a working install — it just arrives under the new name. It has to ship second, since it depends on a `venice-py` that must already exist on PyPI. Until it does, `venice-ai` stays at 2.1.0, which is a complete and working v2 SDK; nothing breaks in the interval.
+
+  Having both installed at once is safe: the bridge ships no importable module, so there is no `venice_ai/` directory for the two to fight over.
 
 - **Pinning `>=2` is no longer necessary.** The old advice existed because a bare `pip install venice-ai` on Python ≤3.12 silently resolved to v1.3.x, which supported Python ≥3.11. No v1 line was ever published under `venice-py`, so there is no wrong version to land on — on an unsupported Python, pip now reports that no matching distribution exists, which is the failure the pin was engineered to force. `pip install venice-py` is enough.
 
@@ -45,6 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Permissions are tightened rather than merely preserved: `conversations/` is narrowed to `0700` and `config.yaml` to `0600`, since transcripts hold prompt and response text and the config may hold a plaintext API key.
 
 - **The `User-Agent` sent with every request is now `venice-py/<version>`**, previously `VeniceAI-Python-SDK/<version>`.
+
+- **The CLI now identifies itself as `venice-py`.** `venice-py --version` printed `Venice AI CLI v<version>` and `venice-py --help` opened with `Venice AI CLI - Your AI assistant in the terminal.` Renaming the command in v2.1.0 stopped the `PATH` collision but left the tool still introducing itself as Venice's, which is the confusion the rename exists to remove. Both surfaces now say `venice-py`, and `--help` states plainly that this is the unofficial, community-maintained CLI rather than Venice's official `venice`.
 
 ### Fixed
 

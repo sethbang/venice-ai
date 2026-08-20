@@ -56,7 +56,8 @@ venice-py skills list               # show bundled skills + install state
 ```
 
 Open Claude Code in the project and the skills auto-load when their trigger
-contexts match (e.g. "venice-py chat", "venice-py image", "venice x402").
+contexts match (e.g. "Venice chat", "generate an image with Venice",
+"Venice x402").
 
 ## Next steps
 
