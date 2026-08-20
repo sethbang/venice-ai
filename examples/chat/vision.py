@@ -63,7 +63,7 @@ async def _fetch_and_fit_data_uri(
     Sets a friendly User-Agent — Wikimedia and many other CDNs reject the
     default aiohttp UA.
     """
-    headers = {"User-Agent": "venice-ai-sdk-examples/1.0 (vision example)"}
+    headers = {"User-Agent": "venice-py-sdk-examples/1.0 (vision example)"}
     async with session.get(url, headers=headers) as resp:
         resp.raise_for_status()
         raw = await resp.read()

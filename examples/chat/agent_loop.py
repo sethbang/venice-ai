@@ -20,7 +20,7 @@ It showcases:
 - Inspecting the ``ToolLoopResult`` (final text, round-trip count, token usage)
 
 Prerequisites:
-- Install: pip install venice-ai
+- Install: pip install venice-py
 - Set API key: export VENICE_API_KEY="your-api-key"
 """
 

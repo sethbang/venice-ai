@@ -26,17 +26,16 @@ is active.
 
 ### Install with pip
 
-Requires Python 3.13+. Quote the specifier — `[...]` is a glob in zsh — and keep the
-`>=2` floor so an older Python fails loudly instead of installing v1.3.x.
+Requires Python 3.13+. Quote the specifier — `[...]` is a glob in zsh.
 
 ```bash
-pip install 'venice-ai[cli]>=2'
+pip install 'venice-py[cli]'
 ```
 
 ### Install with Poetry
 
 ```bash
-poetry add 'venice-ai[cli]>=2'
+poetry add 'venice-py[cli]'
 ```
 
 ### Development Install
@@ -71,7 +70,7 @@ venice-py models
 
 ## Global Options
 
-These options apply to the top-level `venice` command and affect all subcommands.
+These options apply to the top-level `venice-py` command and affect all subcommands.
 
 | Option | Description |
 |--------|-------------|
@@ -1415,7 +1414,7 @@ venice-py configure
 ### Module Not Found
 
 ```bash
-pip install 'venice-ai[cli]>=2'
+pip install 'venice-py[cli]'
 ```
 
 ### Command Not Found

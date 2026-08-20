@@ -32,7 +32,7 @@ def _maybe_hint_cli_extra(exc: ModuleNotFoundError) -> ModuleNotFoundError:
     """Return a friendlier ``ModuleNotFoundError`` if ``exc.name`` is one of
     the CLI optional deps; otherwise return ``exc`` unchanged.
 
-    Without this, a fresh ``pip install venice-ai`` user who runs ``venice``
+    Without this, a fresh ``pip install venice-py`` user who runs ``venice-py``
     sees ``No module named 'rich'`` and burns three install cycles before
     finding the ``[cli]`` extra. We only rewrap names we recognize so a real
     bug (typo'd internal import, broken third-party dep) is not masked.
@@ -42,7 +42,7 @@ def _maybe_hint_cli_extra(exc: ModuleNotFoundError) -> ModuleNotFoundError:
     return ModuleNotFoundError(
         f"Missing CLI dependency '{exc.name}'. The Venice CLI ships as an "
         f"optional install extra to keep the core SDK lean.\n\n"
-        f"    pip install 'venice-ai[cli]'\n",
+        f"    pip install 'venice-py[cli]'\n",
         name=exc.name,
     )
 

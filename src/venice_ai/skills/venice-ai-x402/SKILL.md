@@ -22,7 +22,7 @@ For the actual API surface (chat, images, etc.) once you're authenticated, load 
 x402 features depend on `eth-account` and `siwe` packages, which are NOT in the SDK's core install. The user installs the extra:
 
 ```bash
-pip install 'venice-ai[x402]'
+pip install 'venice-py[x402]'
 ```
 
 If the dependency isn't installed, `from venice_ai.auth.x402 import X402Auth` raises `ImportError`. Code that reaches for these features should fail fast with a clear message.
@@ -33,9 +33,9 @@ If the dependency isn't installed, `from venice_ai.auth.x402 import X402Auth` ra
 pip install eth-account siwe
 ```
 
-This matches the contents of the `[project.optional-dependencies] x402 = ["eth-account", "siwe"]` block in `pyproject.toml`. The PyPI install path (`pip install 'venice-ai[x402]'`) is the supported one — the direct-wheel workaround only matters when consuming the SDK from a sibling project.
+This matches the contents of the `[project.optional-dependencies] x402 = ["eth-account", "siwe"]` block in `pyproject.toml`. The PyPI install path (`pip install 'venice-py[x402]'`) is the supported one — the direct-wheel workaround only matters when consuming the SDK from a sibling project.
 
-**Solana settlement** uses a separate extra — `pip install 'venice-ai[x402-solana]'` (pulls `solders`). `from venice_ai.auth.x402_solana import SolanaX402Auth` raises `ImportError` without it. The EVM (`X402Auth`, `[x402]`) and Solana (`SolanaX402Auth`, `[x402-solana]`) paths are independent — install whichever chain you settle on.
+**Solana settlement** uses a separate extra — `pip install 'venice-py[x402-solana]'` (pulls `solders`). `from venice_ai.auth.x402_solana import SolanaX402Auth` raises `ImportError` without it. The EVM (`X402Auth`, `[x402]`) and Solana (`SolanaX402Auth`, `[x402-solana]`) paths are independent — install whichever chain you settle on.
 
 ## The three modes
 

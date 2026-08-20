@@ -11,7 +11,7 @@ the Venice AI SDK in production:
 5. Cost optimization strategies
 
 Requirements:
-    pip install venice-ai
+    pip install venice-py
     export VENICE_API_KEY="your-api-key"
 """
 

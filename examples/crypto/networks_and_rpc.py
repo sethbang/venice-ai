@@ -19,7 +19,7 @@ discover first, then feed the chosen slug into both ``rpc()`` and ``batch_rpc()`
 — the crypto analog of resolver-based model selection.
 
 Prerequisites:
-- Install: pip install venice-ai
+- Install: pip install venice-py
 - Set API key: export VENICE_API_KEY="your-api-key"
   (``networks()`` is public, but ``rpc()``/``batch_rpc()`` bill credits and need a key.)
 """

@@ -11,7 +11,7 @@ the response against it, and returns a typed instance — no manual
 Requirements:
     - Venice AI API key (set as VENICE_API_KEY environment variable)
     - Python 3.13+
-    - venice-ai SDK (with pydantic available)
+    - venice-py SDK (with pydantic available)
 """
 
 import asyncio

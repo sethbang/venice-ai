@@ -12,7 +12,7 @@ via `RateLimiterMode`:
   (`min_backoff`/`max_backoff`, `max_retries`, failure-window circuit breaking).
   Single-process; no Redis.
 - **`ADAPTIVE`** — **proactive** (prevents `429`s) with multi-worker coordination
-  via Redis. Requires `pip install 'venice-ai[adaptive]>=2'` and a `redis_url`.
+  via Redis. Requires `pip install 'venice-py[adaptive]'` and a `redis_url`.
 - **`DISABLED`** — no rate limiting (testing only; not recommended in production).
 
 **Configuration** (set on the client config's `rate_limiter` field):
@@ -280,7 +280,7 @@ the base64-encoded `X-Sign-In-With-X` header from a private key.
 ### Install
 
 ```bash
-pip install 'venice-ai[x402]'
+pip install 'venice-py[x402]'
 ```
 
 This pulls `eth-account` (local Ethereum account + signing) and `siwe`

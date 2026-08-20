@@ -10,12 +10,12 @@ plaintext of your ``user`` / ``system`` content.
 
 Requires the ``[e2ee]`` extra (pulls in ``cryptography``)::
 
-    pip install 'venice-ai[e2ee]'
+    pip install 'venice-py[e2ee]'
 
 For the optional full client-side TDX quote verification step, also install the
 ``[e2ee-verify]`` extra (pulls in ``dcap-qvl``; arm64-macOS wheel available)::
 
-    pip install 'venice-ai[e2ee-verify]'
+    pip install 'venice-py[e2ee-verify]'
 
 Features Demonstrated:
     - Dynamic discovery of an E2EE-capable model (no hardcoded id)
@@ -131,7 +131,7 @@ async def tee_e2ee_demo() -> bool:
         except ImportError as e:
             print("\n   ⏭️  Full TDX verification needs the [e2ee-verify] extra.")
             print(f"      ({e})")
-            print("      Install it with: pip install 'venice-ai[e2ee-verify]'")
+            print("      Install it with: pip install 'venice-py[e2ee-verify]'")
         except TeeError as e:
             # Full quote verification is fail-closed: if it cannot complete we
             # report it and continue with the baseline-verified attestation
@@ -188,7 +188,7 @@ async def tee_e2ee_demo() -> bool:
             # this is a graceful skip (ok), not a failure.
             print("\n   ⏭️  Encrypted chat needs the [e2ee] extra.")
             print(f"      ({e})")
-            print("      Install it with: pip install 'venice-ai[e2ee]'")
+            print("      Install it with: pip install 'venice-py[e2ee]'")
 
     return True
 

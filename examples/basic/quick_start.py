@@ -7,7 +7,7 @@ This example demonstrates the most basic usage of the Venice AI SDK.
 Get up and running with just a few lines of code!
 
 Prerequisites:
-- Install: pip install venice-ai
+- Install: pip install venice-py
 - Set API key: export VENICE_API_KEY="your-api-key"
 """
 

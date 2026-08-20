@@ -27,10 +27,10 @@ async with VeniceClient() as client:
 | Concern | v1.3.x | v2 |
 |---|---|---|
 | Python | ≥3.11 | **≥3.13** |
-| Install | `pip install venice-ai` | `pip install 'venice-ai>=2'`; optional extras `[x402]`, `[redis]`, `[adaptive]`, `[e2ee]` |
+| Install | `pip install venice-ai` | `pip install venice-py`; optional extras `[x402]`, `[redis]`, `[adaptive]`, `[e2ee]` |
 
-Keep the `>=2` floor: on Python ≤3.12 a bare `pip install venice-ai` resolves to v1.3.x
-with no error, so the floor is what turns a wrong-version install into a clear pip failure.
+The v1 line was published as `venice-ai` and has no release under this name, so there is no
+wrong version to land on — on Python ≤3.12 pip reports that no matching distribution exists.
 
 If you're stuck on Python ≤3.12, stay on the latest v1 release by pinning `venice-ai<2`.
 
@@ -64,7 +64,7 @@ Per-resource type modules moved under `venice_ai.types.api`: `venice_ai.types.im
 
 ## New in v2 (additive — no migration needed)
 
-Entirely new resources: `client.video`, `client.music`, `client.crypto`, `client.augment`, `client.x402`, `client.responses`, `client.tee`. New methods on existing resources: `audio.transcribe` / `audio.create_voice`, `api_keys.update`, `chat.completions.parse` / `stream` / `run_with_tools`. Plus capability-based model resolution (`client.models.resolve_*()` — use instead of hardcoded model IDs), a `venice` CLI, rate limiting, `client.gather([...], max_concurrency=N)`, response `.save()` / `.save_all()`, and real TEE client-side E2EE (`enable_e2ee` / `e2ee=True`) for confidential-compute models.
+Entirely new resources: `client.video`, `client.music`, `client.crypto`, `client.augment`, `client.x402`, `client.responses`, `client.tee`. New methods on existing resources: `audio.transcribe` / `audio.create_voice`, `api_keys.update`, `chat.completions.parse` / `stream` / `run_with_tools`. Plus capability-based model resolution (`client.models.resolve_*()` — use instead of hardcoded model IDs), a `venice-py` CLI, rate limiting, `client.gather([...], max_concurrency=N)`, response `.save()` / `.save_all()`, and real TEE client-side E2EE (`enable_e2ee` / `e2ee=True`) for confidential-compute models.
 
 The new async-job resources (`video`, `music`) use a consistent verb scheme — `submit()` (low-level), `run()` (high-level lifecycle manager via `async with`), `cancel()` (cleanup).
 

@@ -24,7 +24,7 @@ submit a top-up unless you explicitly opt in by setting::
 
 The minimum top-up is $5. Install the extra first:
 
-    pip install 'venice-ai[x402-solana]'    # pulls solders
+    pip install 'venice-py[x402-solana]'    # pulls solders
 
 Credentials (never commit): set ``VENICE_X402_SOLANA_TEST_PRIVATE_KEY`` to the
 base58 secret key. Optionally set ``VENICE_X402_SOLANA_RPC_URL`` to a private
@@ -92,7 +92,7 @@ async def solana_top_up() -> None:
     try:
         from venice_ai.auth.x402_solana import SolanaX402Auth
     except ImportError:
-        print("   ⏭️  Install the extra:  pip install 'venice-ai[x402-solana]'")
+        print("   ⏭️  Install the extra:  pip install 'venice-py[x402-solana]'")
         return
 
     auth = SolanaX402Auth(private_key=secret)

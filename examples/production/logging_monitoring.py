@@ -12,7 +12,7 @@ for the Venice AI SDK, including:
 6. Integration patterns with external monitoring systems
 
 Requirements:
-    pip install venice-ai
+    pip install venice-py
     export VENICE_API_KEY="your-api-key"
 
 Optional monitoring tools (shown conceptually):

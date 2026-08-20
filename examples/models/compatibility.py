@@ -263,7 +263,7 @@ async def migration_checklist() -> bool:
     print("-" * 50)
 
     checklist_items = [
-        ("Install Venice AI SDK", "pip install venice-ai"),
+        ("Install Venice AI SDK", "pip install venice-py"),
         ("Update imports", "from venice_ai import VeniceClient"),
         ("Set up API key", "export VENICE_API_KEY='your-key'"),
         ("Convert to async", "Use async/await for all API calls"),

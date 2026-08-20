@@ -13,7 +13,7 @@ Two entry points:
 * :meth:`Tee.open_session` — :meth:`get_attestation` then build a
   :class:`TeeSession` (generates the SESSION keypair). The keypair generation
   needs ``cryptography``; the lazy import + actionable ``ImportError`` (the
-  ``pip install 'venice-ai[e2ee]'`` hint) live in :mod:`venice_ai.tee._crypto`.
+  ``pip install 'venice-py[e2ee]'`` hint) live in :mod:`venice_ai.tee._crypto`.
 
 .. warning::
     Baseline attestation trusts Venice's server-side ``verified`` claim and does
@@ -158,7 +158,7 @@ class Tee(APIResource["VeniceClient"]):
         encrypting session). Generating the SESSION keypair requires the
         ``[e2ee]`` extra; if ``cryptography`` is missing, the lazy import in
         :mod:`venice_ai.tee._crypto` raises an :class:`ImportError` with the
-        ``pip install 'venice-ai[e2ee]'`` hint.
+        ``pip install 'venice-py[e2ee]'`` hint.
 
         Args:
             model: The ``e2ee-*`` model id.

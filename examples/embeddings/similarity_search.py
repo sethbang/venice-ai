@@ -19,7 +19,7 @@ def cosine_similarity(a: Sequence[float], b: Sequence[float]) -> float:
     """Cosine similarity between two equal-length vectors (pure stdlib).
 
     Equivalent to numpy's ``dot(a, b) / (norm(a) * norm(b))`` but uses only
-    :mod:`math`, so the example runs on a clean ``pip install venice-ai``
+    :mod:`math`, so the example runs on a clean ``pip install venice-py``
     without numpy (which is a dev-only dependency).
     """
     dot = sum(x * y for x, y in zip(a, b))

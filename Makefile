@@ -323,14 +323,14 @@ pre-commit: check-all test-fast ## Pre-commit validation
 # BUILD & PUBLISH TARGETS
 # =====================================================
 build: clean-all ## Build the package (sdist + wheel)
-	@echo "$(GREEN)Building venice-ai v$(VERSION)...$(NC)"
+	@echo "$(GREEN)Building venice-py v$(VERSION)...$(NC)"
 	$(POETRY) build
 	@echo "$(GREEN)Built artifacts in dist/:$(NC)"
 	@ls -lh dist/
 
 smoke-test: ## Smoke test: import check and version verification
 	@echo "$(GREEN)Running smoke test...$(NC)"
-	@$(RUN) python -c "from venice_ai import VeniceClient, __version__; print(f'venice-ai v{__version__} - import OK')"
+	@$(RUN) python -c "from venice_ai import VeniceClient, __version__; print(f'venice-py v{__version__} - import OK')"
 	@echo "$(GREEN)Smoke test passed!$(NC)"
 
 # =====================================================

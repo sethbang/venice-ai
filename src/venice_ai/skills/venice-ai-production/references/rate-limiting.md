@@ -82,7 +82,7 @@ For a complete retry helper covering rate-limit + timeout + connection errors, s
 
 ## Distributed: Redis-backed rate limiter
 
-For multi-instance deployments (multiple workers / pods talking to the same Venice account), in-memory throttling doesn't work — each worker has its own view of `remaining_requests`. The SDK coordinates limits across workers via Redis using the **adaptive** rate limiter, wired through the production config preset (requires `pip install 'venice-ai[adaptive]>=2'`):
+For multi-instance deployments (multiple workers / pods talking to the same Venice account), in-memory throttling doesn't work — each worker has its own view of `remaining_requests`. The SDK coordinates limits across workers via Redis using the **adaptive** rate limiter, wired through the production config preset (requires `pip install 'venice-py[adaptive]'`):
 
 ```python
 import os

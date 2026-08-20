@@ -9,7 +9,7 @@ wallet authenticated via SIWE (Sign-In-With-Ethereum / EIP-4361).
 
 **Install the optional extra** first::
 
-    pip install 'venice-ai[x402]'
+    pip install 'venice-py[x402]'
 
 This pulls ``eth-account`` and ``siwe`` for EIP-4361 message signing.
 
@@ -34,7 +34,7 @@ async def show_balance() -> None:
         from venice_ai.auth.x402 import X402Auth
     except ImportError as e:
         print("❌ Missing optional dependency. Install with:")
-        print("   pip install 'venice-ai[x402]'")
+        print("   pip install 'venice-py[x402]'")
         print(f"   (original error: {e})")
         return
 

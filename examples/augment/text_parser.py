@@ -47,7 +47,7 @@ async def parse_plain_text() -> None:
     sample = RESULTS_DIR / "augment_sample.txt"
     sample.write_text(
         "Venice AI is a privacy-first inference platform.\n"
-        "It exposes a Python SDK at venice-ai on PyPI.\n"
+        "It exposes a Python SDK at venice-py on PyPI.\n"
         "The Augment API lets you scrape, search, and parse documents.\n"
     )
     print(f"📎 Uploading: {sample}")

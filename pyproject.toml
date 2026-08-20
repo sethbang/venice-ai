@@ -3,7 +3,7 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "venice-ai"
+name = "venice-py"
 version = "2.1.0"
 description = "Unofficial, community-maintained Python client library for interacting with the Venice.ai API, offering comprehensive access to its features with unified architecture and intelligent rate limiting."
 readme = "README.md"
@@ -19,6 +19,7 @@ keywords = [
     "sdk",
     "venice",
     "venice-ai",
+    "venice-py",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",

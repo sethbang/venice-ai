@@ -22,21 +22,21 @@ end up back on v1 without noticing:
 
 ```text
 # requirements.txt
-venice-ai>=2
+venice-py
 ```
 
 ```toml
 # pyproject.toml
-dependencies = ["venice-ai>=2"]
+dependencies = ["venice-py"]
 ```
 
 With the floor in place, an interpreter that is too old fails loudly and says why:
 
 ```console
-$ pip install 'venice-ai>=2'
+$ pip install 'venice-py'
 ERROR: Ignored the following versions that require a different python version:
        2.0.2 Requires-Python <4.0,>=3.13
-ERROR: No matching distribution found for venice-ai>=2
+ERROR: No matching distribution found for venice-py
 ```
 
 Staying on v1 for now is a legitimate choice — pin `venice-ai<2` to make it explicit.
@@ -319,7 +319,7 @@ these over hardcoding a model id, which goes stale on deprecation.
 
 ### CLI, rate limiting, and observability
 
-v2 ships a `venice` command-line tool (`pip install` exposes the `venice` entry
+v2 ships a `venice-py` command-line tool (`pip install` exposes the `venice-py` entry
 point), pluggable rate limiting (`SIMPLE` / `ADAPTIVE` modes; the `[adaptive]` extra),
 configurable backends (in-memory by default, Redis via the `[redis]` extra), cost
 tracking, and structured logging.
@@ -327,11 +327,11 @@ tracking, and structured logging.
 ### New optional extras
 
 ```bash
-pip install 'venice-ai[redis]'        # Redis-backed rate limiting / caching
-pip install 'venice-ai[adaptive]'     # ADAPTIVE rate limiter
-pip install 'venice-ai[x402]'         # SIWE wallet auth (eth-account + siwe)
-pip install 'venice-ai[x402-solana]'  # Solana wallet settlement
-pip install 'venice-ai[e2ee]'         # TEE client-side encryption (cryptography)
+pip install 'venice-py[redis]'        # Redis-backed rate limiting / caching
+pip install 'venice-py[adaptive]'     # ADAPTIVE rate limiter
+pip install 'venice-py[x402]'         # SIWE wallet auth (eth-account + siwe)
+pip install 'venice-py[x402-solana]'  # Solana wallet settlement
+pip install 'venice-py[e2ee]'         # TEE client-side encryption (cryptography)
 ```
 
 ### Client-side E2EE (`enable_e2ee` / `e2ee=True`)
@@ -343,7 +343,7 @@ attested enclave key, stream the response, and decrypt it locally.
 
 **What to do:**
 
-- Install the extra: `pip install 'venice-ai[e2ee]'` (pulls `cryptography`).
+- Install the extra: `pip install 'venice-py[e2ee]'` (pulls `cryptography`).
   Baseline attestation works without it; only encryption needs it.
 - Use an `e2ee-*` confidential-compute model. Discover one dynamically — do not
   hardcode a model id:

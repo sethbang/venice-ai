@@ -53,7 +53,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 _INSTALL_HINT = (
     "Venice TEE end-to-end encryption requires the ``cryptography`` package, "
     "which is an optional dependency. Install it with: "
-    "pip install 'venice-ai[e2ee]'"
+    "pip install 'venice-py[e2ee]'"
 )
 
 #: Byte offset where the GCM nonce begins within a decoded wire blob.

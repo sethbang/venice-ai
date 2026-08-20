@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 # ``yaml`` is gated behind the ``[cli]`` extra. Lazy-import it inside the
 # read/write helpers so subcommands that don't touch the config file (e.g.
-# ``venice-py lint``) work on a bare ``pip install venice-ai`` install.
+# ``venice-py lint``) work on a bare ``pip install venice-py`` install.
 
 # Load environment variables
 load_dotenv()
@@ -75,7 +75,7 @@ def load_config(config_path: Path | None = None) -> dict[str, Any]:
             except ModuleNotFoundError:
                 click.echo(
                     f"Warning: PyYAML not installed; cannot read {config_path}. "
-                    "Install with: pip install 'venice-ai[cli]'",
+                    "Install with: pip install 'venice-py[cli]'",
                     err=True,
                 )
                 return DEFAULT_CONFIG.copy()

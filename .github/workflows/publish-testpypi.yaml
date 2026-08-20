@@ -9,7 +9,7 @@
 #   2. Add a new pending publisher with:
 #        - PyPI Project Name:    venice-ai
 #        - Owner:                sethbang
-#        - Repository name:      venice-ai
+#        - Repository name:      venice-ai   (update to venice-py after the repo rename)
 #        - Workflow name:        publish-testpypi.yaml
 #        - Environment name:     testpypi
 #   3. Save. The first successful run from this workflow against an
@@ -40,10 +40,10 @@ jobs:
   build-and-publish-testpypi:
     name: Build wheel + sdist and publish to TestPyPI
     runs-on: ubuntu-latest
-    if: github.repository == 'sethbang/venice-ai' && github.event.inputs.confirm == 'publish-rc'
+    if: github.repository_owner == 'sethbang' && github.event.inputs.confirm == 'publish-rc'
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/venice-ai
+      url: https://test.pypi.org/p/venice-py
 
     steps:
       - name: Checkout repository

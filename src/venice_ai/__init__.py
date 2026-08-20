@@ -399,6 +399,6 @@ __all__ = [
 try:
     from importlib.metadata import version as _pkg_version
 
-    __version__ = _pkg_version("venice-ai")
+    __version__ = _pkg_version("venice-py")
 except Exception:  # pragma: no cover - source tree without installed metadata
     __version__ = "2.1.0"

@@ -9,7 +9,7 @@ const API = 'docs/api/venice_ai';
 
 // Internal-implementation subpackages with no public, user-imported surface.
 const DROP_DIRS = [
-  'cli',           // the `venice` CLI implementation (used as a command, not imported)
+  'cli',           // the `venice-py` CLI implementation (used as a command, not imported)
   'provider',      // adaptive-scheduler provider adapter
   'validation',    // internal validators
   'test_support',  // internal test scaffolding

@@ -28,7 +28,7 @@ Available Suffix Parameters:
 Requirements:
     - Venice AI API key (set as VENICE_API_KEY environment variable)
     - Python 3.13+
-    - venice-ai SDK
+    - venice-py SDK
 """
 
 import asyncio

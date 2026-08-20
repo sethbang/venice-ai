@@ -9,13 +9,19 @@ Tests focus on achieving 90%+ coverage by targeting:
 - models command with beta flag logic
 """
 
+import pathlib
 from unittest.mock import MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
 
+import venice_ai
 from venice_ai import __version__ as VERSION
 from venice_ai.cli.cli import cli, main
+
+# Distribution name on PyPI. Distinct from the import package (``venice_ai``);
+# see test_distribution_name_matches_pyproject below.
+DIST_NAME = "venice-py"
 
 
 @pytest.fixture
@@ -318,7 +324,31 @@ class TestModuleConstants:
 
         import venice_ai
 
-        assert venice_ai.__version__ == _installed_version("venice-ai")
+        assert venice_ai.__version__ == _installed_version(DIST_NAME)
+
+    def test_distribution_name_matches_pyproject(self):
+        """The name passed to importlib.metadata must match the built distribution.
+
+        Regression guard: ``__init__`` looks the version up by *distribution*
+        name inside a bare ``except Exception``. If that string ever drifts from
+        ``[tool.poetry] name`` — as it would during a package rename — the lookup
+        raises ``PackageNotFoundError``, the except swallows it, and
+        ``__version__`` silently freezes at the hardcoded fallback forever.
+        """
+        import re
+        import tomllib
+
+        root = pathlib.Path(venice_ai.__file__).resolve().parents[2]
+        pyproject = tomllib.loads((root / "pyproject.toml").read_text())
+        declared = pyproject["tool"]["poetry"]["name"]
+
+        source = (pathlib.Path(venice_ai.__file__)).read_text()
+        looked_up = re.search(r'_pkg_version\("([^"]+)"\)', source).group(1)
+
+        assert looked_up == declared, (
+            f"__init__.py looks up {looked_up!r} but pyproject declares {declared!r}; "
+            "__version__ would silently fall back to the hardcoded literal."
+        )
 
     def test_cli_group_name(self):
         """Test CLI group name"""
