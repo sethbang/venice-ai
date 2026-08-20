@@ -347,7 +347,30 @@ class TestModuleConstants:
 
         assert looked_up == declared, (
             f"__init__.py looks up {looked_up!r} but pyproject declares {declared!r}; "
-            "__version__ would silently fall back to the hardcoded literal."
+            "__version__ would fall back instead of reporting the installed version."
+        )
+
+    def test_version_fallback_is_not_a_plausible_release(self):
+        """The fallback must never be mistakable for a real version.
+
+        ``test_version_matches_installed_metadata`` can only detect a broken
+        metadata lookup while the fallback differs from what is shipped. A
+        fallback spelled like a release defeats it the moment the two converge,
+        which is precisely what happened when the literal read ``2.2.0`` and
+        ``2.2.0`` was the version being released.
+        """
+        import re
+
+        source = (pathlib.Path(venice_ai.__file__)).read_text()
+        fallback = re.search(
+            r"except PackageNotFoundError:.*?__version__ = \"([^\"]+)\"",
+            source,
+            re.DOTALL,
+        ).group(1)
+
+        assert not re.fullmatch(r"\d+\.\d+\.\d+", fallback), (
+            f"the fallback {fallback!r} is shaped like a real release; "
+            "it must stay distinguishable from an installed version."
         )
 
     def test_cli_group_name(self):
