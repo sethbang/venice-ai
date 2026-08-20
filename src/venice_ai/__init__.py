@@ -1,10 +1,10 @@
 """
-Venice AI SDK - Python Client Library
-====================================
+venice-py - Venice AI Python SDK
+================================
 
-The Venice AI SDK provides a comprehensive Python client library for interacting with the
-Venice AI API. This SDK includes advanced features like intelligent rate limiting, circuit
-breakers, request queuing, and comprehensive error handling.
+An unofficial, community-maintained Python SDK for the Venice AI API, with
+intelligent rate limiting, circuit breakers, request queuing, and comprehensive
+error handling.
 
 Key Features:
     * **VeniceClient**: Main client for API interactions
