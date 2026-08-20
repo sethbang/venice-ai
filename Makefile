@@ -205,20 +205,20 @@ test-mutation-show: ## Show mutation details
 # =====================================================
 lint: ## Run ruff linting checks
 	@echo "$(GREEN)Running ruff linting...$(NC)"
-	$(RUFF) check src/ tests/
+	$(RUFF) check src/ tests/ tools/
 
 format: ## Format code with ruff
 	@echo "$(GREEN)Formatting code with ruff...$(NC)"
-	$(RUFF) format src/ tests/
-	$(RUFF) check --fix src/ tests/
+	$(RUFF) format src/ tests/ tools/
+	$(RUFF) check --fix src/ tests/ tools/
 
 # Non-mutating counterpart to `format`, for CI. `format` rewrites files, so
 # running it in a pipeline gates nothing — badly formatted code is silently
 # fixed and the job passes. This target fails instead.
 format-check: ## Verify formatting without modifying files
 	@echo "$(GREEN)Checking formatting with ruff...$(NC)"
-	$(RUFF) format --check src/ tests/
-	$(RUFF) check src/ tests/
+	$(RUFF) format --check src/ tests/ tools/
+	$(RUFF) check src/ tests/ tools/
 
 type-check: ## Run mypy type checking
 	@echo "$(GREEN)Running mypy type checking...$(NC)"
