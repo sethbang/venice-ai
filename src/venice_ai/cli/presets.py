@@ -9,10 +9,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from . import _paths
 from .utils import print_error, print_success
 
 # Default preset directory
-DEFAULT_PRESETS_DIR = Path.home() / ".venice" / "presets"
+DEFAULT_PRESETS_DIR = _paths.app_dir() / "presets"
 
 _SAFE_NAME_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
 
@@ -39,6 +40,7 @@ def _safe_preset_name(name: str) -> str:
 
 def get_presets_dir() -> Path:
     """Get the presets directory, creating it if needed"""
+    _paths.ensure_migrated()
     presets_dir = DEFAULT_PRESETS_DIR
     presets_dir.mkdir(parents=True, exist_ok=True)
     return presets_dir

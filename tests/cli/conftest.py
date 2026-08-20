@@ -7,9 +7,45 @@ from types import SimpleNamespace
 import pytest
 from rich.highlighter import NullHighlighter
 
+from venice_ai.cli import _paths as _cli_paths
 from venice_ai.cli import config as _cli_config
+from venice_ai.cli import conversation as _cli_conversation
+from venice_ai.cli import presets as _cli_presets
+from venice_ai.cli.commands import configure as _cli_configure
 from venice_ai.cli.utils.console import console as _cli_console
 from venice_ai.cli.utils.console import disable_plain_mode
+
+
+@pytest.fixture(autouse=True)
+def _sandbox_user_config_dir(tmp_path, monkeypatch):
+    """Keep every CLI test away from the developer's real ``~/.venice-py``.
+
+    The CLI resolves its config file, conversations and presets from module
+    constants computed at import time, and copies a pre-rename ``~/.venice``
+    into place on first read. Both would otherwise operate on the real home
+    directory of whoever runs the suite: a test that forgets to redirect a path
+    could read someone's live API key, or create ``~/.venice-py`` and thereby
+    suppress their one-shot migration forever.
+
+    Every test therefore starts with an empty home. Tests that need the real
+    migration behaviour patch ``_paths._home`` themselves.
+    """
+    home = tmp_path / "home"
+    home.mkdir(parents=True, exist_ok=True)
+    app_dir = home / _cli_paths.APP_DIR_NAME
+
+    monkeypatch.setattr(_cli_paths, "_home", lambda: home)
+    monkeypatch.setattr(_cli_config, "DEFAULT_CONFIG_PATH", app_dir / "config.yaml")
+    monkeypatch.setattr(_cli_configure, "DEFAULT_CONFIG_PATH", app_dir / "config.yaml")
+    monkeypatch.setattr(_cli_conversation, "CONVERSATIONS_DIR", str(app_dir / "conversations"))
+    monkeypatch.setattr(_cli_presets, "DEFAULT_PRESETS_DIR", app_dir / "presets")
+
+    # ``ensure_migrated`` latches after its first call; the flag is process
+    # global, so it has to be cleared or the first test to run would decide the
+    # outcome for every test after it.
+    _cli_paths._migration_done = False
+    yield
+    _cli_paths._migration_done = False
 
 
 @pytest.fixture(autouse=True)
