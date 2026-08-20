@@ -56,7 +56,7 @@ def _write_skill(tmp_path: Path, body: str) -> Path:
     """Create a temp skills tree containing one SKILL.md with ``body`` as a
     fenced python block, and return the skills root."""
     skills_root = tmp_path / "tools" / "skills"
-    skill_dir = skills_root / "venice-ai-demo"
+    skill_dir = skills_root / "venice-py-demo"
     skill_dir.mkdir(parents=True)
     md = "# Demo\n\n```python\n" + textwrap.dedent(body).strip("\n") + "\n```\n"
     (skill_dir / "SKILL.md").write_text(md, encoding="utf-8")
@@ -226,3 +226,11 @@ def test_accepts_kwargs_method_arbitrary_kwarg(
         """,
     )
     assert _run(_load_module(), monkeypatch, tmp_path, skills_root) == 0
+
+
+def test_empty_skills_root_is_an_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # See the matching test in test_check_skill_examples.py: a glob that matches
+    # no skills must exit non-zero rather than pass vacuously.
+    skills_root = tmp_path / "src" / "venice_ai" / "skills"
+    skills_root.mkdir(parents=True)
+    assert _run(_load_module(), monkeypatch, tmp_path, skills_root) == 1

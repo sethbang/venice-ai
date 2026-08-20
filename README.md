@@ -88,7 +88,7 @@ venice-py skills install --global   # → ~/.claude/skills/
 venice-py skills list               # show bundled skills + install state
 ```
 
-Catalog: `venice-ai` (chat / streaming / tools / structured output), `venice-ai-multimodal` (image / audio / video / music), `venice-ai-production` (retries / rate limits / cost tracking / observability), `venice-ai-x402` (wallet auth / SIWE / on-chain top-up). See [`tools/skills/README.md`](https://github.com/sethbang/venice-ai/blob/main/tools/skills/README.md) for the full catalog and validation tooling.
+Catalog: `venice-py` (chat / streaming / tools / structured output), `venice-py-multimodal` (image / audio / video / music), `venice-py-production` (retries / rate limits / cost tracking / observability), `venice-py-x402` (wallet auth / SIWE / on-chain top-up). See [`tools/skills/README.md`](https://github.com/sethbang/venice-ai/blob/main/tools/skills/README.md) for the full catalog and validation tooling.
 
 ---
 

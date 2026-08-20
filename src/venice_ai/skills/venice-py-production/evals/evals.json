@@ -1,0 +1,68 @@
+{
+  "skill_name": "venice-py-production",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We have a CSV `support_tickets.csv` with 500 rows; column `body` has user-reported issues. Write `summarize_tickets.py` that reads the CSV (assume `csv.DictReader`), summarizes each ticket's body in ≤30 words via Venice chat, and writes results back to `summaries.csv` with columns `ticket_id,summary,cost_usd`. We're on a tight Venice tier — limit to 5 concurrent requests via `client.gather(max_concurrency=5)`, retry on `RateLimitError` respecting any `retry_after_seconds` the SDK exposes (otherwise exponential backoff capped at 30s, max 5 retries), and stop the whole job if we exceed $2.00 of total spend. Use Venice's `CostTracker` and `BudgetManager` from `venice_ai.costs` for spend tracking — wire the tracker on the client (`VeniceClient(cost_tracker=tracker)`) so the SDK calls `track()` automatically, and use `BudgetManager(tracker=tracker, daily_usd=Decimal('2.00')).can_afford(...)` to gate each call. Crash hard on `AuthenticationError` — don't retry it. Log progress every 25 tickets via `logging`. Async throughout. One file at `outputs/summarize_tickets.py`.",
+      "expected_output": "Python source file at outputs/summarize_tickets.py demonstrating production-grade Venice client usage: bounded concurrency, typed-exception retries, cost tracking, budget gating with the canonical CostTracker / BudgetManager API.",
+      "files": [],
+      "expectations": [
+        "Code catches `RateLimitError` (imported from `venice_ai.exceptions`) specifically — not bare `except Exception`.",
+        "On `RateLimitError`, code reads `e.retry_after_seconds` (or equivalent attribute) and prefers it over an unconditional `time.sleep`.",
+        "Backoff is capped at 30 seconds per retry and bounded to 5 retries total; not unbounded.",
+        "Code catches `AuthenticationError` and re-raises (or `sys.exit(1)`); it does NOT retry authentication failures.",
+        "Code constructs `BudgetManager` with the real signature: `tracker=tracker` plus at least one of `daily_usd=Decimal('2.00')` or `monthly_usd=...`. Does NOT pass `limit=` (no such kwarg) or call a fictional `would_exceed(...)` (use `await budget.can_afford(estimated_cost)`).",
+        "Code uses `CostTracker` and either (a) wires it on the client via `VeniceClient(cost_tracker=tracker)` for auto-track, or (b) explicitly `await`s `tracker.track(response)` after each call (track is async).",
+        "Concurrency is bounded via `client.gather(..., max_concurrency=5)` (preferred) or `asyncio.Semaphore(5)` — NOT unbounded `asyncio.gather`.",
+        "Code resolves the chat model dynamically via `client.models.resolve_chat()` — no hardcoded model string.",
+        "Code uses `async with VeniceClient() as client:`.",
+        "When the script is executed (against a small CSV stub or no-op data), it runs to completion or stops cleanly at the budget cap — no silent failure, no swallowed exceptions."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Write `agent_with_breaker.py`. It runs a Venice tool-calling agent loop using `run_with_tools` with a single tool `search_kb(query: str) -> str` (stub it to return fake results). Wrap the entire `run_with_tools` call in a circuit-breaker pattern: if 3 consecutive `run_with_tools` calls fail (any reason: timeout, rate limit, max-iterations, tool errors), open the circuit for 60 seconds before allowing another attempt. Track failure count and open-circuit time in module-level state (it's a simple example). Surface `MaxIterationsExceededError` distinctly — log at ERROR level but DO NOT retry it (it's a logic bug, not a transient failure). Pure async; one file at `outputs/agent_with_breaker.py`.",
+      "expected_output": "Python source file at outputs/agent_with_breaker.py demonstrating circuit-breaker around an agent loop with proper exception class discrimination.",
+      "files": [],
+      "expectations": [
+        "Code calls `client.chat.completions.run_with_tools(...)` (not a hand-rolled tool loop).",
+        "Code catches `MaxIterationsExceededError` (imported from `venice_ai.exceptions`) distinctly from other failures and does NOT retry it.",
+        "Circuit-breaker logic tracks consecutive failures; opens after 3; stays open for 60 seconds.",
+        "Code resolves a function-calling-capable model via `client.models.resolve_chat(require_function_calling=True)`; no hardcoded model string.",
+        "Code uses `tool_from_function` (imported from `venice_ai`) or passes the bare callable to `run_with_tools` (which auto-wraps).",
+        "Code uses `async with VeniceClient() as client:`.",
+        "File parses with `ast.parse` and `pyflakes` is clean."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Write `model_fallback.py`. It exposes a single async function `cheap_first_chat(question: str) -> str` that tries to answer `question` using a cheap chat model first. If the cheap model's response triggers a tool call (i.e., needs function-calling), or if the response is shorter than 20 chars (treat as 'low-confidence'), fall back to a more capable model that supports function calling. Resolve BOTH models dynamically — use `resolve_chat(...)` with capability filters; do not hardcode. Track and print total estimated USD cost across both attempts via `CostTracker.track()`. Pure async; one file at `outputs/model_fallback.py`.",
+      "expected_output": "Python source file at outputs/model_fallback.py demonstrating cost-aware model fallback with dynamic resolution and CostTracker.",
+      "files": [],
+      "expectations": [
+        "Code calls `client.models.resolve_chat()` for the cheap model AND `client.models.resolve_chat(require_function_calling=True)` for the capable fallback model — no hardcoded model strings on either.",
+        "Code uses `CostTracker` (or equivalent) and tracks each `response` so the printed total reflects spend across both attempts.",
+        "Fallback condition checks for tool calls in the cheap response (e.g., `response.choices[0].message.tool_calls`) AND/OR a length threshold on `response.text`.",
+        "Code uses `async with VeniceClient() as client:`.",
+        "Code uses typed message helpers (`UserMessage(content=...)`) rather than raw dicts.",
+        "File parses with `ast.parse` and `pyflakes` is clean."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "[HELD-OUT TEST SET — do not iterate against] Write `retry_with_jitter.py`. Implement `call_with_retry(client, **kwargs)` that wraps `client.chat.completions.create(**kwargs)` with: exponential backoff (1s, 2s, 4s, 8s, 16s, capped at 30s), full jitter (random uniform [0, base] added per attempt), max 6 retries, retries `RateLimitError` / `APITimeoutError` / `APIConnectionError` / `InternalServerError` / `ServiceUnavailableError`, and immediately re-raises `AuthenticationError` / `PaymentRequiredError` / `InvalidRequestError` / `NotFoundError` / `MaxIterationsExceededError`. On `RateLimitError`, prefer `retry_after_seconds` over the computed backoff. Log each retry with attempt number and reason. Pure async; one file at `outputs/retry_with_jitter.py`.",
+      "expected_output": "Python source file at outputs/retry_with_jitter.py implementing a typed-exception retry decorator with jitter and proper class discrimination.",
+      "files": [],
+      "expectations": [
+        "Code imports specific exception types from `venice_ai.exceptions` and discriminates retry behavior by class — never bare `except Exception`.",
+        "`AuthenticationError`, `PaymentRequiredError`, `InvalidRequestError`, `NotFoundError`, and `MaxIterationsExceededError` are NOT retried (re-raised immediately).",
+        "`RateLimitError` retry uses `e.retry_after_seconds` when present (with a fallback to the computed backoff).",
+        "Backoff is exponential (1, 2, 4, 8, 16, ...) capped at 30 seconds per attempt.",
+        "Jitter is added (e.g., `random.uniform(0, base)`).",
+        "Maximum retry count is bounded (6 per the prompt) — not infinite.",
+        "Each retry logs attempt number and exception reason via `logging`.",
+        "File parses with `ast.parse` and `pyflakes` is clean."
+      ]
+    }
+  ]
+}

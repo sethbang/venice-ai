@@ -411,7 +411,7 @@ def main() -> int:
     blocks_checked = 0
     files_checked = 0
 
-    for skill_dir in sorted(SKILLS_ROOT.glob("venice-ai*")):
+    for skill_dir in sorted(SKILLS_ROOT.glob("venice-py*")):
         if not skill_dir.is_dir():
             continue
         for md in sorted(skill_dir.rglob("*.md")):
@@ -425,6 +425,9 @@ def main() -> int:
         f"Checked SDK symbols in {blocks_checked} python code block(s) "
         f"across {files_checked} markdown file(s)."
     )
+    if not files_checked:
+        print(f"error: no skill markdown found under {SKILLS_ROOT}", file=sys.stderr)
+        return 1
     if all_findings:
         print()
         for f in sorted(all_findings, key=lambda x: (str(x.path), x.line)):

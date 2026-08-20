@@ -37,7 +37,7 @@ def _build_skill_tree(
     examples_root = tmp_path / "examples"
     examples_root.mkdir(parents=True)
 
-    skill_dir = skills_root / "venice-ai-demo"
+    skill_dir = skills_root / "venice-py-demo"
     skill_dir.mkdir(parents=True)
     (skill_dir / "SKILL.md").write_text(skill_md, encoding="utf-8")
 
@@ -100,3 +100,14 @@ def test_script_reference_outside_scripts_heading_ignored(
     md = "# Demo\n\nSee `scripts/ghost.py` somewhere.\n\n## Other\n\nnope.\n"
     skills_root, examples_root = _build_skill_tree(tmp_path, skill_md=md)
     assert _run(mod, monkeypatch, tmp_path, skills_root, examples_root) == 0
+
+
+def test_empty_skills_root_is_an_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # A skill-dir glob that matches nothing must fail loudly. Reporting "0 skills
+    # checked" and exiting 0 would let a renamed skills tree pass CI unvalidated.
+    mod = _load_module()
+    skills_root = tmp_path / "src" / "venice_ai" / "skills"
+    skills_root.mkdir(parents=True)
+    examples_root = tmp_path / "examples"
+    examples_root.mkdir()
+    assert _run(mod, monkeypatch, tmp_path, skills_root, examples_root) == 1

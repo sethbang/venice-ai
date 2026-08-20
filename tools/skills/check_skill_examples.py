@@ -48,10 +48,15 @@ def main() -> int:
 
     missing: list[tuple[Path, int, str]] = []
     checked = 0
+    # Counted separately from `checked`: a skill may legitimately reference no
+    # example or script paths, so only the skill count can detect a glob that
+    # matched nothing.
+    skills_seen = 0
 
-    for skill_dir in sorted(SKILLS_ROOT.glob("venice-ai*")):
+    for skill_dir in sorted(SKILLS_ROOT.glob("venice-py*")):
         if not skill_dir.is_dir():
             continue
+        skills_seen += 1
         for md in skill_dir.rglob("*.md"):
             in_examples_section = False
             in_scripts_section = False
@@ -90,9 +95,11 @@ def main() -> int:
                             missing.append((md, lineno, f"{skill_dir.name}/{rel}"))
 
     print(
-        f"Checked {checked} examples/* and scripts/* file references "
-        "across SKILL.md and references/"
+        f"Checked {checked} examples/* and scripts/* file references across {skills_seen} skill(s)"
     )
+    if not skills_seen:
+        print(f"error: no skills found under {SKILLS_ROOT}", file=sys.stderr)
+        return 1
     if missing:
         print()
         for path, lineno, rel in missing:

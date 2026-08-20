@@ -11,7 +11,7 @@ Two things this protects:
 
 If someone widens the kwarg back to ``str`` or reverts the auto-``all``
 default, these tests fail loudly. See
-``tools/skills/venice-ai/references/response-shapes.md`` for why this matters
+``src/venice_ai/skills/venice-py/references/response-shapes.md`` for why this matters
 to consumers.
 """
 
