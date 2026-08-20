@@ -69,4 +69,9 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: '4.122.0'
+          # `venice-ai-docs` names the live Cloudflare Pages project, not this
+          # package. It is not user-visible — the site is served from the custom
+          # domain above — and Pages projects cannot be renamed in place, so
+          # changing it means creating a new project and re-pointing the domain.
+          # Left as-is deliberately; it does not track the repository name.
           command: pages deploy website/build --project-name=venice-ai-docs --branch=main
