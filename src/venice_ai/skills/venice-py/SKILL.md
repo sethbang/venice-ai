@@ -345,7 +345,7 @@ To catch these patterns automatically in user code, run **`venice-py lint <path>
 
 ## Examples to read
 
-Paths below are relative to the SDK repo's `examples/` directory. Available at [github.com/sethbang/venice-ai/tree/main/examples](https://github.com/sethbang/venice-ai/tree/main/examples) or in your local clone of the SDK.
+Paths below are relative to the SDK repo's `examples/` directory. Available at [github.com/sethbang/venice-py/tree/main/examples](https://github.com/sethbang/venice-py/tree/main/examples) or in your local clone of the SDK.
 
 - `basic/quick_start.py` — minimal client setup
 - `chat/simple_chat.py` — non-streaming chat

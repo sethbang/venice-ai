@@ -6,7 +6,7 @@ crypto, augment, x402, a CLI, rate limiting, and more) ships alongside the v1 su
 
 This guide covers everything a **v1.3.x** user must change to move to v2.0.0, in
 rough order of impact. For the complete list of additions, see the
-[CHANGELOG](https://github.com/sethbang/venice-ai/blob/main/CHANGELOG.md).
+[CHANGELOG](https://github.com/sethbang/venice-py/blob/main/CHANGELOG.md).
 
 ---
 
@@ -379,7 +379,7 @@ attested enclave key, stream the response, and decrypt it locally.
   does **not** perform full client-side Intel TDX + NVIDIA quote verification. A
   one-time `UserWarning` is emitted on engagement. Supply a `FullQuoteVerifier`
   via `e2ee=TeeOptions(verifier=...)` if your threat model requires it. See
-  [CHANGELOG § TEE client-side end-to-end encryption](https://github.com/sethbang/venice-ai/blob/main/CHANGELOG.md).
+  [CHANGELOG § TEE client-side end-to-end encryption](https://github.com/sethbang/venice-py/blob/main/CHANGELOG.md).
 
 ### New kwargs on existing methods
 
@@ -392,5 +392,5 @@ attested enclave key, stream the response, and decrypt it locally.
 
 ## Further Reading
 
-- [CHANGELOG](https://github.com/sethbang/venice-ai/blob/main/CHANGELOG.md) — complete list of all changes in v2.0.0
-- [README](https://github.com/sethbang/venice-ai/blob/main/README.md) — updated usage examples for v2
+- [CHANGELOG](https://github.com/sethbang/venice-py/blob/main/CHANGELOG.md) — complete list of all changes in v2.0.0
+- [README](https://github.com/sethbang/venice-py/blob/main/README.md) — updated usage examples for v2

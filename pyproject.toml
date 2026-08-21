@@ -133,11 +133,11 @@ all = [
 ]
 
 [tool.poetry.urls]
-Homepage = "https://github.com/sethbang/venice-ai"
-Repository = "https://github.com/sethbang/venice-ai"
+Homepage = "https://github.com/sethbang/venice-py"
+Repository = "https://github.com/sethbang/venice-py"
 Documentation = "https://venice-docs.sbang.dev"
-"Issue Tracker" = "https://github.com/sethbang/venice-ai/issues"
-"Changelog" = "https://github.com/sethbang/venice-ai/blob/main/CHANGELOG.md"
+"Issue Tracker" = "https://github.com/sethbang/venice-py/issues"
+"Changelog" = "https://github.com/sethbang/venice-py/blob/main/CHANGELOG.md"
 
 [tool.poetry.group.dev.dependencies]
 adaptive-rate-limiter = "^1.1.0"

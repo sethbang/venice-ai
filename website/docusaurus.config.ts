@@ -11,7 +11,7 @@ const config: Config = {
   baseUrl: '/',
 
   organizationName: 'sethbang',
-  projectName: 'venice-ai',
+  projectName: 'venice-py',
 
   onBrokenLinks: 'throw',
 
@@ -32,7 +32,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/sethbang/venice-ai/tree/main/website/',
+          editUrl: 'https://github.com/sethbang/venice-py/tree/main/website/',
         },
         blog: false,
         theme: {
@@ -72,7 +72,7 @@ const config: Config = {
       items: [
         {type: 'docSidebar', sidebarId: 'guidesSidebar', position: 'left', label: 'Docs'},
         {type: 'docSidebar', sidebarId: 'apiSidebar', position: 'left', label: 'API Reference'},
-        {href: 'https://github.com/sethbang/venice-ai', label: 'GitHub', position: 'right'},
+        {href: 'https://github.com/sethbang/venice-py', label: 'GitHub', position: 'right'},
       ],
     },
     footer: {

@@ -41,8 +41,8 @@ poetry add 'venice-py[cli]'
 ### Development Install
 
 ```bash
-git clone https://github.com/sethbang/venice-ai.git
-cd venice-ai
+git clone https://github.com/sethbang/venice-py.git
+cd venice-py
 poetry install --all-extras
 poetry run venice-py --version
 ```
@@ -1451,6 +1451,6 @@ Run `venice-py models` to see available models. Use `venice-py models --type tex
 
 - [Venice AI Documentation](https://docs.venice.ai)
 - [API Reference](https://docs.venice.ai/api)
-- [Main SDK README](https://github.com/sethbang/venice-ai/blob/main/README.md)
-- [Examples](https://github.com/sethbang/venice-ai/blob/main/examples/)
-- [Changelog](https://github.com/sethbang/venice-ai/blob/main/CHANGELOG.md)
+- [Main SDK README](https://github.com/sethbang/venice-py/blob/main/README.md)
+- [Examples](https://github.com/sethbang/venice-py/blob/main/examples/)
+- [Changelog](https://github.com/sethbang/venice-py/blob/main/CHANGELOG.md)

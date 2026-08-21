@@ -6,8 +6,8 @@ Thank you for your interest in contributing to the Venice AI Python Client!
 
 If you encounter a bug or have an issue with the library:
 
-1. **Search Existing Issues:** Before submitting a new issue, please check if a similar one has already been reported by searching on GitHub under [Issues](https://github.com/sethbang/venice-ai/issues).
-2. **Open a New Issue:** If you can't find an existing issue that addresses your problem, please [open a new one](https://github.com/sethbang/venice-ai/issues/new).
+1. **Search Existing Issues:** Before submitting a new issue, please check if a similar one has already been reported by searching on GitHub under [Issues](https://github.com/sethbang/venice-py/issues).
+2. **Open a New Issue:** If you can't find an existing issue that addresses your problem, please [open a new one](https://github.com/sethbang/venice-py/issues/new).
    - Provide a **clear and descriptive title**.
    - Include a **detailed description** of the issue.
    - If applicable, provide a **code sample or an executable test case** that demonstrates the problem.

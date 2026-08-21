@@ -2,19 +2,19 @@
 
 <div align="center">
 
-<a href="https://venice-docs.sbang.dev/"><img src="https://raw.githubusercontent.com/sethbang/venice-ai/main/website/static/img/venice-py-banner.png" alt="venice-py — unofficial, community-maintained Python SDK for Venice.ai" width="720"></a>
+<a href="https://venice-docs.sbang.dev/"><img src="https://raw.githubusercontent.com/sethbang/venice-py/main/website/static/img/venice-py-banner.png" alt="venice-py — unofficial, community-maintained Python SDK for Venice.ai" width="720"></a>
 
 [![PyPI version](https://img.shields.io/pypi/v/venice-py.svg)](https://pypi.org/project/venice-py/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/venice-py.svg)](https://pypi.org/project/venice-py/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-125da3.svg)](https://opensource.org/licenses/MIT)
-[![CI Status](https://github.com/sethbang/venice-ai/actions/workflows/ci-validation.yaml/badge.svg)](https://github.com/sethbang/venice-ai/actions/workflows/ci-validation.yaml)
-[![Coverage Status](https://img.shields.io/codecov/c/github/sethbang/venice-ai.svg)](https://codecov.io/gh/sethbang/venice-ai)
-[![Security Scan](https://github.com/sethbang/venice-ai/actions/workflows/security-scan.yml/badge.svg)](https://github.com/sethbang/venice-ai/actions/workflows/security-scan.yml)
+[![CI Status](https://github.com/sethbang/venice-py/actions/workflows/ci-validation.yaml/badge.svg)](https://github.com/sethbang/venice-py/actions/workflows/ci-validation.yaml)
+[![Coverage Status](https://img.shields.io/codecov/c/github/sethbang/venice-py.svg)](https://codecov.io/gh/sethbang/venice-py)
+[![Security Scan](https://github.com/sethbang/venice-py/actions/workflows/security-scan.yml/badge.svg)](https://github.com/sethbang/venice-py/actions/workflows/security-scan.yml)
 [![Docs](https://img.shields.io/badge/docs-venice--docs.sbang.dev-3c8fdd)](https://venice-docs.sbang.dev/)
 
 **Production-ready Python SDK for Venice.ai with enterprise-grade rate limiting, intelligent scheduling, and comprehensive error handling**
 
-[Documentation](https://venice-docs.sbang.dev/) | [Examples](https://github.com/sethbang/venice-ai/tree/main/examples/) | [Changelog](https://github.com/sethbang/venice-ai/blob/main/CHANGELOG.md) | [API Reference](https://venice-docs.sbang.dev/docs/api-reference/)
+[Documentation](https://venice-docs.sbang.dev/) | [Examples](https://github.com/sethbang/venice-py/tree/main/examples/) | [Changelog](https://github.com/sethbang/venice-py/blob/main/CHANGELOG.md) | [API Reference](https://venice-docs.sbang.dev/docs/api-reference/)
 
 </div>
 
@@ -23,7 +23,7 @@
 > **This is an unofficial, community-maintained SDK for Venice.ai.**
 > Not affiliated with or endorsed by Venice AI. For official resources visit [Venice.ai](https://venice.ai/).
 
-> **v2.x** — fully breaking rewrite over v1.3.x with enterprise-grade features. Review the [release notes](https://github.com/sethbang/venice-ai/releases), the [CHANGELOG](https://github.com/sethbang/venice-ai/blob/main/CHANGELOG.md), and the [Migration Guide](https://venice-docs.sbang.dev/docs/guides/migration/) before upgrading.
+> **v2.x** — fully breaking rewrite over v1.3.x with enterprise-grade features. Review the [release notes](https://github.com/sethbang/venice-py/releases), the [CHANGELOG](https://github.com/sethbang/venice-py/blob/main/CHANGELOG.md), and the [Migration Guide](https://venice-docs.sbang.dev/docs/guides/migration/) before upgrading.
 
 ---
 
@@ -88,7 +88,7 @@ venice-py skills install --global   # → ~/.claude/skills/
 venice-py skills list               # show bundled skills + install state
 ```
 
-Catalog: `venice-py` (chat / streaming / tools / structured output), `venice-py-multimodal` (image / audio / video / music), `venice-py-production` (retries / rate limits / cost tracking / observability), `venice-py-x402` (wallet auth / SIWE / on-chain top-up). See [`tools/skills/README.md`](https://github.com/sethbang/venice-ai/blob/main/tools/skills/README.md) for the full catalog and validation tooling.
+Catalog: `venice-py` (chat / streaming / tools / structured output), `venice-py-multimodal` (image / audio / video / music), `venice-py-production` (retries / rate limits / cost tracking / observability), `venice-py-x402` (wallet auth / SIWE / on-chain top-up). See [`tools/skills/README.md`](https://github.com/sethbang/venice-py/blob/main/tools/skills/README.md) for the full catalog and validation tooling.
 
 ---
 
@@ -113,7 +113,7 @@ async with VeniceClient() as client:
     print(response.choices[0].message.content)
 ```
 
-[-> `examples/chat/simple_chat.py`](https://github.com/sethbang/venice-ai/blob/main/examples/chat/simple_chat.py)
+[-> `examples/chat/simple_chat.py`](https://github.com/sethbang/venice-py/blob/main/examples/chat/simple_chat.py)
 
 ### Streaming
 
@@ -130,7 +130,7 @@ async with await client.chat.completions.stream(
 
 For the assembled response: `response = await stream.collect()`.
 
-[-> `examples/chat/streaming_chat.py`](https://github.com/sethbang/venice-ai/blob/main/examples/chat/streaming_chat.py)
+[-> `examples/chat/streaming_chat.py`](https://github.com/sethbang/venice-py/blob/main/examples/chat/streaming_chat.py)
 
 ### Synchronous Usage
 
@@ -168,7 +168,7 @@ response = await client.chat.completions.create(
 
 `tool_from_model(MyPydanticModel)` is also available for richer schemas.
 
-[-> `examples/chat/tool_calling.py`](https://github.com/sethbang/venice-ai/blob/main/examples/chat/tool_calling.py)
+[-> `examples/chat/tool_calling.py`](https://github.com/sethbang/venice-py/blob/main/examples/chat/tool_calling.py)
 
 ### Image Generation
 
@@ -187,7 +187,7 @@ response.save("generated.png")          # single image
 Pass-through fields on `image.multi_edit()` now include `model=...`, which the
 SDK forwards to the API as `modelId` (previously dropped silently).
 
-[-> `examples/image/text_to_image.py`](https://github.com/sethbang/venice-ai/blob/main/examples/image/text_to_image.py) | [-> `examples/image/web_search.py`](https://github.com/sethbang/venice-ai/blob/main/examples/image/web_search.py)
+[-> `examples/image/text_to_image.py`](https://github.com/sethbang/venice-py/blob/main/examples/image/text_to_image.py) | [-> `examples/image/web_search.py`](https://github.com/sethbang/venice-py/blob/main/examples/image/web_search.py)
 
 ### Text-to-Speech
 
@@ -204,7 +204,7 @@ response = await client.audio.create_speech(
 response.save("speech.mp3")
 ```
 
-[-> `examples/audio/text_to_speech.py`](https://github.com/sethbang/venice-ai/blob/main/examples/audio/text_to_speech.py)
+[-> `examples/audio/text_to_speech.py`](https://github.com/sethbang/venice-py/blob/main/examples/audio/text_to_speech.py)
 
 ### Embeddings
 
@@ -217,7 +217,7 @@ response = await client.embeddings.create(
 embedding = response.data[0].embedding
 ```
 
-[-> `examples/embeddings/basic_embeddings.py`](https://github.com/sethbang/venice-ai/blob/main/examples/embeddings/basic_embeddings.py)
+[-> `examples/embeddings/basic_embeddings.py`](https://github.com/sethbang/venice-py/blob/main/examples/embeddings/basic_embeddings.py)
 
 ### Video Generation
 
@@ -245,7 +245,7 @@ subset (`model`, `duration_seconds`, `aspect_ratio`, `resolution`, `upscale_fact
 `audio`, `video_url`) per the API spec — prompt text and reference images
 don't affect price.
 
-[-> `examples/video/text_to_video.py`](https://github.com/sethbang/venice-ai/blob/main/examples/video/text_to_video.py) | [-> `examples/video/advanced_fields.py`](https://github.com/sethbang/venice-ai/blob/main/examples/video/advanced_fields.py) | [-> `examples/video/upscale.py`](https://github.com/sethbang/venice-ai/blob/main/examples/video/upscale.py)
+[-> `examples/video/text_to_video.py`](https://github.com/sethbang/venice-py/blob/main/examples/video/text_to_video.py) | [-> `examples/video/advanced_fields.py`](https://github.com/sethbang/venice-py/blob/main/examples/video/advanced_fields.py) | [-> `examples/video/upscale.py`](https://github.com/sethbang/venice-py/blob/main/examples/video/upscale.py)
 
 ### Model Selection
 
@@ -306,7 +306,7 @@ parsed = await client.augment.parse_text(file="report.pdf")
 print(parsed.text, parsed.tokens)
 ```
 
-[-> `examples/augment/scrape.py`](https://github.com/sethbang/venice-ai/blob/main/examples/augment/scrape.py) | [-> `examples/augment/search.py`](https://github.com/sethbang/venice-ai/blob/main/examples/augment/search.py) | [-> `examples/augment/text_parser.py`](https://github.com/sethbang/venice-ai/blob/main/examples/augment/text_parser.py)
+[-> `examples/augment/scrape.py`](https://github.com/sethbang/venice-py/blob/main/examples/augment/scrape.py) | [-> `examples/augment/search.py`](https://github.com/sethbang/venice-py/blob/main/examples/augment/search.py) | [-> `examples/augment/text_parser.py`](https://github.com/sethbang/venice-py/blob/main/examples/augment/text_parser.py)
 
 ### x402 Wallet Billing (optional)
 
@@ -348,7 +348,7 @@ async with VeniceClient() as client:
     await client.x402.top_up_with_solana(auth=auth, amount_usdc=5.0)
 ```
 
-[-> `examples/x402/balance.py`](https://github.com/sethbang/venice-ai/blob/main/examples/x402/balance.py) | [-> `examples/x402/transactions.py`](https://github.com/sethbang/venice-ai/blob/main/examples/x402/transactions.py) | [-> `examples/x402/top_up.py`](https://github.com/sethbang/venice-ai/blob/main/examples/x402/top_up.py)
+[-> `examples/x402/balance.py`](https://github.com/sethbang/venice-py/blob/main/examples/x402/balance.py) | [-> `examples/x402/transactions.py`](https://github.com/sethbang/venice-py/blob/main/examples/x402/transactions.py) | [-> `examples/x402/top_up.py`](https://github.com/sethbang/venice-py/blob/main/examples/x402/top_up.py)
 
 ### Confidential Compute (TEE / E2EE, optional)
 
@@ -519,20 +519,20 @@ Rate limiting, distributed state, monitoring, observability, and performance tun
 
 | Resource | Purpose | Key Methods | Example |
 |----------|---------|-------------|---------|
-| `chat.completions` | Chat & text generation | `create()` | [simple_chat.py](https://github.com/sethbang/venice-ai/blob/main/examples/chat/simple_chat.py) |
+| `chat.completions` | Chat & text generation | `create()` | [simple_chat.py](https://github.com/sethbang/venice-py/blob/main/examples/chat/simple_chat.py) |
 | `responses` | Stateless multi-modal generation (Alpha) | `create()` | — |
-| `image` | Image generation | `create()`, `background_remove()` | [text_to_image.py](https://github.com/sethbang/venice-ai/blob/main/examples/image/text_to_image.py) |
-| `video` | Async video generation | `run()` → `VideoJob`, low-level `submit()` / `quote()` / `retrieve()` / `cancel()` | [text_to_video.py](https://github.com/sethbang/venice-ai/blob/main/examples/video/text_to_video.py) |
-| `audio` | TTS / ASR | `create_speech()`, `transcribe()` | [text_to_speech.py](https://github.com/sethbang/venice-ai/blob/main/examples/audio/text_to_speech.py) |
-| `music` | Async music generation | `run()` → `MusicJob`, low-level `submit()` / `quote()` / `retrieve()` / `cancel()` | [music_generation.py](https://github.com/sethbang/venice-ai/blob/main/examples/music/music_generation.py) |
-| `embeddings` | Text embeddings | `create()` | [basic_embeddings.py](https://github.com/sethbang/venice-ai/blob/main/examples/embeddings/basic_embeddings.py) |
-| `models` | Model discovery | `list()`, `get()` | [list_models.py](https://github.com/sethbang/venice-ai/blob/main/examples/models/list_models.py) |
-| `billing` | Usage analytics | `get_balance()`, `get_usage_history()`, `get_usage_analytics()` | [usage_analytics.py](https://github.com/sethbang/venice-ai/blob/main/examples/billing/usage_analytics.py) |
-| `api_keys` | Key management | `list()`, `get_rate_limits()` | [key_management.py](https://github.com/sethbang/venice-ai/blob/main/examples/api_keys/key_management.py) |
-| `characters` | Character discovery & reviews | `list()`, `get()`, `reviews()` | [character_details.py](https://github.com/sethbang/venice-ai/blob/main/examples/characters/character_details.py) |
-| `augment` | Web scrape / search / text-parser | `scrape()`, `search()`, `parse_text()` | [scrape.py](https://github.com/sethbang/venice-ai/blob/main/examples/augment/scrape.py) |
-| `x402` | Wallet-billing (SIWE auth; `[x402]` extra) | `balance()`, `transactions()`, `top_up()` | [balance.py](https://github.com/sethbang/venice-ai/blob/main/examples/x402/balance.py) |
-| `crypto` | Multi-chain JSON-RPC proxy | `networks()`, `rpc()`, `batch_rpc()` | [networks_and_rpc.py](https://github.com/sethbang/venice-ai/blob/main/examples/crypto/networks_and_rpc.py) |
+| `image` | Image generation | `create()`, `background_remove()` | [text_to_image.py](https://github.com/sethbang/venice-py/blob/main/examples/image/text_to_image.py) |
+| `video` | Async video generation | `run()` → `VideoJob`, low-level `submit()` / `quote()` / `retrieve()` / `cancel()` | [text_to_video.py](https://github.com/sethbang/venice-py/blob/main/examples/video/text_to_video.py) |
+| `audio` | TTS / ASR | `create_speech()`, `transcribe()` | [text_to_speech.py](https://github.com/sethbang/venice-py/blob/main/examples/audio/text_to_speech.py) |
+| `music` | Async music generation | `run()` → `MusicJob`, low-level `submit()` / `quote()` / `retrieve()` / `cancel()` | [music_generation.py](https://github.com/sethbang/venice-py/blob/main/examples/music/music_generation.py) |
+| `embeddings` | Text embeddings | `create()` | [basic_embeddings.py](https://github.com/sethbang/venice-py/blob/main/examples/embeddings/basic_embeddings.py) |
+| `models` | Model discovery | `list()`, `get()` | [list_models.py](https://github.com/sethbang/venice-py/blob/main/examples/models/list_models.py) |
+| `billing` | Usage analytics | `get_balance()`, `get_usage_history()`, `get_usage_analytics()` | [usage_analytics.py](https://github.com/sethbang/venice-py/blob/main/examples/billing/usage_analytics.py) |
+| `api_keys` | Key management | `list()`, `get_rate_limits()` | [key_management.py](https://github.com/sethbang/venice-py/blob/main/examples/api_keys/key_management.py) |
+| `characters` | Character discovery & reviews | `list()`, `get()`, `reviews()` | [character_details.py](https://github.com/sethbang/venice-py/blob/main/examples/characters/character_details.py) |
+| `augment` | Web scrape / search / text-parser | `scrape()`, `search()`, `parse_text()` | [scrape.py](https://github.com/sethbang/venice-py/blob/main/examples/augment/scrape.py) |
+| `x402` | Wallet-billing (SIWE auth; `[x402]` extra) | `balance()`, `transactions()`, `top_up()` | [balance.py](https://github.com/sethbang/venice-py/blob/main/examples/x402/balance.py) |
+| `crypto` | Multi-chain JSON-RPC proxy | `networks()`, `rpc()`, `batch_rpc()` | [networks_and_rpc.py](https://github.com/sethbang/venice-py/blob/main/examples/crypto/networks_and_rpc.py) |
 | `tee` | Confidential-compute attestation & E2EE session (`[e2ee]` extra) | `get_attestation()`, `open_session()` | — |
 
 ## Type Safety
@@ -587,7 +587,7 @@ See [Installation Options](#installation-options) for optional dependencies.
 ## Contributing
 
 ```bash
-git clone https://github.com/sethbang/venice-ai.git && cd venice-ai
+git clone https://github.com/sethbang/venice-py.git && cd venice-py
 poetry install
 make test
 ```
@@ -597,13 +597,13 @@ Follow PEP 8, use type hints, write tests, and submit a PR.
 ## Support
 
 - [Documentation](https://venice-docs.sbang.dev/)
-- [Issue Tracker](https://github.com/sethbang/venice-ai/issues)
-- [Examples](https://github.com/sethbang/venice-ai/tree/main/examples/)
-- [Changelog](https://github.com/sethbang/venice-ai/blob/main/CHANGELOG.md)
+- [Issue Tracker](https://github.com/sethbang/venice-py/issues)
+- [Examples](https://github.com/sethbang/venice-py/tree/main/examples/)
+- [Changelog](https://github.com/sethbang/venice-py/blob/main/CHANGELOG.md)
 
 ## License
 
-MIT License — see [`LICENSE`](https://github.com/sethbang/venice-ai/blob/main/LICENSE).
+MIT License — see [`LICENSE`](https://github.com/sethbang/venice-py/blob/main/LICENSE).
 
 ---
 
