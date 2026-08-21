@@ -23,6 +23,19 @@
 > **This is an unofficial, community-maintained SDK for Venice.ai.**
 > Not affiliated with or endorsed by Venice AI. For official resources visit [Venice.ai](https://venice.ai/).
 
+> **Installed as `venice-py`.** This package was published as `venice-ai` through v2.1.0.
+> **Your code does not change** — the import package is still `venice_ai` and the environment
+> variable is still `VENICE_API_KEY`. Only the name you install moved:
+>
+> ```bash
+> pip install venice-py     # was: pip install venice-ai
+> ```
+>
+> `venice-ai` stays on PyPI and nothing is yanked, so existing pins keep resolving. Its final
+> release, 2.1.1, is a metadata-only bridge that pulls in `venice-py`. The bridge declares **no
+> extras**, so if you install any — `[cli]`, `[x402]`, `[redis]`, `[all]` — switch the name or
+> pip will warn and quietly skip them.
+
 > **v2.x** — fully breaking rewrite over v1.3.x with enterprise-grade features. Review the [release notes](https://github.com/sethbang/venice-py/releases), the [CHANGELOG](https://github.com/sethbang/venice-py/blob/main/CHANGELOG.md), and the [Migration Guide](https://venice-docs.sbang.dev/docs/guides/migration/) before upgrading.
 
 ---

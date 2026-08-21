@@ -5,16 +5,29 @@
 # any version that is not an rc/a/b pre-release, so it can never shadow a
 # real release.
 #
-# Trusted Publisher setup (one-time, on test.pypi.org):
-#   1. Log into https://test.pypi.org/manage/account/publishing/
-#   2. Add a new pending publisher with:
-#        - PyPI Project Name:    venice-py
+# Trusted Publisher setup (on test.pypi.org). The project now exists, so register
+# from the **venice-py project's own** Publishing tab —
+# https://test.pypi.org/manage/project/venice-py/settings/publishing/ :
+#
 #        - Owner:                sethbang
-#        - Repository name:      venice-py   (update if the repo is ever renamed)
-#        - Workflow name:        publish-testpypi.yaml
+#        - Repository name:      venice-py
+#        - Workflow name:        publish-testpypi.yaml   <- .yaml, NOT .yml
 #        - Environment name:     testpypi
-#   3. Save. A pending publisher becomes a real one on the first
-#      successful publish from this workflow.
+#
+# The account-level pending-publisher form at /manage/account/publishing/ is NOT
+# the right place any more. A pending publisher only authorizes *creating* a
+# project that does not exist; against an existing project it cannot authorize an
+# upload.
+#
+# Two ways this goes wrong quietly:
+#
+#   1. Registered under the wrong project — venice-ai rather than venice-py. PyPI
+#      still mints a token, because the claims match, and the upload then fails
+#      with "403 Invalid API Token: OIDC scoped token is not valid for project
+#      'venice-py'". This happened on 2026-08-21. A publisher matching nothing
+#      fails earlier and looks different: a trusted-publishing *exchange* error.
+#   2. Recorded as publish-testpypi.yml. This repo uses both extensions, so the
+#      wrong one is easy to type and simply never matches.
 #
 # Why a separate environment from `pypi`:
 #   - Lets the GitHub repo restrict who can manually trigger TestPyPI

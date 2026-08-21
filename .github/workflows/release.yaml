@@ -8,6 +8,32 @@
 # reliably, and pypa/gh-action-pypi-publish stays on @release/v1 because that branch tracks
 # the latest release-v1.x patch — pinning it to a commit SHA would break
 # Trusted Publishing's audit trail.
+#
+# Trusted Publisher setup (on pypi.org). Register it from the **venice-py project's
+# own** Publishing tab — https://pypi.org/manage/project/venice-py/settings/publishing/
+# — not from the account-level pending-publisher form and not from another project:
+#
+#        - PyPI Project Name:    venice-py
+#        - Owner:                sethbang
+#        - Repository name:      venice-py
+#        - Workflow name:        release.yaml      <- .yaml, NOT .yml
+#        - Environment name:     pypi
+#
+# Two ways this goes wrong quietly:
+#
+#   1. Registered under the wrong project. PyPI still mints a token, because the
+#      claims match — it is just scoped elsewhere — and the upload fails with
+#      "403 Invalid API Token: OIDC scoped token is not valid for project
+#      'venice-py'". A publisher that matches nothing fails earlier and looks
+#      different: a trusted-publishing *exchange* error, not a 403.
+#   2. Recorded as release.yml. This repo uses both extensions (.yaml here and in
+#      publish-testpypi.yaml, .yml for docs/e2e/security-scan/skills/examples), so
+#      the wrong one is easy to type and simply never matches.
+#
+# A publisher is only proven by a successful upload, never by its config page, and
+# PyPI versions are not reusable — so exercise changes through
+# publish-testpypi.yaml first. TestPyPI and PyPI are configured separately; a
+# mistake on one is likely repeated on the other.
 
 name: Publish to PyPI
 
