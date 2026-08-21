@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The README now carries a short note explaining that the package installs as `venice-py`,
+  that imports and `VENICE_API_KEY` are unchanged, and that the `venice-ai` bridge declares
+  no extras — so `venice-ai[cli]` and friends need the name updated.
+
 - **The repository moved to [`sethbang/venice-py`](https://github.com/sethbang/venice-py).**
   GitHub permanently redirects the old location, so existing links, clones and remotes keep
   working — no action needed. The project URLs shown on PyPI update with the next release.
