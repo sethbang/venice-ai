@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The repository moved to [`sethbang/venice-py`](https://github.com/sethbang/venice-py).**
+  GitHub permanently redirects the old location, so existing links, clones and remotes keep
+  working — no action needed. The project URLs shown on PyPI update with the next release.
+  The import package is still `venice_ai` and `VENICE_API_KEY` is unchanged; this is the last
+  step of the distribution rename, and it changes nothing about what gets built or installed.
+
 ### Fixed
 
 - **`__version__` no longer falls back to a plausible-looking version string.** When the
@@ -126,7 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **`messages=` now type-checks with plain dicts.** The parameter was annotated `Sequence[UserMessage | AssistantMessage | SystemMessage | ToolMessage | DeveloperMessage]`, which is narrower than what the code actually accepts: mappings in the OpenAI wire shape (`{"role": "user", "content": "hi"}`) have always been validated and coerced into the corresponding message model, but type checkers rejected them (`error: List item 0 has incompatible type "dict[str, str]"`). The annotation is now the public `ChatMessageParam` union, so both forms check cleanly on `create()`, `stream()`, `parse()`, `estimate_cost()`, and `run_with_tools()`. The typed models remain the documented idiom — they give completion and validation at construction — and malformed mappings still raise `ValidationError` before the request is sent. Reported in [#1](https://github.com/sethbang/venice-ai/issues/1).
+- **`messages=` now type-checks with plain dicts.** The parameter was annotated `Sequence[UserMessage | AssistantMessage | SystemMessage | ToolMessage | DeveloperMessage]`, which is narrower than what the code actually accepts: mappings in the OpenAI wire shape (`{"role": "user", "content": "hi"}`) have always been validated and coerced into the corresponding message model, but type checkers rejected them (`error: List item 0 has incompatible type "dict[str, str]"`). The annotation is now the public `ChatMessageParam` union, so both forms check cleanly on `create()`, `stream()`, `parse()`, `estimate_cost()`, and `run_with_tools()`. The typed models remain the documented idiom — they give completion and validation at construction — and malformed mappings still raise `ValidationError` before the request is sent. Reported in [#1](https://github.com/sethbang/venice-py/issues/1).
 - **`estimate_cost()` and `run_with_tools()` accept mapping messages.** Both read the message list before it reaches the request model, so dict input previously raised `AttributeError` on `.content` (`estimate_cost`) or left raw dicts in the returned `ToolLoopResult.messages` history (`run_with_tools`). Messages are now normalized at the method boundary.
 
 ### Added
@@ -699,18 +707,18 @@ _Initial public release. No retroactive release notes documented._
 
 **Note**: This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. For detailed technical information about any changes, please refer to the git commit history or the linked source files.
 
-[Unreleased]: https://github.com/sethbang/venice-ai/compare/v2.2.0...HEAD
-[2.2.0]: https://github.com/sethbang/venice-ai/compare/v2.1.0...v2.2.0
-[2.1.0]: https://github.com/sethbang/venice-ai/compare/v2.0.2...v2.1.0
-[2.0.2]: https://github.com/sethbang/venice-ai/compare/v2.0.1...v2.0.2
-[2.0.1]: https://github.com/sethbang/venice-ai/compare/v2.0.0...v2.0.1
-[2.0.0]: https://github.com/sethbang/venice-ai/compare/v1.3.0...v2.0.0
-[1.3.0]: https://github.com/sethbang/venice-ai/compare/v1.2.0...v1.3.0
-[1.2.0]: https://github.com/sethbang/venice-ai/compare/v1.1.2...v1.2.0
-[1.1.2]: https://github.com/sethbang/venice-ai/compare/v1.1.1...v1.1.2
-[1.1.1]: https://github.com/sethbang/venice-ai/compare/v1.1.0...v1.1.1
-[1.1.0]: https://github.com/sethbang/venice-ai/compare/v1.0.3...v1.1.0
-[1.0.3]: https://github.com/sethbang/venice-ai/compare/v1.0.2...v1.0.3
-[1.0.2]: https://github.com/sethbang/venice-ai/compare/v1.0.1...v1.0.2
-[1.0.1]: https://github.com/sethbang/venice-ai/compare/v1.0.0...v1.0.1
-[1.0.0]: https://github.com/sethbang/venice-ai/releases/tag/v1.0.0
+[Unreleased]: https://github.com/sethbang/venice-py/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/sethbang/venice-py/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/sethbang/venice-py/compare/v2.0.2...v2.1.0
+[2.0.2]: https://github.com/sethbang/venice-py/compare/v2.0.1...v2.0.2
+[2.0.1]: https://github.com/sethbang/venice-py/compare/v2.0.0...v2.0.1
+[2.0.0]: https://github.com/sethbang/venice-py/compare/v1.3.0...v2.0.0
+[1.3.0]: https://github.com/sethbang/venice-py/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/sethbang/venice-py/compare/v1.1.2...v1.2.0
+[1.1.2]: https://github.com/sethbang/venice-py/compare/v1.1.1...v1.1.2
+[1.1.1]: https://github.com/sethbang/venice-py/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/sethbang/venice-py/compare/v1.0.3...v1.1.0
+[1.0.3]: https://github.com/sethbang/venice-py/compare/v1.0.2...v1.0.3
+[1.0.2]: https://github.com/sethbang/venice-py/compare/v1.0.1...v1.0.2
+[1.0.1]: https://github.com/sethbang/venice-py/compare/v1.0.0...v1.0.1
+[1.0.0]: https://github.com/sethbang/venice-py/releases/tag/v1.0.0

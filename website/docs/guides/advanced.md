@@ -109,7 +109,7 @@ async def make_request_with_retry(client, max_retries=3):
             raise
 ```
 
-[**-> Full example: `examples/basic/error_handling.py`**](https://github.com/sethbang/venice-ai/blob/main/examples/basic/error_handling.py)
+[**-> Full example: `examples/basic/error_handling.py`**](https://github.com/sethbang/venice-py/blob/main/examples/basic/error_handling.py)
 
 ## Distributed State Management
 
@@ -210,7 +210,7 @@ if response.balance_info:
     print(f"Balance: {response.balance_info.usd} USD")
 ```
 
-[**-> Full example: `examples/headers/header_access_example.py`**](https://github.com/sethbang/venice-ai/blob/main/examples/headers/header_access_example.py)
+[**-> Full example: `examples/headers/header_access_example.py`**](https://github.com/sethbang/venice-py/blob/main/examples/headers/header_access_example.py)
 
 ## Performance & Optimization
 

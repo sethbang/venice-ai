@@ -10,7 +10,7 @@
 #   2. Add a new pending publisher with:
 #        - PyPI Project Name:    venice-py
 #        - Owner:                sethbang
-#        - Repository name:      venice-ai   (update if the repo is ever renamed)
+#        - Repository name:      venice-py   (update if the repo is ever renamed)
 #        - Workflow name:        publish-testpypi.yaml
 #        - Environment name:     testpypi
 #   3. Save. A pending publisher becomes a real one on the first

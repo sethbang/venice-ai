@@ -35,7 +35,17 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
           path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+        # The key is namespaced by repository on purpose. `virtualenvs-in-project`
+        # puts .venv inside the workspace, and a virtualenv bakes absolute paths
+        # into pyvenv.cfg, bin/activate and every console-script shebang. Renaming
+        # the repo moves the workspace (/home/runner/work/<repo>/<repo>), so a
+        # cache restored across a rename yields a .venv whose interpreter path no
+        # longer exists. Poetry still reports "No dependencies to install or
+        # update" — the dist-info metadata is all there — and the failure surfaces
+        # later as `Command not found` from poetry run. actions/cache does not
+        # re-save on a hit, so without the repository in the key that broken venv
+        # would be restored forever.
+          key: venv-${{ github.repository }}-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
       
       - name: Install dependencies
         # --all-extras so the audit covers the optional dependencies too. Without
